@@ -20,6 +20,8 @@ export const metadata: Metadata = {
   },
 };
 
+console.log(process.env.NODE_ENV);
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,11 +30,13 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <head>
-        <script
-          defer
-          src="https://umami.diogomartino.run/hyperion.js"
-          data-website-id="0f06df6e-b77f-4cd5-8065-6d819bcd1381"
-        ></script>
+        {process.env.NODE_ENV !== "development" && (
+          <script
+            defer
+            src="https://eye.sharkord.com/hyperion.js"
+            data-website-id="0f06df6e-b77f-4cd5-8065-6d819bcd1381"
+          ></script>
+        )}
       </head>
       <body className={cn("font-sans antialiased")}>{children}</body>
     </html>
