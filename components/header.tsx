@@ -18,7 +18,9 @@ export function Header() {
             </Link>
           </Button>
           <Button size="sm" asChild>
-            <Link href="https://demo.sharkord.com">Demo</Link>
+            <Link href="https://demo.sharkord.com" target="_blank">
+              Demo
+            </Link>
           </Button>
           <Button size="sm" asChild>
             <Link href="#get-started">Get Started</Link>
