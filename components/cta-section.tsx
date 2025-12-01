@@ -66,7 +66,7 @@ chmod +x sharkord
               </div>
               <pre className="bg-muted p-4 rounded text-sm overflow-x-auto">
                 <code className="text-muted-foreground font-mono">
-                  {`ddocker run \\
+                  {`docker run \\
   -p 4991:4991/tcp \\
   -p 40000-40020:40000-40020/tcp \\
   -p 40000-40020:40000-40020/udp \\
