@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Download, Github, Terminal } from "lucide-react";
+import { Download, Github, Terminal, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function CTASection() {
   return (
@@ -14,9 +15,18 @@ export function CTASection() {
             Ready to Take Control?
           </h2>
           <p className="text-lg text-muted-foreground mb-8 text-pretty leading-relaxed">
-            Deploy Sharkord in seconds. Download the binary. Run it anywhere.
-            Start owning your conversations today.
+            Set up your own Sharkord server in minutes. Choose your deployment
+            method and start chatting on your terms.
           </p>
+
+          <Alert className="mb-8 text-left border-amber-500/50 bg-amber-500/10">
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-sm text-foreground">
+              <strong>Alpha Release:</strong> Sharkord is under active
+              development. Expect bugs and potential breaking changes between
+              updates.
+            </AlertDescription>
+          </Alert>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
             <Button size="lg" className="w-full sm:w-auto" asChild>
@@ -24,7 +34,7 @@ export function CTASection() {
                 href="https://github.com/sharkord/sharkord/releases/latest"
                 target="_blank"
               >
-                Download <Download className="ml-2 h-4 w-4" />
+                <Download className="mr-2 h-4 w-4" /> Download Latest
               </Link>
             </Button>
             <Button
@@ -39,17 +49,24 @@ export function CTASection() {
             </Button>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <div className="bg-card border border-border/50 rounded-lg p-6 text-left">
+          <div className="mb-6">
+            <h3 className="text-xl font-semibold text-balance">Quick Start</h3>
+            <p className="text-sm text-muted-foreground mt-2">
+              Choose your preferred deployment method
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <div className="bg-card border border-border/50 rounded-lg p-6 text-left hover:border-primary/50 transition-colors">
               <div className="flex items-center gap-2 mb-3">
                 <Terminal className="h-5 w-5 text-primary" />
-                <span className="text-sm font-semibold">
-                  Deploy with binary (Linux x64)
+                <span className="font-semibold">Standalone Binary</span>
+                <span className="ml-auto text-xs text-muted-foreground">
+                  Linux x64
                 </span>
               </div>
               <pre className="bg-muted p-4 rounded text-sm overflow-x-auto">
-                <code className="text-muted-foreground font-mono">
-                  {/* set code to download with curl, set chmod and execute: https://github.com/sharkord/sharkord/releases/latest/download/sharkord-linux-x64 */}
+                <code className="text-foreground font-mono">
                   {`curl -L https://github.com/sharkord/sharkord/releases/latest/download/sharkord-linux-x64 -o sharkord
 chmod +x sharkord
 ./sharkord`}
@@ -57,15 +74,16 @@ chmod +x sharkord
               </pre>
             </div>
 
-            <div className="bg-card border border-border/50 rounded-lg p-6 text-left">
+            <div className="bg-card border border-border/50 rounded-lg p-6 text-left hover:border-primary/50 transition-colors">
               <div className="flex items-center gap-2 mb-3">
                 <Terminal className="h-5 w-5 text-primary" />
-                <span className="text-sm font-semibold">
-                  Deploy with docker
+                <span className="font-semibold">Docker</span>
+                <span className="ml-auto text-xs text-muted-foreground">
+                  All platforms
                 </span>
               </div>
               <pre className="bg-muted p-4 rounded text-sm overflow-x-auto">
-                <code className="text-muted-foreground font-mono">
+                <code className="text-foreground font-mono">
                   {`docker run \\
   -p 4991:4991/tcp \\
   -p 40000-40020:40000-40020/tcp \\
@@ -77,6 +95,18 @@ chmod +x sharkord
               </pre>
             </div>
           </div>
+
+          <p className="text-sm text-muted-foreground mt-8">
+            Need help? Check out the{" "}
+            <Link
+              href="https://github.com/sharkord/sharkord#readme"
+              target="_blank"
+              className="text-primary hover:underline"
+            >
+              documentation
+            </Link>{" "}
+            or open an issue on GitHub.
+          </p>
         </div>
       </div>
     </section>

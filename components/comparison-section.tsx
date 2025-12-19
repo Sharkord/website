@@ -1,77 +1,82 @@
 import { Check, X } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 const comparisons = [
   {
+    feature: "Your Data, Your Server",
+    description: "Full control over your conversations and files",
+    sharkord: true,
+    discord: false,
+    teamspeak: true,
+  },
+  {
+    feature: "Simple, Clean Interface",
+    description: "Just chat, voice, and screen sharing—nothing more",
+    sharkord: true,
+    discord: false,
+    teamspeak: true,
+  },
+  {
+    feature: "Completely Free",
+    description: "No user limits, no premium features, no hidden costs",
+    sharkord: true,
+    discord: "5-25 users",
+    teamspeak: "32 slots",
+  },
+  {
+    feature: "High Quality Screen Share",
+    description: "Stream your screen in stunning clarity",
+    sharkord: "up to 4K @ 60fps",
+    discord: "720p @ 30fps",
+    teamspeak: false,
+  },
+  {
+    feature: "Zero Data Collection",
+    description: "No analytics, no tracking, no selling your data",
+    sharkord: true,
+    discord: false,
+    teamspeak: true,
+  },
+  {
+    feature: "Native Apps",
+    description: "Native apps for mobile and desktop platforms",
+    sharkord: 'Not yet',
+    discord: true,
+    teamspeak: true,
+  },
+  {
     feature: "Open Source",
+    description: "Community-driven, transparent, and auditable",
     sharkord: true,
     discord: false,
-    teamspeak: false,
-  },
-  {
-    feature: "Data Ownership",
-    sharkord: true,
-    discord: false,
-    teamspeak: true,
-  },
-  {
-    feature: "Self-Hosted",
-    sharkord: true,
-    discord: false,
-    teamspeak: true,
-  },
-  {
-    feature: "Free Forever",
-    sharkord: true,
-    discord: "limited",
-    teamspeak: "limited",
-  },
-  {
-    feature: "Voice & Video",
-    sharkord: true,
-    discord: true,
-    teamspeak: "limited",
-  },
-  {
-    feature: "Needs License",
-    sharkord: false,
-    discord: false,
-    teamspeak: "limited",
-  },
-  {
-    feature: "Paid Features",
-    sharkord: false,
-    discord: true,
-    teamspeak: false,
-  },
-  {
-    feature: "Data Mining",
-    sharkord: false,
-    discord: true,
-    teamspeak: false,
-  },
-  {
-    feature: "Bloated Interface",
-    sharkord: false,
-    discord: true,
-    teamspeak: false,
-  },
-  {
-    feature: "Built for Huge Communities",
-    sharkord: false,
-    discord: true,
     teamspeak: false,
   },
 ];
 
 function ComparisonIcon({ value }: { value: boolean | string }) {
   if (value === true) {
-    return <Check className="h-5 w-5 text-primary" />;
+    return (
+      <div className="flex items-center justify-center">
+        <div className="rounded-full bg-green-500/10 p-1">
+          <Check className="h-5 w-5 text-green-600" />
+        </div>
+      </div>
+    );
   }
   if (value === false) {
-    return <X className="h-5 w-5 text-muted-foreground" />;
+    return (
+      <div className="flex items-center justify-center">
+        <div className="rounded-full bg-red-500/10 p-1">
+          <X className="h-5 w-5 text-red-600" />
+        </div>
+      </div>
+    );
   }
-  return <span className="text-xs text-muted-foreground">Partial</span>;
+  return (
+    <div className="flex items-center justify-center">
+      <span className="text-sm text-muted-foreground font-medium">{value}</span>
+    </div>
+  );
 }
 
 export function ComparisonSection() {
@@ -83,10 +88,10 @@ export function ComparisonSection() {
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-2xl text-center mb-16">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl mb-4 text-balance">
-            How Sharkord Compares
+            Built for Friends, Not Corporations
           </h2>
           <p className="text-lg text-muted-foreground text-pretty leading-relaxed">
-            See how Sharkord stacks up against other popular chat platforms
+            Why settle for bloated platforms that monetize your conversations?
           </p>
         </div>
 
@@ -96,19 +101,19 @@ export function ComparisonSection() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="py-4 px-6 text-left font-semibold">
-                      Feature
+                    <th className="py-5 px-6 text-left font-semibold w-2/5">
+                      What Matters
                     </th>
-                    <th className="py-4 px-6 text-center font-semibold bg-primary/5">
-                      <div className="flex items-center justify-center gap-2">
-                        Sharkord
+                    <th className="py-5 px-6 text-center font-semibold bg-primary/5 w-1/5">
+                      <div className="flex flex-col items-center justify-center gap-1">
+                        <span className="text-base">Sharkord</span>
                       </div>
                     </th>
-                    <th className="py-4 px-6 text-center font-semibold">
-                      Discord
+                    <th className="py-5 px-6 text-center font-semibold w-1/5">
+                      <span className="text-base">Discord</span>
                     </th>
-                    <th className="py-4 px-6 text-center font-semibold">
-                      Teamspeak 3
+                    <th className="py-5 px-6 text-center font-semibold w-1/5">
+                      <span className="text-base">TeamSpeak 3</span>
                     </th>
                   </tr>
                 </thead>
@@ -116,23 +121,24 @@ export function ComparisonSection() {
                   {comparisons.map((row, index) => (
                     <tr
                       key={index}
-                      className="border-b border-border/50 last:border-0"
+                      className="border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors"
                     >
-                      <td className="py-4 px-6 font-medium">{row.feature}</td>
-                      <td className="py-4 px-6 text-center bg-primary/5">
-                        <div className="flex justify-center">
-                          <ComparisonIcon value={row.sharkord} />
+                      <td className="py-5 px-6">
+                        <div className="flex flex-col gap-1">
+                          <span className="font-semibold">{row.feature}</span>
+                          <span className="text-sm text-muted-foreground">
+                            {row.description}
+                          </span>
                         </div>
                       </td>
-                      <td className="py-4 px-6 text-center">
-                        <div className="flex justify-center">
-                          <ComparisonIcon value={row.discord} />
-                        </div>
+                      <td className="py-5 px-6 text-center bg-primary/5">
+                        <ComparisonIcon value={row.sharkord} />
                       </td>
-                      <td className="py-4 px-6 text-center">
-                        <div className="flex justify-center">
-                          <ComparisonIcon value={row.teamspeak} />
-                        </div>
+                      <td className="py-5 px-6 text-center">
+                        <ComparisonIcon value={row.discord} />
+                      </td>
+                      <td className="py-5 px-6 text-center">
+                        <ComparisonIcon value={row.teamspeak} />
                       </td>
                     </tr>
                   ))}
@@ -141,6 +147,32 @@ export function ComparisonSection() {
             </div>
           </CardContent>
         </Card>
+
+        <div className="mt-16 text-center">
+          <p className="text-sm text-muted-foreground">
+            Perfect for small groups who value privacy and simplicity over
+            enterprise features
+          </p>
+        </div>
+
+        <div className="bg-muted/50 border rounded-lg p-8 md:p-12 mt-16">
+          <div className="max-w-3xl mx-auto text-center">
+            <h3 className="text-2xl font-bold mb-4">
+              Why Not Large Communities?
+            </h3>
+            <p className="text-lg text-muted-foreground mb-6 text-pretty">
+              While Discord is built for large-scale communities with thousands
+              of simultaneous users, Sharkord is designed to deliver fast,
+              reliable, and meaningful conversations without the noise. We focus
+              on simplicity, privacy, and a streamlined chatting experience.
+            </p>
+            <p className="text-muted-foreground text-pretty">
+              Think of it as the difference between a cozy living room and a
+              crowded convention center. Both have their place, but Sharkord is
+              all about the living room.
+            </p>
+          </div>
+        </div>
       </div>
     </section>
   );

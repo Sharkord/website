@@ -4,7 +4,6 @@ import { FeaturesSection } from "@/components/features-section";
 import { ComparisonSection } from "@/components/comparison-section";
 import { CTASection } from "@/components/cta-section";
 import { Footer } from "@/components/footer";
-import { CommunityFocusSection } from "@/components/focus-section";
 
 export default function Page() {
   return (
@@ -14,7 +13,6 @@ export default function Page() {
         <HeroSection />
         <FeaturesSection />
         <ComparisonSection />
-        <CommunityFocusSection />
         <CTASection />
       </main>
       <Footer />

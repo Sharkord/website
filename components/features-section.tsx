@@ -1,42 +1,42 @@
-import { Shield, Server, Code, Zap, BanknoteX, Podcast } from "lucide-react";
+import { Shield, Server, Code, Zap, Users, Video } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const features = [
   {
     icon: Shield,
-    title: "Privacy by Design",
+    title: "Your Data, Your Rules",
     description:
-      "Your messages stay on your server. No third-party access, ever.",
+      "Everything stays on your server. No corporate middleman reading your messages or mining your data.",
   },
   {
     icon: Server,
-    title: "Self-Hosted Freedom",
+    title: "Run It Anywhere",
     description:
-      "Deploy on your infrastructure. Whether it's a tiny Raspberry PI or cloud provider, you choose where your data lives.",
+      "Works on a $35 Raspberry Pi 4 or any cloud provider. Your server specs determine your limits, not arbitrary paywalls.",
+  },
+  {
+    icon: Video,
+    title: "Crystal Clear Quality",
+    description:
+      "Modern WebRTC codecs deliver pristine voice and video up to 4K@60fps for screen sharing. No compression artifacts.",
   },
   {
     icon: Zap,
-    title: "Unlimited",
+    title: "Lightweight & Fast",
     description:
-      "No user caps, no message limits. Host as many users and store as much data as your server can handle.",
+      "Clean, minimal interface that doesn't hog your RAM or slow down your computer. Just the features you actually use.",
   },
   {
     icon: Code,
-    title: "100% Open Source",
+    title: "Fully Open Source",
     description:
-      "Audit the code, contribute features, or fork it. Complete transparency with no hidden backdoors.",
+      "Inspect the code, customize it, contribute improvements. No hidden telemetry or mysterious updates.",
   },
   {
-    icon: Podcast,
-    title: "Powerful",
+    icon: Users,
+    title: "No Artificial Limits",
     description:
-      "Supports video up to 4K@60fps video calls and screen sharing.",
-  },
-  {
-    icon: BanknoteX,
-    title: "No Paywalls",
-    description:
-      "All features are free forever. No premium tiers, no locked features. Just pure, unrestricted communication.",
+      "No premium tiers, user caps, or feature restrictions. Your hardware is the only limit.",
   },
 ];
 
@@ -46,11 +46,11 @@ export function FeaturesSection() {
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-2xl text-center mb-16">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl mb-4 text-balance">
-            Built for Privacy Advocates
+            Everything You Need, Nothing You Don't
           </h2>
           <p className="text-lg text-muted-foreground text-pretty leading-relaxed">
-            Every feature designed with one goal: keeping your communications
-            private and under your control.
+            Voice, video, text, and screen sharing—without the bloat, memory
+            leaks, or corporate surveillance.
           </p>
         </div>
 
@@ -60,10 +60,10 @@ export function FeaturesSection() {
             return (
               <Card
                 key={index}
-                className="bg-card border-border/50 hover:border-primary/50 transition-colors"
+                className="bg-card border-border/50 hover:border-primary/50 transition-colors group"
               >
                 <CardContent className="p-6">
-                  <div className="mb-4 inline-flex items-center justify-center rounded-lg bg-primary/10 p-3">
+                  <div className="mb-4 inline-flex items-center justify-center rounded-lg bg-primary/10 p-3 group-hover:bg-primary/20 transition-colors">
                     <Icon className="h-6 w-6 text-primary" />
                   </div>
                   <h3 className="mb-2 text-xl font-semibold">
