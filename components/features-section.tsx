@@ -60,7 +60,7 @@ export function FeaturesSection() {
             return (
               <Card
                 key={index}
-                className="bg-card border-border/50 hover:border-primary/50 transition-colors group"
+                className="bg-card border-border/50 hover:border-primary/50 transition-all duration-200 group"
               >
                 <CardContent className="p-6">
                   <div className="mb-4 inline-flex items-center justify-center rounded-lg bg-primary/10 p-3 group-hover:bg-primary/20 transition-colors">

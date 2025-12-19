@@ -7,7 +7,7 @@ export function HeroSection() {
     <section className="relative overflow-hidden border-b border-border/40">
       <div className="absolute inset-0 bg-linear-to-b from-primary/5 to-transparent" />
 
-      <div className="container relative mx-auto px-4 py-24 md:py-32">
+      <div className="container relative mx-auto px-4 py-24 md:py-32 lg:py-40">
         <div className="mx-auto max-w-4xl text-center">
           <h1 className="mb-6 text-4xl font-bold tracking-tight text-balance sm:text-5xl md:text-6xl lg:text-7xl">
             <span className="bg-linear-to-r from-foreground via-foreground to-foreground/80 bg-clip-text text-transparent">

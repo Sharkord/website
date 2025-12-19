@@ -148,25 +148,24 @@ export function ComparisonSection() {
           </CardContent>
         </Card>
 
-        <div className="mt-16 text-center">
-          <p className="text-sm text-muted-foreground">
+        <div className="mt-12 text-center">
+          <p className="text-muted-foreground">
             Perfect for small groups who value privacy and simplicity over
             enterprise features
           </p>
         </div>
 
-        <div className="bg-muted/50 border rounded-lg p-8 md:p-12 mt-16">
-          <div className="max-w-3xl mx-auto text-center">
+        <div className="bg-muted/50 border border-border/40 rounded-lg p-8 md:p-12 mt-16 max-w-3xl mx-auto">
+          <div className="text-center">
             <h3 className="text-2xl font-bold mb-4">
               Why Not Large Communities?
             </h3>
-            <p className="text-lg text-muted-foreground mb-6 text-pretty">
+            <p className="text-lg text-muted-foreground mb-4 text-pretty leading-relaxed">
               While Discord is built for large-scale communities with thousands
               of simultaneous users, Sharkord is designed to deliver fast,
-              reliable, and meaningful conversations without the noise. We focus
-              on simplicity, privacy, and a streamlined chatting experience.
+              reliable, and meaningful conversations without the noise.
             </p>
-            <p className="text-muted-foreground text-pretty">
+            <p className="text-muted-foreground text-pretty leading-relaxed">
               Think of it as the difference between a cozy living room and a
               crowded convention center. Both have their place, but Sharkord is
               all about the living room.

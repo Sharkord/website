@@ -7,17 +7,20 @@ export function CTASection() {
   return (
     <section
       id="get-started"
-      className="py-24 md:py-32 border-b border-border/40 bg-gradient-to-b from-primary/5 to-transparent"
+      className="py-24 md:py-32 border-b border-border/40 bg-linear-to-b from-primary/5 to-transparent"
     >
       <div className="container mx-auto px-4">
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl mb-6 text-balance">
+        <div className="mx-auto max-w-2xl text-center mb-12">
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl mb-4 text-balance">
             Ready to Take Control?
           </h2>
-          <p className="text-lg text-muted-foreground mb-8 text-pretty leading-relaxed">
+          <p className="text-lg text-muted-foreground text-pretty leading-relaxed">
             Set up your own Sharkord server in minutes. Choose your deployment
             method and start chatting on your terms.
           </p>
+        </div>
+
+        <div className="mx-auto max-w-3xl">
 
           <Alert className="mb-8 text-left border-amber-500/50 bg-amber-500/10">
             <AlertCircle className="h-4 w-4 text-amber-600" />
@@ -28,30 +31,32 @@ export function CTASection() {
             </AlertDescription>
           </Alert>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-            <Button size="lg" className="w-full sm:w-auto" asChild>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+            <Button size="lg" className="w-full sm:w-auto group" asChild>
               <Link
                 href="https://github.com/sharkord/sharkord/releases/latest"
                 target="_blank"
               >
-                <Download className="mr-2 h-4 w-4" /> Download Latest
+                <Download className="mr-2 h-4 w-4 transition-transform group-hover:translate-y-0.5" /> 
+                Download Latest
               </Link>
             </Button>
             <Button
               size="lg"
               variant="outline"
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto group"
               asChild
             >
               <Link href="https://github.com/sharkord/sharkord" target="_blank">
-                <Github className="mr-2 h-4 w-4" /> View on GitHub
+                <Github className="mr-2 h-4 w-4 transition-transform group-hover:rotate-12" /> 
+                View on GitHub
               </Link>
             </Button>
           </div>
 
-          <div className="mb-6">
-            <h3 className="text-xl font-semibold text-balance">Quick Start</h3>
-            <p className="text-sm text-muted-foreground mt-2">
+          <div className="mb-8 text-center">
+            <h3 className="text-2xl font-bold mb-2 text-balance">Quick Start</h3>
+            <p className="text-muted-foreground">
               Choose your preferred deployment method
             </p>
           </div>
@@ -96,7 +101,7 @@ chmod +x sharkord
             </div>
           </div>
 
-          <p className="text-sm text-muted-foreground mt-8">
+          <p className="text-sm text-muted-foreground mt-8 text-center">
             Need help? Check out the{" "}
             <Link
               href="https://github.com/sharkord/sharkord#readme"
