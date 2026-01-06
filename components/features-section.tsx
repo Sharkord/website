@@ -49,7 +49,7 @@ export function FeaturesSection() {
             Everything You Need, Nothing You Don't
           </h2>
           <p className="text-lg text-muted-foreground text-pretty leading-relaxed">
-            Voice, video, text, and screen sharing—without the bloat, memory
+            Voice, video, text, and screen sharing without the bloat, memory
             leaks, or corporate surveillance.
           </p>
         </div>

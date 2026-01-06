@@ -22,9 +22,8 @@ export function HeroSection() {
           </h1>
 
           <p className="mb-10 text-lg text-muted-foreground text-pretty md:text-xl max-w-3xl mx-auto leading-relaxed">
-            Open-source chat platform for friends who value privacy over
-            features. Voice, video, and screen sharing—without the bloat or
-            surveillance.
+            Open-source chat platform for friends who value privacy. Voice,
+            video, and screen sharing without the bloat or surveillance.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

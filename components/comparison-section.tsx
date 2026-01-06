@@ -11,7 +11,7 @@ const comparisons = [
   },
   {
     feature: "Simple, Clean Interface",
-    description: "Just chat, voice, and screen sharing—nothing more",
+    description: "Just chat, voice, and screen sharing - nothing more",
     sharkord: true,
     discord: false,
     teamspeak: true,
@@ -40,7 +40,7 @@ const comparisons = [
   {
     feature: "Native Apps",
     description: "Native apps for mobile and desktop platforms",
-    sharkord: 'Not yet',
+    sharkord: "Not yet",
     discord: true,
     teamspeak: true,
   },
