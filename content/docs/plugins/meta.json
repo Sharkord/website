@@ -1,0 +1,13 @@
+{
+  "title": "Plugins",
+  "icon": "Puzzle",
+  "pages": [
+    "overview",
+    "getting-started",
+    "lifecycle",
+    "commands",
+    "installation",
+    "best-practices",
+    "api-reference"
+  ]
+}

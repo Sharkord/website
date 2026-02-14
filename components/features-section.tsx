@@ -1,24 +1,24 @@
 import { Shield, Server, Code, Zap, Users, Video } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import Link from "next/link";
 
 const features = [
   {
     icon: Shield,
     title: "Your Data, Your Rules",
     description:
-      "Everything stays on your server. No corporate middleman reading your messages or mining your data.",
+      "Host it yourself. Your messages and files stay on your machine, not in someone else's cloud.",
   },
   {
     icon: Server,
     title: "Run It Anywhere",
-    description:
-      "Works on a $35 Raspberry Pi 4 or any cloud provider. Your server specs determine your limits, not arbitrary paywalls.",
+    description: "Lightweight by design. Run it on modest hardware or a VPS",
   },
   {
     icon: Video,
     title: "Crystal Clear Quality",
     description:
-      "Modern WebRTC codecs deliver pristine voice and video up to 4K@60fps for screen sharing. No compression artifacts.",
+      "WebRTC voice, video, and smooth screen sharing. Encrypted in transit with TLS/SRTP when served over HTTPS.",
   },
   {
     icon: Zap,
@@ -36,7 +36,7 @@ const features = [
     icon: Users,
     title: "No Artificial Limits",
     description:
-      "No premium tiers, user caps, or feature restrictions. Your hardware is the only limit.",
+      "No premium tiers or user caps. Your hardware and bandwidth set the ceiling.",
   },
 ];
 
@@ -46,7 +46,7 @@ export function FeaturesSection() {
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-2xl text-center mb-16">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl mb-4 text-balance">
-            Everything You Need, Nothing You Don't
+            Everything You Need, Nothing You Don&apos;t
           </h2>
           <p className="text-lg text-muted-foreground text-pretty leading-relaxed">
             Voice, video, text, and screen sharing without the bloat, memory

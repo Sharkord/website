@@ -1,0 +1,13 @@
+{
+  "pages": [
+    "introduction",
+    "configuration",
+    "https-setup",
+    "plugins",
+    "common-questions",
+    "troubleshooting",
+    "contributing",
+    "license",
+    "acknowledgments"
+  ]
+}

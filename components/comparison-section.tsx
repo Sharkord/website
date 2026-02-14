@@ -1,5 +1,6 @@
 import { Check, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import Link from "next/link";
 
 const comparisons = [
   {
@@ -18,15 +19,15 @@ const comparisons = [
   },
   {
     feature: "Completely Free",
-    description: "No user limits, no premium features, no hidden costs",
+    description: "No premium tiers, no paywalled core features",
     sharkord: true,
-    discord: "5-25 users",
-    teamspeak: "32 slots",
+    discord: "Paid perks",
+    teamspeak: "Paid slots",
   },
   {
     feature: "High Quality Screen Share",
     description: "Stream your screen in stunning clarity",
-    sharkord: "up to 4K @ 60fps",
+    sharkord: "up to 4K@60fps",
     discord: "720p @ 30fps",
     teamspeak: false,
   },
@@ -50,6 +51,13 @@ const comparisons = [
     sharkord: true,
     discord: false,
     teamspeak: false,
+  },
+  {
+    feature: "Plugins",
+    description: "Extend functionality with community-made plugins",
+    sharkord: true,
+    discord: "Not natively",
+    teamspeak: "Limited",
   },
 ];
 
@@ -151,7 +159,14 @@ export function ComparisonSection() {
         <div className="mt-12 text-center">
           <p className="text-muted-foreground">
             Perfect for small groups who value privacy and simplicity over
-            enterprise features
+            enterprise features. Have questions?{" "}
+            <Link
+              href="/docs/common-questions"
+              className="text-primary hover:underline"
+            >
+              Read the FAQ
+            </Link>
+            .
           </p>
         </div>
 

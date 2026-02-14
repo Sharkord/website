@@ -1,0 +1,13 @@
+{
+  "title": "Introduction",
+  "icon": "BookOpen",
+  "collapsible": false,
+  "defaultOpen": true,
+  "pages": [
+    "quick-start",
+    "what-is-sharkord",
+    "live-demo",
+    "installation",
+    "owner-permissions"
+  ]
+}

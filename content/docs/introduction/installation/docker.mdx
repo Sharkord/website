@@ -1,0 +1,21 @@
+---
+title: Docker
+description: Run Sharkord using Docker.
+icon: Container
+---
+
+# Docker Installation
+
+Run Sharkord in Docker with HTTP and RTC ports mapped:
+
+```bash
+docker run \
+  -p 4991:4991/tcp \
+  -p 40000-40020:40000-40020/tcp \
+  -p 40000-40020:40000-40020/udp \
+  -v ./data:/root/.config/sharkord \
+  --name sharkord \
+  sharkord/sharkord:latest
+```
+
+Then open `http://localhost:4991`.

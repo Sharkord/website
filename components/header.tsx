@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { Github } from "lucide-react";
+import { BookOpen, Github } from "lucide-react";
 
 export function Header() {
   return (
@@ -19,6 +19,14 @@ export function Header() {
         </div>
 
         <nav className="flex items-center gap-1.5 sm:gap-3">
+          <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
+            <Link href="/docs">Docs</Link>
+          </Button>
+          <Button variant="ghost" size="sm" asChild className="sm:hidden px-2">
+            <Link href="/docs" aria-label="Docs">
+              <BookOpen className="w-5 h-5" />
+            </Link>
+          </Button>
           <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
             <Link href="https://github.com/sharkord/sharkord" target="_blank">
               GitHub
