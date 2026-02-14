@@ -1,0 +1,6 @@
+{
+  "title": "Installation",
+  "icon": "Download",
+  "defaultOpen": false,
+  "pages": ["docker", "linux", "windows"]
+}

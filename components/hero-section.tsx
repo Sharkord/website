@@ -23,7 +23,11 @@ export function HeroSection() {
 
           <p className="mb-10 text-lg text-muted-foreground text-pretty md:text-xl max-w-3xl mx-auto leading-relaxed">
             Open-source chat platform for friends who value privacy. Voice,
-            video, and screen sharing without the bloat or surveillance.
+            video, and screen sharing without the bloat or surveillance.{" "}
+            <Link href="/docs" className="text-primary hover:underline">
+              Read the docs
+            </Link>
+            .
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

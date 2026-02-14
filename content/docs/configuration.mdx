@@ -1,0 +1,23 @@
+---
+title: Configuration
+description: Configure Sharkord using config.ini.
+icon: Settings
+---
+
+# Configuration
+
+On first run, Sharkord creates a config file at `~/.config/sharkord/config.ini`.
+
+Update this file to customize runtime behavior.
+
+## Options
+
+| Field        | Default | Description                                         |
+| ------------ | ------- | --------------------------------------------------- |
+| `port`       | `4991`  | HTTP and WebSocket listening port                   |
+| `debug`      | `false` | Enables verbose debug logging                       |
+| `rtcMinPort` | `40000` | Minimum WebRTC media port                           |
+| `rtcMaxPort` | `40020` | Maximum WebRTC media port                           |
+| `autoupdate` | `false` | Enables automatic updates. Not available in Docker. |
+
+See

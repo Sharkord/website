@@ -1,0 +1,29 @@
+---
+title: Install and Enable
+description: Add a compiled plugin to your Sharkord instance.
+icon: ShieldAlert
+---
+
+# Install and Enable Plugins
+
+After compiling your plugin, install it into your Sharkord data directory.
+
+<Alert type="attention" title="Security Risk">
+  Plugins can execute arbitrary code on the host. Only use trusted plugins and
+  prefer Docker isolation.
+</Alert>
+
+## Installation Steps
+
+1. Open your Sharkord data directory (usually `~/.config/sharkord`).
+2. Create a `plugins` folder if it does not exist.
+3. Create a folder for your plugin, for example `my-plugin`.
+4. Copy your compiled plugin output (for example, `dist/`) into that folder.
+5. Enable the plugin in Sharkord settings under **Plugins**.
+6. Go to the plugins tab and the plugin should be listed there. Click **Enable** to activate it.
+
+
+## Example Plugins
+
+- [Sharkord Music Bot](https://github.com/diogomartino/sharkord-music-bot) - Adds music playback in voice channels using YouTube.
+- [Sharkord IPTV](https://github.com/diogomartino/sharkord-iptv) - Streams IPTV channels in voice channels.

@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { RootProvider } from "fumadocs-ui/provider/next";
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geist_mono = Geist_Mono({ subsets: ["latin"] });
+const geistSans = Geist({ subsets: ["latin"], variable: "--font-sans" });
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://sharkord.com"),
   title: "Sharkord - Open Source Self-Hosted Chat Platform",
   description:
     "Privacy-first, self-hosted real-time chat platform. Own your data, control your conversations.",
@@ -20,15 +22,13 @@ export const metadata: Metadata = {
   },
 };
 
-console.log(process.env.NODE_ENV);
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         {process.env.NODE_ENV !== "development" && (
           <script
@@ -38,7 +38,15 @@ export default function RootLayout({
           ></script>
         )}
       </head>
-      <body className={cn("font-sans antialiased")}>{children}</body>
+      <body
+        className={cn(
+          geistSans.variable,
+          geistMono.variable,
+          "font-sans antialiased flex flex-col min-h-screen",
+        )}
+      >
+        <RootProvider theme={{ enableColorScheme: false }}>{children}</RootProvider>
+      </body>
     </html>
   );
 }
