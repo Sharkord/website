@@ -1,0 +1,23 @@
+---
+title: Updating
+description: Update Sharkord to the latest version.
+icon: CloudDownload
+---
+
+# Updating
+
+To update Sharkord, you have multiple options:
+
+- **Via the Admin panel**: You can trigger an update from there. This will download and install the latest version of Sharkord. Not available in Docker.
+- **Manual update**: You can also manually download the latest release from the [GitHub releases page](https://github.com/sharkord/sharkord/releases) and simply run the new version. Your existing configuration and data will be preserved.
+- **Docker**: If you're running Sharkord in a Docker container, you can pull the latest image from Docker Hub and restart your container to update to the latest version.
+
+### Automatic Updates
+
+Sharkord can automatically check for updates and install them. To enable this feature, set the `autoupdate` option to `true` in your `config.ini` file. Note that automatic updates are not available when running Sharkord in a Docker container.
+
+<Alert type="warning" title="Attention">
+  Triggering the update from the Admin panel OR relying the automatic update may
+  not work in some environments. For now, it's recommended to update manually by
+  downloading the latest release from GitHub or pulling the latest Docker image.
+</Alert>

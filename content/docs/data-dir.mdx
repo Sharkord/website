@@ -1,0 +1,27 @@
+---
+title: Data Directory
+description: Manage Sharkord's data directory.
+icon: Folder
+---
+
+Sharkord stores its data in a directory. This includes configuration files, logs, and other runtime data. The location of this directory depends on your operating system.
+
+### Linux
+
+`~/.local/share/sharkord`
+
+### Windows
+
+`%APPDATA%\sharkord`
+
+### macOS
+
+`~/Library/Application Support/sharkord`
+
+### Docker
+
+When running Sharkord in a Docker container, the data directory is typically mounted as a volume or bind mount. You can specify the location of the data directory on your host machine when starting the container.
+
+## Migrating Your Server
+
+To migrate your Sharkord server to a new machine or location, simply copy the entire data directory to the new location. This will preserve all your settings, logs, and other data.
