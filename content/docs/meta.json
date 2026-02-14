@@ -2,6 +2,8 @@
   "pages": [
     "introduction",
     "configuration",
+    "updating",
+    "data-dir",
     "https-setup",
     "plugins",
     "common-questions",
