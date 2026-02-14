@@ -26,7 +26,7 @@ const comparisons = [
   {
     feature: "High Quality Screen Share",
     description: "Stream your screen in stunning clarity",
-    sharkord: "up to 4K @ 60fps",
+    sharkord: "up to 4K@120fps",
     discord: "720p @ 30fps",
     teamspeak: false,
   },
@@ -50,6 +50,13 @@ const comparisons = [
     sharkord: true,
     discord: false,
     teamspeak: false,
+  },
+  {
+    feature: "Plugins",
+    description: "Extend functionality with community-made plugins",
+    sharkord: true,
+    discord: "Not natively",
+    teamspeak: true,
   },
 ];
 

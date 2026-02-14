@@ -18,7 +18,7 @@ const features = [
     icon: Video,
     title: "Crystal Clear Quality",
     description:
-      "Modern WebRTC codecs deliver pristine voice and video up to 4K@60fps for screen sharing. No compression artifacts.",
+      "Modern WebRTC codecs deliver pristine voice and video up to 4K@120fps for screen sharing. No compression artifacts.",
   },
   {
     icon: Zap,
