@@ -2,9 +2,9 @@
   "pages": [
     "introduction",
     "configuration",
+    "https",
     "updating",
     "data-dir",
-    "https-setup",
     "plugins",
     "common-questions",
     "troubleshooting",

@@ -1,0 +1,6 @@
+{
+  "title": "HTTPS Setup",
+  "icon": "Lock",
+  "defaultOpen": true,
+  "pages": ["why", "caddy"]
+}

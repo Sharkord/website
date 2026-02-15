@@ -1,0 +1,17 @@
+---
+title: Why Do I Need HTTPS?
+description: Learn why HTTPS is important for Sharkord and how to set it up.
+icon: CircleQuestionMark
+---
+
+Browsers need HTTPS to access the Sharkord web interface because it uses WebRTC for real-time communication, which requires a secure context. Without HTTPS, you will be able to still use Sharkord but NOT stream related features like screen sharing, webcam, and audio because the browser will block access to your media devices. Additionally, using HTTPS ensures that your data is encrypted and secure from potential eavesdropping or tampering.
+
+See [MediaDevices](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia) documentation for more details on the security requirements for accessing media devices in browsers.
+
+### How to Set Up HTTPS?
+
+To set up HTTPS for your Sharkord instance, you can use a reverse proxy like Caddy or Nginx to handle SSL termination. This involves obtaining an SSL certificate (you can get a free one from Let's Encrypt) and configuring your reverse proxy to serve your Sharkord instance over HTTPS.
+
+## TL;DR
+
+Without HTTPS **you won't be able to use streaming features**, but the rest of Sharkord will work fine. But it is **NOT** recommended to run Sharkord without HTTPS due to security and privacy concerns.
