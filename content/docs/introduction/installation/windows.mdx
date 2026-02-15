@@ -10,8 +10,6 @@ icon: AppWindow
   use of the Docker version OR running Sharkord on WSL2.
 </Alert>
 
-# Windows Installation
-
 1. Download `sharkord-windows-x64.exe` from [GitHub Releases](https://github.com/sharkord/sharkord/releases/latest).
 2. Open Command Prompt and navigate to the folder where you downloaded the executable.
 3. Run:
@@ -20,10 +18,12 @@ icon: AppWindow
 .\sharkord-windows-x64.exe
 ```
 
-## Required Runtime
+### Required Runtime
 
 Install Microsoft Visual C++ 2015-2022 Redistributable (x64):
 
 [https://aka.ms/vs/17/release/vc_redist.x64.exe](https://aka.ms/vs/17/release/vc_redist.x64.exe)
 
 Without this dependency, Sharkord will fail to start.
+
+See [HTTPS Setup](/docs/https/caddy) guide for securing your Sharkord instance with HTTPS, which is required for streaming features.

@@ -1,0 +1,117 @@
+---
+title: Caddy
+description: Use Caddy as a reverse proxy for Sharkord.
+icon: Network
+---
+
+This will guide you through setting up a simple Caddy server as a reverse proxy for Sharkord, enabling HTTPS with automatic certificate management.
+
+### Assumptions
+
+1. You have Sharkord running on your sever with default ports.
+2. You are running Ubuntu Server.
+3. You have a domain name pointing to your server's IP address (e.g., `sharkord.yourdomain.com`).
+
+If any of these assumptions are not true, you may need to adjust the instructions accordingly.
+
+### Step 1: Update and Install Dependencies
+
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y wget ufw curl nano
+```
+
+### Step 2: Install Caddy
+
+```bash
+wget "https://github.com/caddyserver/caddy/releases/latest/download/caddy_2.10.2_linux_amd64.tar.gz" -O /tmp/caddy.tar.gz
+
+tar -xzf /tmp/caddy.tar.gz
+
+sudo mv caddy /usr/local/bin/
+sudo chmod +x /usr/local/bin/caddy
+
+# check installation
+caddy version
+```
+
+### Step 3: Configure Caddy
+
+```bash
+sudo mkdir -p /etc/caddy
+sudo nano /etc/caddy/Caddyfile
+```
+
+And paste the following configuration, replacing `sharkord.yourdomain.com` with the domain you want to use:
+
+```
+sharkord.yourdomain.com {
+    reverse_proxy 127.0.0.1:4991
+    encode gzip
+}
+```
+
+### Step 4: Configure Caddy
+
+Create a systemd service file for Caddy:
+
+```bash
+sudo nano /etc/systemd/system/caddy.service
+```
+
+Paste the following content:
+
+```
+[Unit]
+Description=Caddy Web Server
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+ExecReload=/usr/local/bin/caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
+Restart=on-failure
+User=root
+Group=root
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### Step 5: Start and Enable Caddy
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable caddy
+sudo systemctl start caddy
+sudo systemctl status caddy
+```
+
+### Step 6: Configure Firewall
+
+First check if you have UFW enabled:
+
+```bash
+sudo ufw status
+```
+
+If it's active, allow the necessary ports:
+
+```bash
+sudo ufw allow 22/tcp
+
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+
+sudo ufw allow 40000/tcp
+sudo ufw allow 40000/udp
+
+sudo ufw enable
+sudo ufw reload
+```
+
+If it's not active, you can skip this step. But it's **recommended** to have a firewall enabled for security.
+
+### Step 7: Access Sharkord
+
+You should now be able to access Sharkord securely at `https://sharkord.yourdomain.com`. Caddy will automatically obtain and renew SSL certificates for your domain using Let's Encrypt.
