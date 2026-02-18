@@ -112,8 +112,8 @@ export function CTASection() {
                 <code className="text-foreground font-mono">
                   {`docker run \\
    -p 4991:4991/tcp \\
-   -p 40000-40020:40000-40020/tcp \\
-   -p 40000-40020:40000-40020/udp \\
+   -p 40000:40000/tcp \\
+   -p 40000:40000/udp \\
    -v "./data":/root/.config/sharkord \\
    --name sharkord \\
    sharkord/sharkord:latest`}

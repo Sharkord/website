@@ -4,18 +4,21 @@ description: Run Sharkord using Docker.
 icon: Container
 ---
 
-Run Sharkord in Docker with HTTP and RTC ports mapped:
+To run Sharkord using Docker, use the following command:
 
 ```bash
 docker run \
   -p 4991:4991/tcp \
-  -p 40000-40020:40000-40020/tcp \
-  -p 40000-40020:40000-40020/udp \
+  -p 40000:40000/tcp \
+  -p 40000:40000/udp \
   -v ./data:/root/.config/sharkord \
   --name sharkord \
   sharkord/sharkord:latest
 ```
 
-Then open `http://localhost:4991`.
+Note that it needs to bind the following ports:
 
-See [HTTPS Setup](/docs/https/caddy) guide for securing your Sharkord instance with HTTPS, which is required for streaming features.
+- `4991`: TCP only for the communication between the client and the server.
+- `40000`: Both TCP and UDP to handle streaming and voice communication.
+
+Then open `http://localhost:4991` in your web browser to access the Sharkord web interface.
