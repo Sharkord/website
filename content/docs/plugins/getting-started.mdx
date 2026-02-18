@@ -4,94 +4,56 @@ description: Create your first Sharkord plugin with the SDK.
 icon: Rocket
 ---
 
-# Getting Started
-
 This guide walks through creating a minimal Sharkord plugin.
 
-## 1) Create a Plugin Directory
+### 1) Create a Plugin Directory
 
-Create a project folder, for example `my-plugin`.
-
-## 2) Initialize the Package
+Initialize a new plugin:
 
 ```bash
-bun init
+bun create github.com/Sharkord/plugin-example
 ```
 
-## 3) Configure `package.json`
+### 2) Link the SDK & UI (if building components)
 
-Your package must include standard fields and Sharkord plugin metadata.
-
-Required:
-
-- `name`
-- `version` (semver)
-- `sharkord.entry` (must point to a `.js` file)
-- `sharkord.author`
-- `sharkord.description`
-
-Optional:
-
-- `sharkord.homepage`
-- `sharkord.logo`
-
-Example:
-
-```json
-{
-  "name": "my-plugin",
-  "version": "0.0.1",
-  "module": "src/index.ts",
-  "sharkord": {
-    "entry": "index.js",
-    "author": "Me",
-    "homepage": "https://some-page.com",
-    "description": "This is my first Sharkord plugin!",
-    "logo": "https://some-page.com/logo.png"
-  },
-  "type": "module",
-  "scripts": {
-    "build": "bun build src/index.ts --outdir dist --target bun --minify --format esm && cp package.json dist/"
-  },
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  }
-}
-```
-
-## 4) Install the SDK
-
-The SDK is not currently published to a package registry. Use `bun link` to link it locally for now. To do this, you must clone the Sharkord repository, build it and link the plugin SDK package.
-
-## 5) Create Your Entry File
-
-```ts
-import type { PluginContext } from "@sharkord/plugin-sdk";
-
-const onLoad = (ctx: PluginContext) => {
-  ctx.log("My Plugin loaded");
-
-  ctx.events.on("user:joined", ({ userId, username }) => {
-    ctx.log(`User joined: ${username} (ID: ${userId})`);
-  });
-};
-
-const onUnload = (ctx: PluginContext) => {
-  ctx.log("My Plugin unloaded");
-};
-
-export { onLoad, onUnload };
-```
-
-## 6) Build the Plugin
-
-Compile to JavaScript before loading into Sharkord:
+To do this, first clone the Sharkord repository:
 
 ```bash
-bun run build
+git clone https://github.com/Sharkord/sharkord.git
 ```
 
-Make sure the `package.json` file is copied to the output directory so Sharkord can read the plugin metadata.
+Install dependencies and link the correct packages:
+
+```bash
+cd sharkord
+
+bun install
+
+cd ./packages/plugin-sdk
+bun link
+
+cd ../ui
+bun link
+```
+
+Then, in your plugin directory, link the SDK and UI:
+
+```bash
+cd plugin-example
+
+bun link @sharkord/plugin-sdk
+bun link @sharkord/ui
+```
+
+### 3) Change the Plugin Manifest
+
+Go to `package.json` and edit the information to match your plugin:
+
+### 4) Build
+
+Your plugin needs to be bundled before it can be used. Two scripts are pre-shipped in the `package.json`:
+
+- `build`: Bundles the plugin for production.
+- `build:dev`: Bundles the plugin AND copies to the sharkord plugins directory for testing.
+
+These two commands need to be edited to match the correct paths in your system.
