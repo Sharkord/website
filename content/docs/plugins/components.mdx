@@ -47,6 +47,10 @@ export { onLoad, components };
 
 You need to register the components and export them inside the components object, otherwise they won't be loaded.
 
+### Styling
+
+At the moment, you can use some tailwind classes for styling your components. Becausee of the way tailwind bundles css at build time, it's not garanteed that all classes will work, but most of the common ones should. This is a limitation and probably the solution is to have the plugin have it's own tailwind setup and ship the css with the plugin, but for now you can experiment with the classes and see what works.
+
 ### Example
 
 In this example, we created a simple component that shows in the home screen.
