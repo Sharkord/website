@@ -9,39 +9,66 @@ icon: Info
     Sharkord is a self-hosted voice and text chat server with a Discord-like interface, but it does not aim to replicate all of Discord's features. It focuses on providing core chat and voice functionality for small to medium private groups, with extensibility through plugins. It does not aim to host huge public communities or be a full social platform like Discord.
   </AccordionItem>
 
-  <AccordionItem title="What specs do I need to run X number of users with X amount of voice channels?">
-    Sharkord server is lightweight and can run on modest hardware. It really depends on the number of concurrent users and voice channels.
-  </AccordionItem>
+<AccordionItem title="What specs do I need to run X number of users with X amount of voice channels?">
+  Sharkord server is lightweight and can run on modest hardware. It really
+  depends on the number of concurrent users and voice channels.
+</AccordionItem>
 
-  <AccordionItem title="Can we migrate the server to another machine without losing data?">
-    Yes. Just copy the data directory to the new machine and that's it.
-  </AccordionItem>
+<AccordionItem title="Can we migrate the server to another machine without losing data?">
+  Yes. Just copy the data directory to the new machine and that's it.
+</AccordionItem>
 
-  <AccordionItem title="Does it support multiple servers/instances?">
-    No. Each Sharkord instance is a single server. You can run multiple instances on the same machine with different ports and data directories, but they will be separate servers.
-  </AccordionItem>
+<AccordionItem title="Does it support multiple servers/instances?">
+  No. Each Sharkord instance is a single server. You can run multiple instances
+  on the same machine with different ports and data directories, but they will
+  be separate servers.
+</AccordionItem>
 
-  <AccordionItem title="Can I have a music bot?">
-    Yes, via plugins. Check out the [Example Plugins](/docs/plugins/installation#example-plugins) for an example.
-  </AccordionItem>
+<AccordionItem title="Can I have a music bot?">
+  Yes, via plugins. Check out the [Example
+  Plugins](/docs/plugins/installation#example-plugins) for an example.
+</AccordionItem>
 
-  <AccordionItem title="Does it have a Desktop/Mobile client?">
-    No. It's a possibility for the future. For now, it's only web.
-  </AccordionItem>
+<AccordionItem title="Does it have a Desktop/Mobile client?">
+  No. It's a possibility for the future. For now, it's only web.
+</AccordionItem>
 
-  <AccordionItem title="Where are files stored?">
-    Files are stored in the host machine. Currently it's not possible to change the storage location, but it's planned for the future.
-  </AccordionItem>
+<AccordionItem title="Where are files stored?">
+  Files are stored in the host machine. Currently it's not possible to change
+  the storage location, but it's planned for the future.
+</AccordionItem>
 
-  <AccordionItem title="Are the messages encrypted?">
-    They are encrypted in transit using TLS (when accessed via HTTPS), but not end-to-end encrypted.
-  </AccordionItem>
+<AccordionItem title="Are the messages encrypted?">
+  They are encrypted in transit using TLS (when accessed via HTTPS), but not
+  end-to-end encrypted.
+</AccordionItem>
 
-  <AccordionItem title="Is the voice and video communication encrypted?">
-    Yes, voice communication is encrypted in transit using TLS and SRTP.
-  </AccordionItem>
+<AccordionItem title="Is the voice and video communication encrypted?">
+  Yes, voice communication is encrypted in transit using TLS and SRTP.
+</AccordionItem>
 
-  <AccordionItem title="Can I use my own domain and SSL certificate?">
-    Yes, you can configure a reverse proxy like Nginx or Caddy to serve Sharkord on your domain with your SSL certificate. Sharkord itself does not handle SSL termination, so a reverse proxy is required for custom domains and certificates.
-  </AccordionItem>
+<AccordionItem title="Can I use my own domain and SSL certificate?">
+  Yes, you can configure a reverse proxy like Nginx or Caddy to serve Sharkord
+  on your domain with your SSL certificate. Sharkord itself does not handle SSL
+  termination, so a reverse proxy is required for custom domains and
+  certificates.
+</AccordionItem>
+
+<AccordionItem title="Can I use my own domain and SSL certificate?">
+  Yes, you can configure a reverse proxy like Nginx or Caddy to serve Sharkord
+  on your domain with your SSL certificate. Sharkord itself does not handle SSL
+  termination, so a reverse proxy is required for custom domains and
+  certificates.
+</AccordionItem>
+
+<AccordionItem title="Is Sharkord vibecoded?">
+  No, Sharkord is not vibecoded. AI is used as a tool to assist in development,
+  documentation and testing, but the core design and implementation decisions
+  are made by the developers. The AI is not responsible for any core aspects of
+  the project.
+</AccordionItem>
+
+<AccordionItem title="How do I reset my server?">
+  To reset your server, delete the data directory. This will remove ALL data. Check the [Data Directory](/docs/data-dir) for the location of the data directory on your system.
+</AccordionItem>
 </Accordion>

@@ -4,11 +4,9 @@ description: Register typed commands users can run.
 icon: Terminal
 ---
 
-# Commands
-
 Plugins can register custom commands with typed arguments and custom execution logic.
 
-## Register a Command
+### Register a Command
 
 ```ts
 import type { PluginContext, TInvokerContext } from '@sharkord/plugin-sdk';
@@ -36,6 +34,6 @@ const onLoad = (ctx: PluginContext) => {
 export { onLoad };
 ```
 
-## Sensitive Arguments
+### Sensitive Arguments
 
 Set `sensitive: true` for secrets (for example passwords or tokens). Sensitive values are masked in the interface.

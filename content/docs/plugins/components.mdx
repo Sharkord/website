@@ -1,0 +1,58 @@
+---
+title: Components
+description: Build custom UI components for Sharkord.
+icon: Puzzle
+---
+
+Plugins can create custom UI components that integrate directly into the Sharkord interface. This allows you to build rich, interactive features that feel native to the app.
+
+### Slots
+
+Sharkord provides several "slots" where plugins can inject their components. These include:
+
+- `CONNECT_SCREEN`: A slot below the logo and server name on the connect screen.
+- `HOME_SCREEN`: A slot on the home screen, which is the screen the user sees when he connects to the server.
+- `CHAT_ACTIONS`: A slot in the chat input area, where plugins can add buttons or other interactive elements.
+- `TOPBAR_RIGHT`: A slot on the top bar, on the right side of the screen, next to the existing buttons.
+
+Each plugin can render multiple components in different slots, allowing for flexible UI integration.
+
+### Building Components
+
+You should components using the Sharkord UI library so that they match the look and feel of the rest of the app. The UI library provides a set of pre-built components and styles that you can use to create your plugin's interface.
+
+For example, to create a simple button component that can be rendered in the `CHAT_ACTIONS` slot:
+
+```tsx
+import { Button } from "@sharkord/ui";
+
+const MyChatButton = () => {
+  return <Button onClick={() => alert("Button clicked!")}>Click Me</Button>;
+};
+
+const components: TPluginComponentsMapBySlotId = {
+  [PluginSlot.CHAT_ACTIONS]: [MyChatButton],
+};
+
+const onLoad = async (ctx: PluginContext) => {
+  // ... rest of your plugin code
+
+  ctx.ui.registerComponents(components);
+};
+
+// ... rest of your plugin code
+
+export { onLoad, components };
+```
+
+You need to register the components and export them inside the components object, otherwise they won't be loaded.
+
+### Styling
+
+At the moment, you can use some tailwind classes for styling your components. Becausee of the way tailwind bundles css at build time, it's not garanteed that all classes will work, but most of the common ones should. This is a limitation and probably the solution is to have the plugin have it's own tailwind setup and ship the css with the plugin, but for now you can experiment with the classes and see what works.
+
+### Example
+
+In this example, we created a simple component that shows in the home screen.
+
+![Example of a plugin rendering a button in the chat actions slot](/Screenshot_20260218_214904.png)

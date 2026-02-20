@@ -4,18 +4,16 @@ description: Extend Sharkord with custom plugins.
 icon: Wrench
 ---
 
-# Plugins Overview
-
 Sharkord plugins let you extend server behavior with custom logic such as automations, integrations, and commands.
 
 <Alert type="warning">
   Plugins are an experimental feature and may have breaking changes.
 </Alert>
 
-## Security Model
+### Security Model
 
 Plugins execute with host-level access and should be treated as privileged code. Only install plugins from trusted sources, and consider running Sharkord in Docker for better isolation when using plugins.
 
-## Plugin SDK
+### Plugin SDK
 
 Use the official SDK for type-safe plugin development: [packages/plugin-sdk](https://github.com/Sharkord/sharkord/tree/development/packages/plugin-sdk).

@@ -4,18 +4,16 @@ description: Troubleshoot common issues with Sharkord.
 icon: Bug
 ---
 
-  <AccordionItem title="Voice and video not working">
-    Make sure you:
+<AccordionItem title="Voice and video not working">
+Make sure you:
+- are in a secure context (HTTPS or http://localhost)
+- have allowed microphone and camera permissions in your browser
+- have configured the correct `webRtc.port` in your `config.ini` and opened those ports in your firewall/router for UDP traffic. In some setups, you might also need to set `webRtc.announcedAddress` to your public IP address or domain name, especially if you're behind a NAT.
 
-    - are in a secure context (HTTPS or http://localhost)
-    - have allowed microphone and camera permissions in your browser
-    - have configured the correct `rtcMinPort` and `rtcMaxPort` in your `config.ini` and opened those ports in your firewall/router for UDP traffic.
+</AccordionItem>
 
-  </AccordionItem>
-
-    <AccordionItem title="I keep getting disconnected from the server (code 1006)">
-    This is most likely a network issue. Please read the following issues for possible solutions:
-    - [https://github.com/Sharkord/sharkord/issues/46](https://github.com/Sharkord/sharkord/issues/46)
-    - [https://github.com/Sharkord/sharkord/issues/289](https://github.com/Sharkord/sharkord/issues/289)
-
-  </AccordionItem>
+<AccordionItem title="I keep getting disconnected from the server (code 1006)">
+This is most likely a network issue. Please read the following issues for possible solutions:
+  - [https://github.com/Sharkord/sharkord/issues/46](https://github.com/Sharkord/sharkord/issues/46)
+  - [https://github.com/Sharkord/sharkord/issues/289](https://github.com/Sharkord/sharkord/issues/289)
+</AccordionItem>
