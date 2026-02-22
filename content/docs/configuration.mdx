@@ -10,19 +10,20 @@ Update this file to customize runtime behavior.
 
 ### Options
 
-| Field                                          | Default | Description                                                                                       |
-| ---------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------- |
-| `port`                                         | `4991`  | HTTP and WebSocket listening port                                                                 |
-| `debug`                                        | `false` | Enables verbose debug logging                                                                     |
-| `webRtc.port`                                  | `40000` | Port where the WebRTC server listens                                                              |
-| `webRtc.announcedAddress`                      |         | Optional public address for WebRTC server. If not set, the server will use the public IP address. |
-| `rateLimiters.sendAndEditMessages.maxRequests` | `15`    | Max messages sent/edited per window per user before being rate limited                            |
-| `rateLimiters.sendAndEditMessages.windowMs`    | `60000` | Time window for rate limiting in milliseconds                                                     |
-| `rateLimiters.joinVoiceChannel.maxRequests`    | `20`    | Max voice channel joins per window per user before being rate limited                             |
-| `rateLimiters.joinVoiceChannel.windowMs`       | `60000` | Time window for rate limiting in milliseconds                                                     |
-| `rateLimiters.joinServer.maxRequests`          | `5`     | Max server joins per window per user before being rate limited                                    |
-| `rateLimiters.joinServer.windowMs`             | `60000` | Time window for rate limiting in milliseconds                                                     |
-| `autoupdate`                                   | `false` | Enables automatic updates. Not available in Docker.                                               |
+| Field                                          | Default  | Description                                                                                           |
+| ---------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------- |
+| `port`                                         | `4991`   | HTTP and WebSocket listening port                                                                     |
+| `debug`                                        | `false`  | Enables verbose debug logging                                                                         |
+| `webRtc.port`                                  | `40000`  | Port where the WebRTC server listens                                                                  |
+| `webRtc.announcedAddress`                      |          | Optional public address for WebRTC server. If not set, the server will use the public IP address.     |
+| `webRtc.maxBitrate`                            | 30000000 | Maximum bitrate for WebRTC connections in bits per second. Adjust based on your network capabilities. |
+| `rateLimiters.sendAndEditMessages.maxRequests` | `15`     | Max messages sent/edited per window per user before being rate limited                                |
+| `rateLimiters.sendAndEditMessages.windowMs`    | `60000`  | Time window for rate limiting in milliseconds                                                         |
+| `rateLimiters.joinVoiceChannel.maxRequests`    | `20`     | Max voice channel joins per window per user before being rate limited                                 |
+| `rateLimiters.joinVoiceChannel.windowMs`       | `60000`  | Time window for rate limiting in milliseconds                                                         |
+| `rateLimiters.joinServer.maxRequests`          | `5`      | Max server joins per window per user before being rate limited                                        |
+| `rateLimiters.joinServer.windowMs`             | `60000`  | Time window for rate limiting in milliseconds                                                         |
+| `autoupdate`                                   | `false`  | Enables automatic updates. Not available in Docker.                                                   |
 
 ### Environment Variables
 
@@ -34,4 +35,7 @@ You can override some configuration options using environment variables. This is
 | `SHARKORD_DEBUG`                    | Overrides the `debug` option in `config.ini`.                   |
 | `SHARKORD_WEBRTC_PORT`              | Overrides the `webRtc.port` option in `config.ini`.             |
 | `SHARKORD_WEBRTC_ANNOUNCED_ADDRESS` | Overrides the `webRtc.announcedAddress` option in `config.ini`. |
+| `SHARKORD_WEBRTC_MAX_BITRATE`       | Overrides the `webRtc.maxBitrate` option in `config.ini`.       |
 | `SHARKORD_AUTOUPDATE`               | Overrides the `autoupdate` option in `config.ini`.              |
+
+|
