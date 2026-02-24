@@ -24,28 +24,40 @@ You should components using the Sharkord UI library so that they match the look 
 For example, to create a simple button component that can be rendered in the `CHAT_ACTIONS` slot:
 
 ```tsx
-import { Button } from "@sharkord/ui";
+// src/client.ts
 
-const MyChatButton = () => {
-  return <Button onClick={() => alert("Button clicked!")}>Click Me</Button>;
-};
+import {
+  PluginSlot,
+  type TPluginComponentsMapBySlotId,
+} from "@sharkord/plugin-sdk";
+import { HomeTest } from "./components/test";
 
 const components: TPluginComponentsMapBySlotId = {
-  [PluginSlot.CHAT_ACTIONS]: [MyChatButton],
+  [PluginSlot.HOME_SCREEN]: [HomeTest],
 };
 
-const onLoad = async (ctx: PluginContext) => {
-  // ... rest of your plugin code
-
-  ctx.ui.registerComponents(components);
-};
-
-// ... rest of your plugin code
-
-export { onLoad, components };
+export { components };
 ```
 
-You need to register the components and export them inside the components object, otherwise they won't be loaded.
+In `server.ts` you also need to enable the components feature:
+
+```tsx
+// src/server.ts
+
+import { type PluginContext, type TInvokerContext } from "@sharkord/plugin-sdk";
+
+const onLoad = async (ctx: PluginContext) => {
+  // ... rest of your code
+
+  ctx.ui.enable();
+};
+
+const onUnload = (ctx: PluginContext) => {
+  // ... rest of your code
+};
+
+export { onLoad, onUnload };
+```
 
 ### Styling
 
