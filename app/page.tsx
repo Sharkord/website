@@ -1,5 +1,6 @@
 import { Header } from "@/components/header";
 import { HeroSection } from "@/components/hero-section";
+import { ShowcaseSection } from "@/components/showcase-section";
 import { FeaturesSection } from "@/components/features-section";
 import { ComparisonSection } from "@/components/comparison-section";
 import { CTASection } from "@/components/cta-section";
@@ -11,6 +12,7 @@ export default function Page() {
       <Header />
       <main>
         <HeroSection />
+        <ShowcaseSection />
         <FeaturesSection />
         <ComparisonSection />
         <CTASection />
