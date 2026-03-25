@@ -69,6 +69,8 @@ And paste the following configuration, replacing `sharkord.yourdomain.com` with 
     RewriteCond %{HTTP:Upgrade} =websocket [NC]
     RewriteRule /(.*) ws://localhost:4991/$1 [P,L]
 
+    RequestHeader set X-Forwarded-Proto "https"
+
     SetEnv proxy-nokeepalive 1
     SetEnv proxy-initial-not-pooled 1
 
