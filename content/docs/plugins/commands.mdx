@@ -1,6 +1,6 @@
 ---
 title: Commands
-description: Register typed commands users can run.
+description: Register commands users can run.
 icon: Terminal
 ---
 
@@ -9,26 +9,29 @@ Plugins can register custom commands with typed arguments and custom execution l
 ### Register a Command
 
 ```ts
-import type { PluginContext, TInvokerContext } from '@sharkord/plugin-sdk';
+import type { PluginContext, TInvokerContext } from "@sharkord/plugin-sdk";
+
+type Commands = {
+  hello: {
+    args: { name: string };
+    response: string;
+  };
+};
 
 const onLoad = (ctx: PluginContext) => {
-  ctx.commands.register({
-    name: 'greet',
-    description: 'Greet a user',
-    args: [
-      {
-        name: 'username',
-        type: 'string',
-        description: 'The user to greet',
-        required: true,
-        sensitive: false,
-      },
-    ],
-    async executes(invokerCtx: TInvokerContext, args: { username: string }) {
-      ctx.log(`Greeting ${args.username} invoked by user ${invokerCtx.userId}`);
-      return `Hello, ${args.username}!`;
+  const registerCommand = createRegisterCommand<Commands>(ctx);
+
+  // by using the registerCommand helper, we get type safety for the command name, arguments and response
+  registerCommand(
+    "hello",
+    {
+      description: "Tells the executor hello with their user id.",
+      args: [{ name: "name", type: "string", required: true }],
     },
-  });
+    async (invoker, args) => {
+      return `Hello, ${args.name}!. Your user ID is: ${invoker.userId}`;
+    },
+  );
 };
 
 export { onLoad };

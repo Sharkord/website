@@ -14,6 +14,7 @@ Sharkord provides several "slots" where plugins can inject their components. The
 - `HOME_SCREEN`: A slot on the home screen, which is the screen the user sees when he connects to the server.
 - `CHAT_ACTIONS`: A slot in the chat input area, where plugins can add buttons or other interactive elements.
 - `TOPBAR_RIGHT`: A slot on the top bar, on the right side of the screen, next to the existing buttons.
+- `FULL_SCREEN`: A slot that takes over the entire screen and adds a button to the left sidebar to open it. This is useful for plugins that need a lot of space or want to create a custom interface.
 
 Each plugin can render multiple components in different slots, allowing for flexible UI integration.
 
@@ -24,7 +25,7 @@ You should components using the Sharkord UI library so that they match the look 
 For example, to create a simple button component that can be rendered in the `CHAT_ACTIONS` slot:
 
 ```tsx
-// src/client.ts
+// src/client/index.ts
 
 import {
   PluginSlot,
@@ -39,10 +40,10 @@ const components: TPluginComponentsMapBySlotId = {
 export { components };
 ```
 
-In `server.ts` you also need to enable the components feature:
+In `src/server/index.ts` you also need to enable the components feature:
 
 ```tsx
-// src/server.ts
+// src/server/index.ts
 
 import { type PluginContext, type TInvokerContext } from "@sharkord/plugin-sdk";
 

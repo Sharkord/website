@@ -1,0 +1,59 @@
+---
+title: Actions
+description: Register server actions that can be called from the UI.
+icon: Workflow
+---
+
+Plugins can register actions that run on the server providing a secure context for executing custom logic.
+
+### Register An Action
+
+```ts
+import type { PluginContext, TInvokerContext } from "@sharkord/plugin-sdk";
+
+type Actions = {
+  sum: {
+    payload: { a: number; b: number };
+    response: number;
+  };
+};
+
+const onLoad = (ctx: PluginContext) => {
+  const registerAction = createRegisterAction<Actions>(ctx);
+
+  registerAction("sum", async (invoker, payload) => {
+    // this is a secure context, runs on the server, can access secrets and perform actions that the client cannot do
+    return payload.a + payload.b;
+  });
+};
+
+export { onLoad };
+```
+
+### Calling Actions from the Client
+
+To call an action from the client, use the `callAction` method from the client SDK:
+
+```ts
+import { Button } from "@sharkord/ui";
+import { memo, useCallback } from "react";
+import { useCallAction } from "../store/hooks";
+
+const TestComponent = memo(() => {
+  const callAction = useCallAction();
+
+  const onSumClick = useCallback(async () => {
+    const result = await callAction("sum", { a: 1, b: 2 });
+
+    console.log(result);
+  }, [callAction]);
+
+  return (
+    <div className="flex flex-col gap-1 items-center">
+      <Button onClick={onSumClick}>Calculate</Button>
+    </div>
+  );
+});
+
+export { TestComponent };
+```

@@ -1,0 +1,55 @@
+---
+title: Marketplace
+description: Learn about the Sharkord plugin marketplace.
+icon: Store
+---
+
+Sharkord's plugin marketplace is a centralized platform where developers can publish their plugins and users can discover and install them. The marketplace provides a convenient way for users to find plugins that enhance their Sharkord experience, while also giving developers a way to share their creations with the community.
+
+### For Users
+
+The marketplace is a feature built into the Sharkord interface, allowing you to browse and search for plugins directly from your Sharkord instance. You can view detailed information about each plugin, including its features, screenshots, and user reviews. When you find a plugin you like, you can easily install it with just a few clicks.
+
+<Alert type="attention" title="Security Warning">
+  Before installing plugins, please read the [Security](./security) page to
+  understand the potential risks.
+</Alert>
+
+### For Developers
+
+To publish your plugin on the marketplace, you need to open a PR at the marketplace repository at [https://github.com/Sharkord/plugins](https://github.com/Sharkord/plugins). Follow the existing structure and guidelines to ensure your plugin is properly listed. Once your PR is reviewed and merged, your plugin will be available for users to discover and install.
+
+### How To Publish Your Plugin
+
+The default plugin template includes a `publish` script that automates part the process of preparing your plugin for publication. This process is for public github repositories, if you want to publish your plugin in any other way, you need to do this process manually.
+
+#### Step 1: Get a GitHub Personal Access Token
+
+To publish your plugin, you need to have a GitHub Personal Access Token (PAT) with the `repo` scope. You can create a PAT by following these steps:
+
+1. Go to your GitHub account settings.
+2. Click on "Developer settings" in the left sidebar.
+3. Click on "Personal access tokens" and then "Generate new token".
+4. Give your token a name and select the `repo` scope.
+5. Click "Generate token" and copy the token to a safe place.
+
+Then move the `.env.example` file to `.env` and add your token there as `GITHUB_TOKEN=your_token_here`.
+
+#### Step 2: Run the Publish Script
+
+In your plugin directory, run the following command:
+
+```bash
+bun run publish
+```
+
+This script will do the following:
+
+1. Sync fields in `manifest.json` with the `package.json` values.
+2. Bundle your plugin using the `build` script.
+3. Create a new release on GitHub with the bundled plugin as an asset.
+4. Create a `version` file with some metadata about the release.
+
+#### Step 3: Open a PR in the Marketplace Repository
+
+After running the publish script, you need to open a PR in the marketplace repository at [https://github.com/Sharkord/plugins](https://github.com/Sharkord/plugins). Include the generated `version` file in your PR. This will allow your plugin to be listed in the marketplace with the correct version and download link.

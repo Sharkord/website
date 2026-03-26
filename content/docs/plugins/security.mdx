@@ -1,0 +1,35 @@
+---
+title: Security
+description: Learn about the security considerations when using Sharkord plugins.
+icon: Shield
+---
+
+Sharkord plugins are designed to be powerful and flexible, but with great power comes great responsibility. Before installing and using plugins, it's important to understand the security implications and best practices to keep your Sharkord instance safe.
+
+### Why Are Plugins a Security Concern?
+
+Plugins can execute **ANY** code on your server, which means that a plugin can:
+
+- Read, modify, or delete **ANY** data that Sharkord has access to.
+- Read, modify, or delete **ANY** files on the host machine.
+- Access the network and communicate with external servers, which could be used for data exfiltration, command and control, or other malicious activities.
+- Execute arbitrary code on the host machine, which could lead to a full compromise of the system.
+
+Plugins can also execute **ANY** code on the users browsers, which means a plugin can steal user sessions, inject malicious scripts, or perform other harmful actions.
+
+### What Can I Do to Mitigate These Risks?
+
+- **VERY IMPORTANT RECOMMENDATION**: use Docker or another containerization technology to isolate your Sharkord instance and plugins from the host system. This can help prevent plugins from accessing sensitive data or resources on the host machine.
+- Only install plugins from trusted sources, such as the official Sharkord plugin repository or reputable developers.
+- Review the plugin's code and documentation before installing it to understand what it does and how it works. Even if you don't have the technical expertise to fully understand the code, you can ask an AI assistant to review it for you and highlight any potential security issues.
+- Keep your Sharkord instance and plugins up to date with the latest security patches and updates.
+
+Even if a plugin is on the Marketplace, it does not necessarily mean that it is safe. The marketplace is open for anyone to publish their plugins, and while there may be some review process in place, it is still possible for malicious plugins to slip through. Always exercise caution and do your due diligence before installing any plugin.
+
+### For Plugin Developers
+
+- Follow secure coding practices and guidelines to minimize the risk of vulnerabilities in your plugin.
+- Regularly review and update your plugin to address any security issues that may arise.
+- Write clear and comprehensive documentation for your plugin, including any potential security risks and how to mitigate them.
+
+By following these best practices, you can help ensure that your Sharkord instance remains secure while still benefiting from the powerful features that plugins can provide.

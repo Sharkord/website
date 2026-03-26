@@ -3,9 +3,11 @@
   "icon": "Puzzle",
   "pages": [
     "overview",
-    "getting-started",
-    "lifecycle",
+    "security",
+    "create-plugin",
+    "marketplace",
     "commands",
+    "actions",
     "components",
     "installation",
     "best-practices",
