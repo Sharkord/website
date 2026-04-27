@@ -36,7 +36,7 @@ certbot --version
 Before configuring the proxy itself, we need to enable the following modules:
 
 ```bash
-sudo a2enmod proxy proxy_http proxy_wstunnel
+sudo a2enmod rewrite proxy proxy_http proxy_wstunnel
 ```
 
 Then, we can create a new Virtual Host file for Sharkord (replace 001-sharkord for your name, if you need):
@@ -54,28 +54,45 @@ And paste the following configuration, replacing `sharkord.yourdomain.com` with 
 </VirtualHost>
 
 <VirtualHost *:443>
+    # Site name and http2 (for speed and stability)
     ServerName sharkord.yourdomain.com
+    ServerSignature off
+    Protocols h2 http/1.1
 
-    ProxyPreserveHost On
-    ProxyPass / http://localhost:4991/
-    ProxyPassReverse / http://localhost:4991/
+    # TCP KeepAlive for frontend stability
+    KeepAlive On
+	KeepAliveTimeout 5
+	MaxKeepAliveRequests 150
 
-    ProxyPass /ws ws://localhost:4991/ws
-    ProxyPassReverse /ws ws://localhost:4991/ws
-
-    ProxyTimeout 86400
-
+    # Websocket for Voice/Video functionality
     RewriteEngine On
     RewriteCond %{HTTP:Upgrade} =websocket [NC]
     RewriteRule /(.*) ws://localhost:4991/$1 [P,L]
 
+    # Headers
     RequestHeader set X-Forwarded-Proto "https"
+    Header always unset "X-Powered-By"
+	Header always unset "Server"
 
+    # Logging
+    ErrorLog ${APACHE_LOG_DIR}/sharkord_error.log
+    CustomLog ${APACHE_LOG_DIR}/sharkord_access.log combined
+
+    # Proxy from localhost
+    ProxyPreserveHost On
+    ProxyPass / http://localhost:4991/
+    ProxyPassReverse / http://localhost:4991/
+    ProxyPass /ws ws://localhost:4991/ws
+    ProxyPassReverse /ws ws://localhost:4991/ws
+    ProxyTimeout 86400
     SetEnv proxy-nokeepalive 1
     SetEnv proxy-initial-not-pooled 1
 
-    ErrorLog ${APACHE_LOG_DIR}/sharkord_error.log
-    CustomLog ${APACHE_LOG_DIR}/sharkord_access.log combined
+    # SSL
+    SSLEngine on
+    SSLProtocol all -SSLv3 -TLSv1 -TLSv1.1
+    SSLCompression off
+    SSLSessionTickets off
 </VirtualHost>
 ```
 
