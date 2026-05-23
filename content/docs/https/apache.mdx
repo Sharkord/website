@@ -18,7 +18,7 @@ If any of these assumptions are not true, you may need to adjust the instruction
 
 ```bash
 sudo apt update && sudo apt upgrade -y
-sudo apt install -y wget ufw curl nano 
+sudo apt install -y wget ufw curl nano
 ```
 
 ### Step 2: Install Apache and Certbot with Apache module
@@ -42,7 +42,7 @@ sudo a2enmod rewrite proxy proxy_http proxy_wstunnel
 Then, we can create a new Virtual Host file for Sharkord (replace 001-sharkord for your name, if you need):
 
 ```bash
-sudo nano /etc/apache2/sites-available/001-sharkord.conf 
+sudo nano /etc/apache2/sites-available/001-sharkord.conf
 ```
 
 And paste the following configuration, replacing `sharkord.yourdomain.com` with the domain you want to use:

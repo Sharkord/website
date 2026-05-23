@@ -1,6 +1,6 @@
 @import "tailwindcss";
-@import 'fumadocs-ui/css/neutral.css';
-@import 'fumadocs-ui/css/preset.css';
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -120,6 +120,17 @@
   * {
     @apply border-border outline-ring/50;
   }
+
+  code,
+  kbd,
+  pre,
+  samp {
+    font-variant-ligatures: none;
+    font-feature-settings:
+      "liga" 0,
+      "calt" 0;
+  }
+
   body {
     @apply bg-background text-foreground;
   }
