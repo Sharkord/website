@@ -1,0 +1,57 @@
+---
+title: Settings
+description: Register typed plugin settings and read or update their values.
+icon: Settings
+---
+
+Plugins can register their own settings through `ctx.settings.register(...)`. The returned `PluginSettings` object provides typed `get` and `set` methods for the keys you define.
+
+### Register Settings
+
+```ts
+import type { PluginContext } from "@sharkord/plugin-sdk";
+
+const onLoad = async (ctx: PluginContext) => {
+  const settings = await ctx.settings.register([
+    {
+      key: "welcome-enabled",
+      name: "Enable welcome messages",
+      description: "Send a message when a user joins the server.",
+      type: "boolean",
+      defaultValue: true,
+    },
+    {
+      key: "welcome-channel-id",
+      name: "Welcome channel",
+      type: "number",
+      defaultValue: 1,
+    },
+  ]);
+
+  // you can read the current value of settings with get
+  const welcomeEnabled = await settings.get("welcome-enabled");
+
+  // and update them with set
+  await settings.set("welcome-enabled", false);
+};
+
+export { onLoad };
+```
+
+### Supported Setting Types
+
+Each setting definition uses one of these types:
+
+- `string`
+- `number`
+- `boolean`
+
+The SDK maps those definitions back into typed values for `get` and `set`.
+
+### Runtime Behavior
+
+- `register(...)` returns the current persisted values for the definitions you provide.
+- `get(key)` reads the current value for one of your registered keys.
+- `set(key, value)` updates a value programmatically.
+
+If your plugin needs to react when values change, subscribe to the `setting:set` event from [Events](./events).

@@ -1,14 +1,34 @@
 ---
 title: API Reference
-description: Current API reference status.
+description: Reference index for the current Sharkord plugin SDK.
 icon: BookMarked
 ---
 
-The existing API is currently really limited and will most likely change as we continue development. An API reference is not available at this time.
+The plugin SDK is still experimental, but the main surfaces are documented in this section.
 
-For now, use the SDK type definitions as the source of truth:
+### Server Runtime
+
+- [Commands](./commands)
+- [Actions](./actions)
+- [Events](./events)
+- [Settings](./settings)
+- [Data](./data)
+- [Hooks](./hooks)
+- [Voice](./voice)
+
+### Client Runtime
+
+- [Components](./components)
+- [Client SDK](./client-sdk)
+
+### Source Of Truth
+
+If a documented example and the SDK types ever disagree, treat the current source as authoritative:
 
 - [packages/plugin-sdk/src/index.ts](https://github.com/Sharkord/sharkord/blob/development/packages/plugin-sdk/src/index.ts)
+- [packages/plugin-sdk/src/actions.ts](https://github.com/Sharkord/sharkord/blob/development/packages/plugin-sdk/src/actions.ts)
+- [packages/plugin-sdk/src/commands.ts](https://github.com/Sharkord/sharkord/blob/development/packages/plugin-sdk/src/commands.ts)
 - [packages/shared/src/plugins/client-sdk.ts](https://github.com/Sharkord/sharkord/blob/development/packages/shared/src/plugins/client-sdk.ts)
+- [packages/shared/src/plugins/index.ts](https://github.com/Sharkord/sharkord/blob/development/packages/shared/src/plugins/index.ts)
 
-As the SDK stabilizes, this section will be replaced with complete API documentation.
+Expect signatures and behavior to keep evolving while plugins remain experimental.

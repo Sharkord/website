@@ -1,0 +1,74 @@
+---
+title: Client SDK
+description: Use the Sharkord client runtime from plugin UI code.
+icon: Monitor
+---
+
+In most plugins, you only need two helpers in client components: `useStoreSelector` and `useCallAction`.
+
+### Store Helpers
+
+Use `useStoreSelector` when a component needs data from Sharkord state.
+
+```tsx
+import { useStoreSelector } from "../store";
+
+const SelectedChannel = () => {
+  const selectedChannelId = useStoreSelector((state) => state.selectedChannelId);
+
+  return <span>Selected channel: {selectedChannelId ?? "none"}</span>;
+};
+
+export { SelectedChannel };
+```
+
+### Action Helper
+
+Use `useCallAction` to call a server [action](./actions) from a component.
+
+```tsx
+import { Button } from "@sharkord/ui";
+import { memo } from "react";
+import { useCallAction } from "../store/hooks";
+
+const SumButton = memo(() => {
+  const callAction = useCallAction();
+
+  const onClick = async () => {
+    // calls the server action and gets the typed response back
+    const result = await callAction("sum", { a: 1, b: 2 });
+    console.log(result);
+  };
+
+  return <Button onClick={onClick}>Calculate</Button>;
+});
+
+export { SumButton };
+```
+
+### Custom State Hooks
+
+If you read the same piece of state often, wrap the selector in a small hook.
+
+```ts
+import { useStoreSelector } from ".";
+
+export const useCurrentVoiceChannelId = () =>
+  useStoreSelector((state) => state.currentVoiceChannelId);
+```
+
+### Exposed Window Globals
+
+Sharkord also exposes a few globals on `window` for plugin bundles:
+
+- `window.__SHARKORD_STORE__`
+- `window.__SHARKORD_EXPOSED_LIBS__`
+- `window.__SHARKORD_REACT__`
+- `window.__SHARKORD_REACT_JSX__`
+- `window.__SHARKORD_REACT_JSX_DEV__`
+- `window.__SHARKORD_REACT_DOM__`
+- `window.__SHARKORD_REACT_DOM_CLIENT__`
+
+Most plugins do not need to use these directly, but it helps to know they are there.
+
+That is the main pattern: read state with `useStoreSelector`, call server code with `useCallAction`, and wrap repeated selectors in small hooks.

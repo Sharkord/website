@@ -1,0 +1,42 @@
+---
+title: Data
+description: Read basic server data from the plugin runtime.
+icon: Database
+---
+
+The data API gives server-side plugins read access to a small set of Sharkord entities.
+
+### Available Methods
+
+- `ctx.data.getUser(userId)`
+- `ctx.data.getChannel(channelId)`
+- `ctx.data.getPublicUsers()`
+
+All of these methods are asynchronous and may return `undefined` when the requested record does not exist.
+
+### Example
+
+```ts
+import type { PluginContext } from "@sharkord/plugin-sdk";
+
+const onLoad = (ctx: PluginContext) => {
+  ctx.events.on("user:joined", async ({ userId }) => {
+    const user = await ctx.data.getUser(userId);
+
+    if (!user) {
+      ctx.error("joined user was not found", userId);
+      return;
+    }
+
+    const publicUsers = await ctx.data.getPublicUsers();
+    ctx.debug("current public user count", publicUsers.length);
+  });
+};
+
+export { onLoad };
+```
+
+### Notes
+
+- At the moment, this API is really basic and only includes a few methods.
+- It's not typesafe.

@@ -9,7 +9,7 @@ Plugins can register custom commands with typed arguments and custom execution l
 ### Register a Command
 
 ```ts
-import type { PluginContext, TInvokerContext } from "@sharkord/plugin-sdk";
+import { createRegisterCommand, type PluginContext } from "@sharkord/plugin-sdk";
 
 type Commands = {
   hello: {
@@ -37,6 +37,20 @@ const onLoad = (ctx: PluginContext) => {
 export { onLoad };
 ```
 
-### Sensitive Arguments
+Each argument supports `name`, `description`, `type`, `required`, and `sensitive`.
 
-Set `sensitive: true` for secrets (for example passwords or tokens). Sensitive values are masked in the interface.
+```ts
+args: [
+  {
+    name: "token",
+    description: "API token used to reach the external service.",
+    type: "string",
+    required: true,
+    sensitive: true,
+  },
+]
+```
+
+Set `sensitive: true` for secrets. Sensitive values are masked in the interface.
+
+See also [Actions](./actions) when you need a server operation to be triggered from plugin UI.

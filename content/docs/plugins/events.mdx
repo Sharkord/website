@@ -1,0 +1,56 @@
+---
+title: Events
+description: Subscribe to server-side events from your plugin.
+icon: Bell
+---
+
+Sharkord plugins can subscribe to server events through `ctx.events`. This API is useful for automation, audit logging, and workflows that react to user or message activity.
+
+### Subscribing To Events
+
+Use `ctx.events.on(...)` inside `onLoad`.
+
+```ts
+import type { PluginContext } from "@sharkord/plugin-sdk";
+
+const onLoad = (ctx: PluginContext) => {
+  ctx.events.on("message:created", async (payload) => {
+    // reacts every time a message is created
+    ctx.debug("message created", payload.messageId, payload.channelId);
+  });
+};
+
+export { onLoad };
+```
+
+You can also remove a handler explicitly with `ctx.events.off(event, handler)` if you keep a reference to the original callback.
+
+### Available Events
+
+#### User Events
+
+- `user:joined`: `{ userId, username }`
+- `user:left`: `{ userId, username }`
+- `user:joined_voice`: `{ userId, channelId }`
+- `user:left_voice`: `{ userId, channelId }`
+
+#### Message Events
+
+- `message:created`: `{ messageId, channelId, userId, pluginId, content, textContent }`
+- `message:updated`: `{ messageId, channelId, userId, pluginId, content, textContent }`
+- `message:deleted`: `{ messageId, channelId }`
+
+`userId` and `pluginId` can be `null` for plugin-generated or system-generated messages.
+
+#### Voice Runtime Events
+
+- `voice:runtime_initialized`: `{ channelId }`
+- `voice:runtime_closed`: `{ channelId }`
+
+These are useful when your plugin integrates with the [Voice](./voice) API and needs to know when a channel runtime is ready.
+
+#### Settings Events
+
+- `setting:set`: `{ key, value }`
+
+Use this event when plugin behavior depends on configuration that may change while the plugin is running.

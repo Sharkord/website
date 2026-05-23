@@ -4,7 +4,7 @@ description: Create your first Sharkord plugin with this step-by-step guide.
 icon: ToyBrick
 ---
 
-This guide walks through creating a minimal Sharkord plugin.
+This guide walks through the smallest plugin shape that matches the current scaffold.
 
 ### 1) Create a Plugin Directory
 
@@ -64,7 +64,9 @@ bun link @sharkord/plugin-builder
 
 ### 3) Change the manifest file
 
-Go to `manifest.json` and edit the information to match your plugin. The `id` field is important, it should be a unique identifier for your plugin. It should be all lowercase. Example:
+Go to `manifest.json` and edit the information to match your plugin. The `id` field is important: it should be a unique identifier using only lowercase letters, numbers, and dashes.
+
+Example:
 
 ```json
 {
@@ -79,7 +81,46 @@ Go to `manifest.json` and edit the information to match your plugin. The `id` fi
 }
 ```
 
-### 4) Build
+### 4) Edit the Generated Files
+
+The scaffold already gives you everything you need to start:
+
+- `src/server/index.ts`
+- `src/client/index.ts`
+- `src/contracts/actions.ts`
+- `src/contracts/commands.ts`
+
+Start by editing the generated files instead of creating new entrypoints.
+
+```ts
+import {
+  createRegisterAction,
+  createRegisterCommand,
+  type PluginContext,
+} from "@sharkord/plugin-sdk";
+import type { Actions } from "../contracts/actions";
+import type { Commands } from "../contracts/commands";
+
+const onLoad = async (ctx: PluginContext) => {
+  const registerAction = createRegisterAction<Actions>(ctx);
+  const registerCommand = createRegisterCommand<Commands>(ctx);
+
+  // replace the example logic with your own plugin behavior
+  registerCommand("hello", { description: "Says hello" }, async () => {
+    return "Hello from my plugin";
+  });
+
+  registerAction("sum", async (_invoker, payload) => payload.a + payload.b);
+};
+
+export { onLoad };
+```
+
+`ctx.path` points to your plugin directory on disk. Use it when your plugin needs to read or write files relative to its own installation.
+
+See [Components](./components) for the slot API and [Client SDK](./client-sdk) for the client runtime.
+
+### 5) Build
 
 Your plugin needs to be bundled before it can be used. There's a build script already set up for you, so you can just run:
 
@@ -88,3 +129,5 @@ bun run build
 ```
 
 And your plugin will be bundled into the `dist` folder, which you can then install into your Sharkord instance (see [Installation](./installation) for more details).
+
+Start with one command or one action first. Once the scaffold loads cleanly, add settings, UI, or voice features.

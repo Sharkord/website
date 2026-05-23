@@ -16,11 +16,11 @@ Sharkord provides several "slots" where plugins can inject their components. The
 - `TOPBAR_RIGHT`: A slot on the top bar, on the right side of the screen, next to the existing buttons.
 - `FULL_SCREEN`: A slot that takes over the entire screen and adds a button to the left sidebar to open it. This is useful for plugins that need a lot of space or want to create a custom interface.
 
-Each plugin can render multiple components in different slots, allowing for flexible UI integration.
+Each plugin can render multiple components in different slots.
 
 ### Building Components
 
-You should components using the Sharkord UI library so that they match the look and feel of the rest of the app. The UI library provides a set of pre-built components and styles that you can use to create your plugin's interface.
+Build components with the Sharkord UI library and export your slot map from the client entrypoint.
 
 For example, to create a simple button component that can be rendered in the `CHAT_ACTIONS` slot:
 
@@ -45,24 +45,22 @@ In `src/server/index.ts` you also need to enable the components feature:
 ```tsx
 // src/server/index.ts
 
-import { type PluginContext, type TInvokerContext } from "@sharkord/plugin-sdk";
+import { type PluginContext, type UnloadPluginContext } from "@sharkord/plugin-sdk";
 
 const onLoad = async (ctx: PluginContext) => {
-  // ... rest of your code
-
   ctx.ui.enable();
 };
 
-const onUnload = (ctx: PluginContext) => {
-  // ... rest of your code
-};
-
-export { onLoad, onUnload };
+export { onLoad };
 ```
+
+Call `ctx.ui.enable()` when your plugin ships components.
 
 ### Styling
 
-At the moment, you can use some tailwind classes for styling your components. Becausee of the way tailwind bundles css at build time, it's not garanteed that all classes will work, but most of the common ones should. This is a limitation and probably the solution is to have the plugin have it's own tailwind setup and ship the css with the plugin, but for now you can experiment with the classes and see what works.
+Keep styling simple. Prefer Sharkord UI primitives first, and do not assume every Tailwind utility will be available in the host app.
+
+If a component needs privileged behavior, call a server [action](./actions).
 
 ### Example
 

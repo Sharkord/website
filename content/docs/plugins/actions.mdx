@@ -4,12 +4,13 @@ description: Register server actions that can be called from the UI.
 icon: Workflow
 ---
 
-Plugins can register actions that run on the server providing a secure context for executing custom logic.
+Plugins can register actions that run on the server.
 
 ### Register An Action
 
 ```ts
-import type { PluginContext, TInvokerContext } from "@sharkord/plugin-sdk";
+// src/server/index.ts
+import { createRegisterAction, type PluginContext } from "@sharkord/plugin-sdk";
 
 type Actions = {
   sum: {
@@ -22,7 +23,7 @@ const onLoad = (ctx: PluginContext) => {
   const registerAction = createRegisterAction<Actions>(ctx);
 
   registerAction("sum", async (invoker, payload) => {
-    // this is a secure context, runs on the server, can access secrets and perform actions that the client cannot do
+    // this runs on the server and can return a response back to the caller
     return payload.a + payload.b;
   });
 };
@@ -32,28 +33,32 @@ export { onLoad };
 
 ### Calling Actions from the Client
 
-To call an action from the client, use the `callAction` method from the client SDK:
-
 ```ts
+
+// src/client/store/hooks.ts
+import { createCallAction } from "@sharkord/plugin-sdk";
+import { actions } from "./store";
+
+export const useCallAction = () => createCallAction<Actions>(actions);
+
+// src/client/components/sum-button.tsx
 import { Button } from "@sharkord/ui";
-import { memo, useCallback } from "react";
+import { memo } from "react";
 import { useCallAction } from "../store/hooks";
 
-const TestComponent = memo(() => {
+const SumButton = memo(() => {
   const callAction = useCallAction();
 
-  const onSumClick = useCallback(async () => {
+  const onClick = async () => {
+    // this calls the server action that we registered, passing the payload and awaiting the response
     const result = await callAction("sum", { a: 1, b: 2 });
-
     console.log(result);
-  }, [callAction]);
+  };
 
-  return (
-    <div className="flex flex-col gap-1 items-center">
-      <Button onClick={onSumClick}>Calculate</Button>
-    </div>
-  );
+  return <Button onClick={onClick}>Calculate</Button>;
 });
 
-export { TestComponent };
+export { SumButton };
 ```
+
+See [Client SDK](./client-sdk) for the rest of the runtime surface available to plugin UI code.

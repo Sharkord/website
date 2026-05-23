@@ -5,12 +5,17 @@
     "overview",
     "security",
     "create-plugin",
+    "installation",
     "marketplace",
     "commands",
     "actions",
     "components",
-    "installation",
-    "best-practices",
+    "events",
+    "settings",
+    "data",
+    "hooks",
+    "voice",
+    "client-sdk",
     "api-reference"
   ]
 }

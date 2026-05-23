@@ -1,0 +1,54 @@
+---
+title: Hooks
+description: Intercept file-save operations from the plugin runtime.
+icon: Save
+---
+
+Plugins can register file-save hooks through `ctx.hooks.onBeforeFileSave(...)`.
+
+This hook runs before Sharkord persists an uploaded file and lets your plugin either allow the save or replace the final filename by returning a string.
+
+### Hook Signature
+
+The hook receives:
+
+- `tempFile`: the temporary file record, including its path, size, extension, and original filename.
+- `userId`: the user performing the upload.
+- `type`: the file category being saved.
+
+The handler returns either:
+
+- `void` to allow the normal flow to continue.
+- `string` to replace the final stored filename.
+
+### File Types
+
+The SDK exports `FileSaveType` with these values:
+
+- `MESSAGE`
+- `AVATAR`
+- `BANNER`
+- `EMOJI`
+- `SERVER_LOGO`
+
+### Example
+
+```ts
+import { FileSaveType, type PluginContext } from "@sharkord/plugin-sdk";
+
+const onLoad = (ctx: PluginContext) => {
+  ctx.hooks.onBeforeFileSave(async ({ tempFile, type, userId }) => {
+    ctx.debug("before file save", tempFile.originalName, type, userId);
+
+    // make changes to the file, save it somewhere else and return it's new path
+
+    if (type === FileSaveType.EMOJI) {
+      return `emoji-${Date.now()}-${tempFile.originalName}`;
+    }
+  });
+};
+
+export { onLoad };
+```
+
+Keep this hook fast and deterministic. Expensive work in the upload path will slow down user-facing operations.
