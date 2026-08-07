@@ -1,0 +1,177 @@
+---
+title: Podman
+description: Run Sharkord using Podman.
+icon: Container
+---
+
+```bash
+podman run \
+  -p 127.0.0.1:4991:4991/tcp \
+  -p 40000:40000/tcp \
+  -p 40000:40000/udp \
+  -v sharkord:/home/bun/.config/sharkord \
+  --name sharkord \
+  --rm \
+  docker.io/sharkord/sharkord:latest
+```
+
+
+## Quadlets (Recommended)
+
+The best way to set up Podman containers is using Quadlets. This way, your containers are defined as systemd Unit files, and can be managed as services.
+
+Start by pulling the Sharkord container image:
+
+```bash
+podman pull docker.io/sharkord/sharkord:latest
+```
+
+Now create a Quadlet file at `/etc/containers/systemd/sharkord.container`:
+
+```ini
+[Unit]
+Description=Sharkord
+
+[Container]
+Image=docker.io/sharkord/sharkord:latest
+ContainerName=sharkord
+Volume=sharkord:/home/bun/.config/sharkord
+PublishPort=127.0.0.1:4991:4991/tcp
+PublishPort=40000:40000/tcp
+PublishPort=40000:40000/udp
+
+[Service]
+Restart=always
+TimeoutStartSec=60
+
+[Install]
+WantedBy=default.target
+```
+
+Run the following command after editing a Quadlet file:
+
+```bash
+systemctl daemon-reload
+```
+
+You can now start the Sharkord container as a service:
+
+```bash
+systemctl start sharkord
+```
+
+<Alert type="warning" title="Attention">
+  Quadlets are transient services. Do not use `systemctl enable`, as they are enabled automatically when an `[Install]` section is present in the Quadlet file. If you **do not** want Sharkord to start automatically, remove the `[Install]` section from the Quadlet file.
+</Alert>
+
+Sharkord should now be running. Point your reverse proxy to `127.0.0.1:4991`.
+
+The first time you run Sharkord, it outputs an **owner access token**. Run this command to get it:
+
+```bash
+podman logs sharkord
+```
+
+### Configuration
+
+Files such as `config.ini` should be located under `/var/lib/containers/storage/volumes/sharkord/_data/`.
+
+To restart the Sharkord server:
+
+```bash
+systemctl restart sharkord
+```
+
+All of your Sharkord data is stored in the `sharkord` volume. You can manage this using `podman volume` commands. To learn more, run this:
+
+```bash
+podman volume --help
+```
+
+### Updates
+
+To update Sharkord, you must pull the latest image and spin up a new container using it. Sharkord's Automatic Updates feature is disabled by default, as it does not work in container environments.
+
+First, stop the Sharkord server:
+
+```bash
+systemctl stop sharkord
+```
+
+Pull the latest image:
+
+```bash
+podman pull docker.io/sharkord/sharkord:latest
+```
+
+Start the server again:
+
+```bash
+systemctl start sharkord
+```
+
+Free storage by removing unused, dangling images:
+
+```bash
+podman image prune -f
+```
+
+## Caddy
+
+Pull the Caddy container image:
+
+```bash
+podman pull docker.io/library/caddy:alpine
+```
+
+Create a Quadlet file for Caddy at `/etc/containers/systemd/caddy.container`:
+
+```ini
+[Unit]
+Description=Caddy
+
+[Container]
+Image=docker.io/library/caddy:alpine
+ContainerName=caddy
+Volume=caddy_conf:/etc/caddy
+Volume=caddy_data:/data
+Network=host
+
+[Service]
+Restart=always
+TimeoutStartSec=60
+
+[Install]
+WantedBy=default.target
+```
+
+Run the following command after editing a Quadlet file:
+
+```bash
+systemctl daemon-reload
+```
+
+Ensure that you do not have any other programs listening on port 80 and 443. You can then start Caddy:
+
+```bash
+systemctl start caddy
+```
+
+### Configuration
+
+Your `Caddyfile` should be located at `/var/lib/containers/storage/volumes/caddy_conf/_data/Caddyfile`. Modify it to look like this, with your actual (sub)domain:
+
+```
+sharkord.example.com {
+    reverse_proxy 127.0.0.1:4991
+    encode gzip
+}
+```
+
+Afterwards, just restart Caddy:
+
+```bash
+systemctl restart caddy
+```
+
+You should now have a fully working Sharkord server running on Podman!
