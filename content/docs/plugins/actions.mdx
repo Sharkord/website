@@ -1,12 +1,12 @@
 ---
 title: Actions
-description: Register server actions that can be called from the UI.
+description: Server functions your plugin UI can call.
 icon: Workflow
 ---
 
-Plugins can register actions that run on the server.
+An action is a function that runs on the server and is called from your plugin's [components](./components). Use one whenever the browser should not be trusted with the work: API keys, database reads, anything privileged.
 
-### Register An Action
+### Register an Action
 
 ```ts
 // src/server/index.ts
@@ -23,24 +23,26 @@ const onLoad = (ctx: PluginContext) => {
   const registerAction = createRegisterAction<Actions>(ctx);
 
   registerAction("sum", async (invoker, payload) => {
-    // this runs on the server and can return a response back to the caller
+    // runs on the server; the return value goes back to the caller
     return payload.a + payload.b;
   });
 };
-
-export { onLoad };
 ```
 
-### Calling Actions from the Client
+`createRegisterAction<Actions>` wraps `ctx.actions.register(...)` and ties the payload and response types to your contract. Define that contract in `src/contracts/actions.ts` so both halves of the plugin import the same one.
 
-```ts
+### Call It From the Client
 
+```tsx
 // src/client/store/hooks.ts
 import { createCallAction } from "@sharkord/plugin-sdk";
-import { actions } from "./store";
+import { actions } from ".";
+import type { Actions } from "../../contracts/actions";
 
 export const useCallAction = () => createCallAction<Actions>(actions);
+```
 
+```tsx
 // src/client/components/sum-button.tsx
 import { Button } from "@sharkord/ui";
 import { memo } from "react";
@@ -50,7 +52,6 @@ const SumButton = memo(() => {
   const callAction = useCallAction();
 
   const onClick = async () => {
-    // this calls the server action that we registered, passing the payload and awaiting the response
     const result = await callAction("sum", { a: 1, b: 2 });
     console.log(result);
   };
@@ -61,4 +62,11 @@ const SumButton = memo(() => {
 export { SumButton };
 ```
 
-See [Client SDK](./client-sdk) for the rest of the runtime surface available to plugin UI code.
+### Rules of the Road
+
+- The caller needs the `USE_PLUGINS` permission.
+- Handlers time out after 30 seconds.
+- Calls are rate limited (60 per minute per user by default) and written to the activity log with their payload.
+- The `invoker` argument is the same `{ userId, currentVoiceChannelId? }` as for [commands](./commands). It is set by the server, so it is the one thing in the call you can trust: validate the payload yourself.
+
+See [Client SDK](./client-sdk) for the rest of what your UI code can reach.

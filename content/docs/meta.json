@@ -2,8 +2,10 @@
   "pages": [
     "introduction",
     "configuration",
+    "administration",
     "https",
     "domains",
+    "voice",
     "updating",
     "data-dir",
     "plugins",

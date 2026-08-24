@@ -1,10 +1,8 @@
 ---
 title: Docker
-description: Run Sharkord using Docker.
+description: Run Sharkord with Docker.
 icon: Container
 ---
-
-To run Sharkord using Docker, use the following command:
 
 ```bash
 docker run \
@@ -12,13 +10,62 @@ docker run \
   -p 40000:40000/tcp \
   -p 40000:40000/udp \
   -v ./data:/home/bun/.config/sharkord \
+  --restart unless-stopped \
   --name sharkord \
   sharkord/sharkord:latest
 ```
 
-Note that it needs to bind the following ports:
+Then open `http://localhost:4991` in your browser.
 
-- `4991`: TCP only for the communication between the client and the server.
-- `40000`: Both TCP and UDP to handle streaming and voice communication.
+Images are published for `linux/amd64` and `linux/arm64`.
 
-Then open `http://localhost:4991` in your web browser to access the Sharkord web interface.
+### Ports
+
+- `4991/tcp` carries HTTP and WebSocket traffic between the client and the server.
+- `40000/tcp` and `40000/udp` carry WebRTC media: voice, webcam, and screen sharing. Both protocols listen on this port, so publish both.
+
+### Data
+
+The container stores everything under `/home/bun/.config/sharkord`. Mount it somewhere on the host, as above, or your server is gone with the container. See [Data Directory](/docs/data-dir).
+
+### First Launch
+
+The access token is printed once, on the first start. If you missed it:
+
+```bash
+docker logs sharkord
+```
+
+### File Ownership
+
+The container drops to the `bun` user. If the mounted directory belongs to another UID on the host, set `PUID` and `PGID` and the entrypoint remaps the user before starting:
+
+```bash
+docker run -e PUID=1000 -e PGID=1000 ...
+```
+
+Running the container as a non-root user directly (`--user`, Kubernetes `securityContext`, rootless Podman) also works; in that case `PUID`/`PGID` are ignored and the mounted directory has to be writable already.
+
+### Configuration
+
+Every option in [`config.ini`](/docs/configuration) can be set with an environment variable, which is usually easier in Docker:
+
+```bash
+docker run -e SHARKORD_WEBRTC_ANNOUNCED_ADDRESS=203.0.113.10 ...
+```
+
+<Alert type="info" title="Behind a NAT or a reverse proxy?">
+  Set `SHARKORD_WEBRTC_ANNOUNCED_ADDRESS` to the public IP or domain clients
+  should send media to, and `SHARKORD_TRUSTED_PROXIES` to the address of your
+  proxy. See [Configuration](/docs/configuration).
+</Alert>
+
+### Updating
+
+```bash
+docker pull sharkord/sharkord:latest
+docker rm -f sharkord
+# run the same command again
+```
+
+The in-app updater is disabled inside Docker. See [Updating](/docs/updating).

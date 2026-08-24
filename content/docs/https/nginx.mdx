@@ -4,4 +4,111 @@ description: Use Nginx as a reverse proxy for Sharkord.
 icon: Network
 ---
 
-TODO: Write Nginx guide. See Caddy guide for reference.
+This guide sets up Nginx in front of Sharkord, with a Let's Encrypt certificate from certbot.
+
+### Assumptions
+
+1. Sharkord is running on this server with the default ports.
+2. You are on Ubuntu Server.
+3. A domain (for example `sharkord.yourdomain.com`) already points at this server's public IP.
+
+### Step 1: Install Nginx and Certbot
+
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y nginx certbot python3-certbot-nginx
+```
+
+### Step 2: Create the Site
+
+```bash
+sudo nano /etc/nginx/sites-available/sharkord
+```
+
+Paste this, replacing `sharkord.yourdomain.com` with your domain:
+
+```nginx
+server {
+    listen 80;
+    server_name sharkord.yourdomain.com;
+
+    # uploads are streamed straight through, so do not cap or buffer them
+    client_max_body_size 0;
+    proxy_request_buffering off;
+
+    location / {
+        proxy_pass http://127.0.0.1:4991;
+        proxy_http_version 1.1;
+
+        # required for the websocket connection sharkord runs on
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # the websocket is long lived, the default 60s would drop it
+        proxy_read_timeout 86400;
+        proxy_send_timeout 86400;
+    }
+}
+```
+
+Enable it and reload:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/sharkord /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+<Alert type="warning" title="Do not skip client_max_body_size">
+  Nginx rejects request bodies over 1 MB by default, which breaks every file
+  upload with a `413`. `0` removes the limit and lets Sharkord's own upload
+  limits (set per role in the server settings) decide.
+</Alert>
+
+### Step 3: Get the Certificate
+
+```bash
+sudo certbot --nginx -d sharkord.yourdomain.com
+```
+
+Certbot adds the TLS configuration to the site, sets up the redirect from HTTP, and installs a renewal timer.
+
+### Step 4: Tell Sharkord About the Proxy
+
+Sharkord ignores `X-Forwarded-For` unless it knows the request came from your proxy, so without this every user shares a single rate limit bucket.
+
+Add to `config.ini` in your [data directory](/docs/data-dir):
+
+```ini
+[server]
+trustedProxies[]=127.0.0.1
+trustedProxies[]=::1
+```
+
+Restart Sharkord afterwards.
+
+### Step 5: Configure the Firewall
+
+```bash
+sudo ufw allow 22/tcp
+
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+
+sudo ufw allow 40000/tcp
+sudo ufw allow 40000/udp
+
+sudo ufw enable
+sudo ufw reload
+```
+
+Port `4991` stays closed to the internet; Nginx reaches it over localhost. Port `40000` must be open, because voice and video go straight to Sharkord and never touch the proxy.
+
+### Step 6: Open It
+
+Go to `https://sharkord.yourdomain.com`.

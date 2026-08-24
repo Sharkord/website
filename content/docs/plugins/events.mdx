@@ -1,56 +1,65 @@
 ---
 title: Events
-description: Subscribe to server-side events from your plugin.
+description: React to what happens on the server.
 icon: Bell
 ---
 
-Sharkord plugins can subscribe to server events through `ctx.events`. This API is useful for automation, audit logging, and workflows that react to user or message activity.
-
-### Subscribing To Events
-
-Use `ctx.events.on(...)` inside `onLoad`.
+`ctx.events.on(...)` subscribes to server events. Use it for automation, logging, and anything that should happen without a user asking.
 
 ```ts
 import type { PluginContext } from "@sharkord/plugin-sdk";
 
 const onLoad = (ctx: PluginContext) => {
   ctx.events.on("message:created", async (payload) => {
-    // reacts every time a message is created
-    ctx.debug("message created", payload.messageId, payload.channelId);
+    ctx.logger.debug("message created", payload.messageId, payload.channelId);
   });
 };
-
-export { onLoad };
 ```
 
-You can also remove a handler explicitly with `ctx.events.off(event, handler)` if you keep a reference to the original callback.
+`on` returns an unsubscribe function, and `ctx.events.off(event, handler)` does the same if you kept the handler around. Neither is needed for cleanup on unload: every subscription is removed when the plugin unloads.
 
 ### Available Events
 
-#### User Events
+#### Users
 
-- `user:joined`: `{ userId, username }`
-- `user:left`: `{ userId, username }`
-- `user:joined_voice`: `{ userId, channelId }`
-- `user:left_voice`: `{ userId, channelId }`
+| Event               | Payload                        |
+| ------------------- | ------------------------------ |
+| `user:joined`       | `{ userId, username }`         |
+| `user:left`         | `{ userId, username }`         |
+| `user:joined_voice` | `{ userId, channelId }`        |
+| `user:left_voice`   | `{ userId, channelId }`        |
 
-#### Message Events
+#### Messages
 
-- `message:created`: `{ messageId, channelId, userId, pluginId, content, textContent }`
-- `message:updated`: `{ messageId, channelId, userId, pluginId, content, textContent }`
-- `message:deleted`: `{ messageId, channelId }`
+| Event             | Payload                                                                |
+| ----------------- | ---------------------------------------------------------------------- |
+| `message:created` | `{ messageId, channelId, userId, pluginId, content, textContent }`     |
+| `message:updated` | `{ messageId, channelId, userId, editedBy, pluginId, content, textContent }` |
+| `message:deleted` | `{ messageId, channelId }`                                             |
 
-`userId` and `pluginId` can be `null` for plugin-generated or system-generated messages.
+`content` is the rich message body; `textContent` is the plain text version. `userId` and `pluginId` are `null` when the message came from the other kind of author, so a message sent by a plugin has a `pluginId` and no `userId`. On `message:updated`, `editedBy` is the user who made the edit, which is not always the author.
 
-#### Voice Runtime Events
+Messages your own plugin sends also raise these events. Check `pluginId` before reacting, or you can build yourself a loop.
 
-- `voice:runtime_initialized`: `{ channelId }`
-- `voice:runtime_closed`: `{ channelId }`
+#### Voice
 
-These are useful when your plugin integrates with the [Voice](./voice) API and needs to know when a channel runtime is ready.
+| Event                       | Payload         |
+| --------------------------- | --------------- |
+| `voice:runtime_initialized` | `{ channelId }` |
+| `voice:runtime_closed`      | `{ channelId }` |
 
-#### Settings Events
+A voice channel's runtime is created when the first user joins and closed when the last one leaves. These are the events to wait for before touching the [Voice](./voice) API: there is no router to get before the runtime exists.
 
-- `setting:set`: `{ key, value }`
+#### Settings
 
-Use this event when plugin behavior depends on configuration that may change while the plugin is running.
+| Event         | Payload           |
+| ------------- | ----------------- |
+| `setting:set` | `{ key, value }`  |
+
+Raised whenever a plugin setting is written, by an admin in the interface or by a plugin calling `set`. It fires for every plugin's settings, so check the `key`. See [Settings](./settings).
+
+### Handler Rules
+
+- Handlers time out after 10 seconds. Kick off longer work and return.
+- A handler that throws or times out is logged to the server log; the other handlers still run.
+- Handlers run for events triggered by anyone, including other plugins.

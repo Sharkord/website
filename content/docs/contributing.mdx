@@ -4,8 +4,53 @@ description: How to contribute to Sharkord.
 icon: Handshake
 ---
 
-Contributions are welcome.
+Contributions are welcome. The full rules live in the [Contributing Guide](https://github.com/Sharkord/sharkord/blob/development/CONTRIBUTING.md); this page is the short version.
 
-See the project guide for workflow details:
+### Before You Open a PR
 
-- [Contributing Guide](https://github.com/Sharkord/sharkord/blob/development/CONTRIBUTING.md)
+- **Open an issue first.** Pull requests without a linked issue are closed. This is where scope and approach get agreed.
+- **Check the [roadmap](https://github.com/Sharkord/sharkord/blob/development/ROADMAP.md).** Features outside the project's scope are not accepted, and "not planned" decisions are final.
+- **Target the `development` branch**, one feature or fix per PR.
+
+Title your PR `feat(123): short description`, `fix(123): ...`, or `chore(123): ...`, where `123` is the issue number. Commits use the same prefixes without the number.
+
+### Running It Locally
+
+You need [Bun](https://bun.sh).
+
+```bash
+git clone https://github.com/Sharkord/sharkord.git
+cd sharkord
+bun install
+```
+
+Then start the client and the server. With tmux:
+
+```bash
+./start.sh
+```
+
+Without tmux, run `bun dev` in both `apps/client` and `apps/server`.
+
+Development data (database, uploads) goes to `apps/server/data`. Delete that folder for a clean reset.
+
+### Tests
+
+```bash
+bun run test
+```
+
+Use `bun run test`, not `bun test`. The plain form fails.
+
+### Code Standards
+
+- No default exports; named exports only.
+- Avoid `any`; use explicit types.
+- Follow the structure and conventions already in the codebase.
+- Avoid new dependencies and over-engineering.
+
+CI has to pass before review: lint, format, types, and tests.
+
+### Using AI
+
+AI tools are allowed. You are responsible for understanding and standing behind everything you submit, and AI-written code is held to the same standard as anything else.

@@ -1,18 +1,20 @@
 ---
 title: Data
-description: Read basic server data from the plugin runtime.
+description: Read users and channels from the plugin runtime.
 icon: Database
 ---
 
-The data API gives server-side plugins read access to a small set of Sharkord entities.
+`ctx.data` is a small read-only window into the server's data. It is deliberately minimal, and it will grow.
 
-### Available Methods
+| Method                       | Returns                             |
+| ---------------------------- | ----------------------------------- |
+| `getUser(userId)`            | `TJoinedPublicUser \| undefined`    |
+| `getChannel(channelId)`      | `TChannel \| undefined`             |
+| `getPublicUsers()`           | `TJoinedPublicUser[]`               |
 
-- `ctx.data.getUser(userId)`
-- `ctx.data.getChannel(channelId)`
-- `ctx.data.getPublicUsers()`
+All three are async. `getUser` and `getChannel` return `undefined` when the record does not exist, so check before using the result.
 
-All of these methods are asynchronous and may return `undefined` when the requested record does not exist.
+A public user carries `id`, `name`, `bio`, `profileColor`, `banned`, `createdAt`, and the avatar and banner files. Passwords, tokens, and identities are not exposed.
 
 ### Example
 
@@ -24,19 +26,19 @@ const onLoad = (ctx: PluginContext) => {
     const user = await ctx.data.getUser(userId);
 
     if (!user) {
-      ctx.error("joined user was not found", userId);
+      ctx.logger.error("joined user not found", userId);
       return;
     }
 
-    const publicUsers = await ctx.data.getPublicUsers();
-    ctx.debug("current public user count", publicUsers.length);
+    const users = await ctx.data.getPublicUsers();
+
+    ctx.logger.debug(`${user.name} joined, ${users.length} users total`);
   });
 };
-
-export { onLoad };
 ```
 
-### Notes
+### Limits
 
-- At the moment, this API is really basic and only includes a few methods.
-- It's not typesafe.
+- Read-only. To change something, use [messages](./messages) or do it yourself against your own storage.
+- No roles, permissions, or message history yet.
+- Return types come from the server's internal types and are not stable across releases. Treat this API as experimental, like the rest of the SDK.

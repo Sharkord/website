@@ -1,29 +1,37 @@
 ---
 title: Windows
-description: Run Sharkord server on Windows.
+description: Run the Sharkord server on Windows.
 icon: AppWindow
 ---
 
-<Alert title="Windows Support" type="warning">
-  Sharkord is primarily developed and tested on Linux. At the moment, the
-  Windows build has some problems, specially with voice chats. We recommend the
-  use of the Docker version OR running Sharkord on WSL2.
+<Alert type="warning" title="Windows support is rough">
+  Sharkord is developed and tested mainly on Linux. The Windows build still has
+  problems, especially with voice. If you hit them, run Sharkord under
+  [Docker](/docs/introduction/installation/docker) or WSL2 instead.
 </Alert>
 
-1. Download `sharkord-windows-x64.exe` from [GitHub Releases](https://github.com/sharkord/sharkord/releases/latest).
-2. Open Command Prompt and navigate to the folder where you downloaded the executable.
-3. Run:
+### 1. Install the Runtime
+
+Sharkord needs the Microsoft Visual C++ 2015-2022 Redistributable (x64). Without it the server fails to start.
+
+[Download it here](https://aka.ms/vs/17/release/vc_redist.x64.exe)
+
+### 2. Download and Run
+
+1. Download `sharkord-windows-x64.exe` from [GitHub Releases](https://github.com/Sharkord/sharkord/releases/latest).
+2. Open PowerShell or Command Prompt in the folder you downloaded it to.
+3. Run it:
 
 ```powershell
 .\sharkord-windows-x64.exe
 ```
 
-### Required Runtime
+Keep the window open. Closing it stops the server.
 
-Install Microsoft Visual C++ 2015-2022 Redistributable (x64):
+Then open `http://localhost:4991` in your browser.
 
-[https://aka.ms/vs/17/release/vc_redist.x64.exe](https://aka.ms/vs/17/release/vc_redist.x64.exe)
+Sharkord stores its data in `%APPDATA%\sharkord`. See [Data Directory](/docs/data-dir).
 
-Without this dependency, Sharkord will fail to start.
+### Next Steps
 
-See [HTTPS Setup](/docs/https/caddy) guide for securing your Sharkord instance with HTTPS, which is required for streaming features.
+Set up [HTTPS](/docs/https/caddy). Without it, browsers block the microphone, webcam, and screen sharing.

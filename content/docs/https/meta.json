@@ -2,5 +2,5 @@
   "title": "HTTPS Setup",
   "icon": "Lock",
   "defaultOpen": true,
-  "pages": ["why", "caddy", "apache"]
+  "pages": ["why", "caddy", "nginx", "apache"]
 }

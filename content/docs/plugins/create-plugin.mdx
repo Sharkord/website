@@ -1,133 +1,137 @@
 ---
 title: Create a Plugin
-description: Create your first Sharkord plugin with this step-by-step guide.
+description: Scaffold, build, and run your first plugin.
 icon: ToyBrick
 ---
 
-This guide walks through the smallest plugin shape that matches the current scaffold.
-
-### 1) Create a Plugin Directory
-
-Initialize a new plugin:
+### 1. Scaffold It
 
 ```bash
-bun create github.com/Sharkord/plugin-example
+bun create github.com/Sharkord/plugin-example my-plugin
 ```
 
-### 2) Link the needed packages
+That gives you a working plugin: a command, an action, a setting, an event listener, and two UI components.
 
-To do this, first clone the Sharkord repository:
+```
+my-plugin/
+  manifest.json
+  build.ts
+  src/
+    server/index.ts     # runs on the server
+    client/index.ts     # runs in the browser
+    client/store/       # helpers for reading sharkord state
+    client/components/  # your React components
+    contracts/          # shared types for commands and actions
+```
+
+### 2. Link the SDK
+
+The SDK is not published to npm yet, so link it from the Sharkord repository:
 
 ```bash
 git clone https://github.com/Sharkord/sharkord.git
-```
-
-Install dependencies and link the correct packages:
-
-```bash
 cd sharkord
-
 bun install
 
-cd ./packages/plugin-sdk
-bun link
-
-cd ../ui
-bun link
+cd packages/plugin-sdk && bun link
+cd ../ui && bun link
 ```
 
-Now exit the Sharkord repo and clone another repo: the plugin builder, which is a template for building plugins with the correct configuration and build scripts:
+The build tooling is a separate repository:
 
 ```bash
 git clone https://github.com/Sharkord/plugin-builder.git
-```
-
-Then install dependencies and link the package:
-
-```bash
 cd plugin-builder
-
 bun install
-
 bun link
 ```
 
-Then, in your plugin directory, link the SDK and UI:
+Then, in your plugin:
 
 ```bash
-cd plugin-example
-
+cd my-plugin
+bun install
 bun link @sharkord/plugin-sdk
 bun link @sharkord/ui
 bun link @sharkord/plugin-builder
 ```
 
-### 3) Change the manifest file
-
-Go to `manifest.json` and edit the information to match your plugin. The `id` field is important: it should be a unique identifier using only lowercase letters, numbers, and dashes.
-
-Example:
+### 3. Fill In the Manifest
 
 ```json
 {
-  "id": "plugin-example",
-  "name": "Plugin Example",
+  "id": "my-plugin",
+  "name": "My Plugin",
   "author": "Me",
-  "description": "This a Sharkord plugin example.",
-  "homepage": "https://some-page.com",
+  "description": "Does something useful.",
+  "homepage": "https://example.com",
   "logo": "https://placehold.co/100x100/white/black",
   "sdkVersion": 1,
   "version": "0.0.1"
 }
 ```
 
-### 4) Edit the Generated Files
+- `id`: lowercase letters, numbers, and dashes only. It **must** match the folder the plugin is installed into.
+- `sdkVersion`: the SDK version the plugin targets. It must equal the server's, or the plugin refuses to load.
+- `version`: semver, `1.2.3` or `1.2.3-beta.1`.
+- `homepage` and `logo` are optional; both must be `http` or `https` URLs when present.
 
-The scaffold already gives you everything you need to start:
+### 4. Write the Server Half
 
-- `src/server/index.ts`
-- `src/client/index.ts`
-- `src/contracts/actions.ts`
-- `src/contracts/commands.ts`
-
-Start by editing the generated files instead of creating new entrypoints.
+Edit `src/server/index.ts`. Both `onLoad` and `onUnload` are required exports:
 
 ```ts
 import {
   createRegisterAction,
   createRegisterCommand,
   type PluginContext,
+  type UnloadPluginContext,
 } from "@sharkord/plugin-sdk";
 import type { Actions } from "../contracts/actions";
 import type { Commands } from "../contracts/commands";
 
 const onLoad = async (ctx: PluginContext) => {
-  const registerAction = createRegisterAction<Actions>(ctx);
-  const registerCommand = createRegisterCommand<Commands>(ctx);
+  ctx.logger.log("my-plugin loaded");
 
-  // replace the example logic with your own plugin behavior
-  registerCommand("hello", { description: "Says hello" }, async () => {
-    return "Hello from my plugin";
+  const registerCommand = createRegisterCommand<Commands>(ctx);
+  const registerAction = createRegisterAction<Actions>(ctx);
+
+  registerCommand("hello", { description: "Says hello" }, async (invoker) => {
+    return `Hello, user ${invoker.userId}`;
   });
 
   registerAction("sum", async (_invoker, payload) => payload.a + payload.b);
 };
 
-export { onLoad };
+const onUnload = async (ctx: UnloadPluginContext) => {
+  ctx.logger.log("my-plugin unloaded");
+};
+
+export { onLoad, onUnload };
 ```
 
-`ctx.path` points to your plugin directory on disk. Use it when your plugin needs to read or write files relative to its own installation.
+The contracts in `src/contracts/` are plain types shared by both halves; they are what makes `registerCommand`, `registerAction`, and `callAction` type safe.
 
-See [Components](./components) for the slot API and [Client SDK](./client-sdk) for the client runtime.
+`ctx.path` is your plugin's folder on disk. Use it for anything you need to read or write, and keep it inside that folder.
 
-### 5) Build
+Start with one command or one action. Once it loads cleanly, add settings, UI, or voice.
 
-Your plugin needs to be bundled before it can be used. There's a build script already set up for you, so you can just run:
+### 5. Build
 
 ```bash
 bun run build
 ```
 
-And your plugin will be bundled into the `dist` folder, which you can then install into your Sharkord instance (see [Installation](./installation) for more details).
+The bundle lands in `dist/<plugin-id>/`, with `manifest.json`, `server/index.js`, and `client/index.js` inside.
 
-Start with one command or one action first. Once the scaffold loads cleanly, add settings, UI, or voice features.
+`build.ts` also ships a `copyPluginToSharkord` helper with the call commented out. Uncomment it and your build copies straight into `~/.config/sharkord/plugins`, which makes the edit-build-reload loop much shorter.
+
+### 6. Install It
+
+See [Installation](./installation). In short: put the built folder in `plugins/`, enable plugins in the server settings, then enable your plugin.
+
+### Next
+
+- [Commands](./commands) and [Actions](./actions) for behavior
+- [Components](./components) and [Client SDK](./client-sdk) for UI
+- [Marketplace](./marketplace) to publish it

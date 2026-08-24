@@ -1,24 +1,44 @@
 ---
 title: Quick Start
-description: Download and run Sharkord in seconds.
+description: Download and run Sharkord in a couple of minutes.
 icon: Rocket
 ---
 
-<Alert type="warning" title="Attention">
-  Sharkord is currently in alpha. Expect bugs, incomplete features, and breaking
-  changes.
+<Alert type="warning" title="Alpha software">
+  Sharkord is in alpha. Expect bugs, incomplete features, and breaking changes.
 </Alert>
 
-Sharkord ships as a standalone binary that includes both server and client.
+Sharkord ships as a single binary that contains both the server and the web client. There is nothing else to install.
 
-1. Download the latest release for your platform from [GitHub Releases](https://github.com/sharkord/sharkord/releases).
-2. Run Sharkord ([Linux](/docs/introduction/installation/linux), [Windows](/docs/introduction/installation/windows), [macOS](/docs/introduction/installation/macos)).
-3. Open `http://localhost:4991` in your browser.
+1. Download the latest release for your platform from [GitHub Releases](https://github.com/Sharkord/sharkord/releases/latest), or use the [Docker image](/docs/introduction/installation/docker).
+2. Run it: [Linux](/docs/introduction/installation/linux), [Windows](/docs/introduction/installation/windows), [macOS](/docs/introduction/installation/macos).
+3. Open `http://localhost:4991` in your browser and create your account.
+
+If the server runs on another machine, replace `localhost` with its IP address or domain.
 
 ### First Launch
 
-On first launch, Sharkord generates an owner access token and prints it in the server console.
+The first run creates the [data directory](/docs/data-dir), writes a default [`config.ini`](/docs/configuration), and prints an access token to the console:
 
-Treat this token like a master password; anyone with it can gain owner permissions.
+```
+🚨🚨 I M P O R T A N T 🚨🚨
+────────────────────────────────────────────────────
+This server has been started for the first time.
+Please save this access token somewhere safe, as it will not be shown again and there is no way to recover it.
+The access token below is used to gain admin privileges. Anyone with this token can take over the server.
+```
 
-See [Gain Owner Permissions](/docs/introduction/owner-permissions) for the current flow.
+Copy it somewhere safe. It is shown once, it cannot be recovered, and anyone who has it can claim ownership of your server. See [Gain Owner Permissions](/docs/introduction/owner-permissions) for how to use it.
+
+### Next Steps
+
+<NetcupBanner title="No server yet?">
+  Sharkord is happy on a small VPS. We host on netcup, whose root servers start
+  at a few euros a month and include enough bandwidth for voice.
+</NetcupBanner>
+
+- Put Sharkord behind [HTTPS](/docs/https/why). Screen sharing, webcam, and microphone access do not work without it.
+- Tune ports and limits in [Configuration](/docs/configuration).
+- No domain? Claim a [free subdomain](/docs/domains).
+- Set up your [roles and permissions](/docs/administration/roles-permissions) before inviting anyone.
+- Point users at [Voice and Devices](/docs/voice) if their microphone needs tuning.

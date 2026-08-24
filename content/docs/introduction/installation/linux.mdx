@@ -1,19 +1,61 @@
 ---
 title: Linux
-description: Run Sharkord server on Linux.
+description: Run the Sharkord server on Linux.
 icon: MonitorCog
 ---
 
-Download the latest Linux x64 binary and run it:
+Download the binary for your architecture and run it.
+
+**x64**
 
 ```bash
-curl -L https://github.com/sharkord/sharkord/releases/latest/download/sharkord-linux-x64 -o sharkord
+curl -L https://github.com/Sharkord/sharkord/releases/latest/download/sharkord-linux-x64 -o sharkord
 chmod +x sharkord
 ./sharkord
 ```
 
-Then open `http://localhost:4991` in your browser.
+**arm64**
 
-If hosted remotely, use your server IP or domain instead of `localhost`.
+```bash
+curl -L https://github.com/Sharkord/sharkord/releases/latest/download/sharkord-linux-arm64 -o sharkord
+chmod +x sharkord
+./sharkord
+```
 
-See [HTTPS Setup](/docs/https/caddy) guide for securing your Sharkord instance with HTTPS, which is required for streaming features.
+Then open `http://localhost:4991` in your browser, or use the server's IP or domain if it runs on another machine.
+
+Nothing else needs to be installed. The binary bundles the server, the web client, and the media worker, and creates its [data directory](/docs/data-dir) at `~/.config/sharkord` on first run.
+
+<NetcupBanner />
+
+### Run It as a Service
+
+To keep Sharkord running after you log out, create `/etc/systemd/system/sharkord.service`:
+
+```
+[Unit]
+Description=Sharkord
+After=network.target
+
+[Service]
+Type=simple
+User=sharkord
+ExecStart=/opt/sharkord/sharkord
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Then enable it:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now sharkord
+```
+
+The data directory follows the user the service runs as, so `sharkord` in the example above stores everything in that user's `~/.config/sharkord`. The access token from the first launch appears in `journalctl -u sharkord`.
+
+### Next Steps
+
+Set up [HTTPS](/docs/https/caddy). Without it, browsers block the microphone, webcam, and screen sharing.

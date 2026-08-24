@@ -1,17 +1,32 @@
 ---
 title: Why Do I Need HTTPS?
-description: Learn why HTTPS is important for Sharkord and how to set it up.
+description: What breaks without HTTPS, and how to fix it.
 icon: CircleQuestionMark
 ---
 
-Browsers need HTTPS to access the Sharkord web interface because it uses WebRTC for real-time communication, which requires a secure context. Without HTTPS, you will be able to still use Sharkord but NOT stream related features like screen sharing, webcam, and audio because the browser will block access to your media devices. Additionally, using HTTPS ensures that your data is encrypted and secure from potential eavesdropping or tampering.
+Browsers only give a page access to the microphone, webcam, and screen in a [secure context](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia): HTTPS, or `http://localhost`. Over plain HTTP on any other address, those requests are blocked before Sharkord ever sees them.
 
-See [MediaDevices](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia) documentation for more details on the security requirements for accessing media devices in browsers.
+So without HTTPS:
 
-### How to Set Up HTTPS?
+- Text chat, file sharing, and everything else still work.
+- Voice, webcam, and screen sharing do not.
+- Traffic between your users and the server is unencrypted, including their passwords.
 
-To set up HTTPS for your Sharkord instance, you can use a reverse proxy like Caddy, Nginx and Apache to handle SSL termination. This involves obtaining an SSL certificate (you can get a free one from Let's Encrypt) and configuring your reverse proxy to serve your Sharkord instance over HTTPS.
+Testing locally on `http://localhost` is fine. Anything else needs a certificate. See [Voice and Devices](/docs/voice) for what those blocked features are.
 
-## TL;DR
+### How to Set It Up
 
-Without HTTPS **you won't be able to use streaming features**, but the rest of Sharkord will work fine. But it is **NOT** recommended to run Sharkord without HTTPS due to security and privacy concerns.
+Sharkord does not terminate TLS itself. Put a reverse proxy in front of it, point your domain at the server, and let the proxy handle certificates:
+
+- **[Caddy](/docs/https/caddy)**: the easiest option. Certificates are automatic.
+- **[Nginx](/docs/https/nginx)**: certificates through certbot.
+- **[Apache](/docs/https/apache)**: certificates through certbot.
+- **[Docker Compose](/docs/introduction/installation/docker-compose)**: Sharkord and Caddy together in one file.
+
+No domain? Claim a [free subdomain](/docs/domains).
+
+<Alert type="info" title="Media does not go through the proxy">
+  The reverse proxy handles HTTP and WebSocket traffic on port 4991 only. Voice
+  and video go directly to port `40000` over UDP and TCP, so that port has to
+  stay open in your firewall.
+</Alert>

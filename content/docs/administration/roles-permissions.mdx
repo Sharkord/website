@@ -1,0 +1,83 @@
+---
+title: Roles & Permissions
+description: How roles, server permissions, and per-channel overrides fit together.
+icon: ShieldCheck
+---
+
+Permissions come from roles. A user has one or more roles, and their permissions are the union of what those roles grant. There is no "deny" at the server level: a permission is granted by any role, or it is not granted at all.
+
+## The Two Built-in Roles
+
+A fresh server has:
+
+- **Owner**, which holds every permission and bypasses every check, including private channels. It cannot be deleted, and its permissions cannot be edited. You get it by claiming the [access token](/docs/introduction/owner-permissions).
+- **Member**, the default role. New users are given it automatically, and it starts with: send messages, upload files, join voice channels, share screen, enable webcam.
+
+Any role can be made the default from the Roles tab. Deleting a role moves everyone who had it to the default role.
+
+## Server Permissions
+
+Managing these needs `MANAGE_ROLES`.
+
+### Member Permissions
+
+| Permission          | Grants                                               |
+| ------------------- | ---------------------------------------------------- |
+| Send messages       | Sending messages in channels, and typing indicators. |
+| React to messages   | Adding and removing reactions.                       |
+| Pin messages        | Pinning and unpinning messages.                      |
+| Upload files        | Attaching files to messages.                         |
+| Join voice channels | Joining voice channels at all.                       |
+| Share screen        | Starting a screen share.                             |
+| Enable webcam       | Turning on the webcam.                               |
+
+### Administrative Permissions
+
+| Permission                 | Grants                                                                   |
+| -------------------------- | ------------------------------------------------------------------------ |
+| Manage channels            | Create, edit, reorder, and delete channels.                              |
+| Manage channel permissions | Edit per-channel permission overrides.                                   |
+| Manage categories          | Create, edit, reorder, and delete categories.                            |
+| Manage roles               | Create, edit, and delete roles, and set the default role.                |
+| Manage emojis              | Add, rename, and remove custom emojis.                                   |
+| Manage server settings     | Read and change the server settings.                                     |
+| Manage users               | Ban, unban, kick, and delete users, and assign roles.                    |
+| Move members               | Move other users between voice channels.                                 |
+| Manage messages            | Edit and delete anyone's messages, including messages posted by plugins. |
+| Manage storage             | Change the storage settings.                                             |
+| Manage invites             | Create, edit, and revoke invites.                                        |
+| Manage updates             | See the update panel and trigger updates.                                |
+| Manage plugins             | Install, update, enable, disable, and remove plugins.                    |
+| Use plugins                | Run plugin commands and actions, and see plugin UI.                      |
+| View user sensitive data   | See a user's identity, IP address, and location.                         |
+
+## Channel Permissions
+
+Six permissions can be set per channel: **View channel**, **Send messages**, **Join channel**, **Speak**, **Share screen**, and **Enable webcam**. Editing them needs `MANAGE_CHANNEL_PERMISSIONS`.
+
+They can be granted to a role or to a single user.
+
+### How They Resolve
+
+The rules, in order:
+
+1. **Public channels grant everything to everyone.** Overrides on a public channel do nothing. To restrict a channel, make it private.
+2. **The owner always passes**, on any channel.
+3. **View channel gates the rest.** A user who cannot see a channel cannot do anything in it, whatever else is granted.
+4. **A user-level entry wins**, whether it grants or denies. This is the only way to deny something.
+5. **Otherwise, any role granting it wins.** Role entries are additive.
+6. **Otherwise it is denied.** Private channels start closed.
+
+So a private channel is closed until you grant view to somebody, and one user can be excluded from a channel their role otherwise opens.
+
+### Voice Channels
+
+Joining a voice channel needs the server-level **Join voice channels** permission plus the channel-level **Join**. Publishing then checks the channel level: **Speak** for the microphone, **Enable webcam** for video, **Share screen** for screen sharing. Losing one of these while connected takes the corresponding stream away rather than disconnecting you.
+
+Moving someone else between voice channels needs **Move members**, and the target has to be allowed to join the destination.
+
+## Per-Role Storage Quotas
+
+A role can carry a storage quota that overrides the server-wide per-user quota. Enable the override on the role and set the amount.
+
+When a user has several roles with overrides, the largest quota wins, and a role whose quota is `0` means unlimited, which beats everything. Without any override role, the global per-user quota applies. See [Storage and Uploads](./storage).

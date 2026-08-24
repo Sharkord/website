@@ -1,29 +1,32 @@
 ---
 title: Hooks
-description: Intercept file-save operations from the plugin runtime.
+description: Intercept files before they are saved.
 icon: Save
 ---
 
-Plugins can register file-save hooks through `ctx.hooks.onBeforeFileSave(...)`.
+`ctx.hooks.onBeforeFileSave(...)` runs just before Sharkord moves an uploaded file into permanent storage. Use it to scan uploads, or to replace the file with one you produced.
 
-This hook runs before Sharkord persists an uploaded file and lets your plugin either allow the save or replace the final filename by returning a string.
+### Signature
 
-### Hook Signature
+```ts
+ctx.hooks.onBeforeFileSave(async ({ tempFile, userId, type }) => {
+  // return nothing, or the path to a replacement file
+});
+```
 
-The hook receives:
+The payload is:
 
-- `tempFile`: the temporary file record, including its path, size, extension, and original filename.
-- `userId`: the user performing the upload.
-- `type`: the file category being saved.
+| Field      | Type           | Description                                                        |
+| ---------- | -------------- | ------------------------------------------------------------------ |
+| `tempFile` | `TTempFile`    | `{ id, originalName, size, md5, path, extension, userId }`         |
+| `userId`   | `number`       | Who is uploading                                                   |
+| `type`     | `FileSaveType` | What the file is for                                               |
 
-The handler returns either:
-
-- `void` to allow the normal flow to continue.
-- `string` to replace the final stored filename.
+`tempFile` is frozen. Mutating it does nothing; to change the file, write a new one and return its path.
 
 ### File Types
 
-The SDK exports `FileSaveType` with these values:
+`FileSaveType` is exported by the SDK:
 
 - `MESSAGE`
 - `AVATAR`
@@ -31,24 +34,34 @@ The SDK exports `FileSaveType` with these values:
 - `EMOJI`
 - `SERVER_LOGO`
 
-### Example
+### Returning a Replacement
+
+Return **nothing** to let the upload continue untouched, or an **absolute path to a file that exists on disk** to swap it in. Sharkord then re-reads the size and checksum from your file and deletes the original temp file.
 
 ```ts
 import { FileSaveType, type PluginContext } from "@sharkord/plugin-sdk";
+import path from "path";
 
 const onLoad = (ctx: PluginContext) => {
   ctx.hooks.onBeforeFileSave(async ({ tempFile, type, userId }) => {
-    ctx.debug("before file save", tempFile.originalName, type, userId);
+    if (type !== FileSaveType.AVATAR) return;
 
-    // make changes to the file, save it somewhere else and return it's new path
+    const outputPath = path.join(ctx.path, `avatar-${tempFile.id}.webp`);
 
-    if (type === FileSaveType.EMOJI) {
-      return `emoji-${Date.now()}-${tempFile.originalName}`;
-    }
+    await convertToWebp(tempFile.path, outputPath); // your code
+
+    ctx.logger.debug("replaced avatar upload", tempFile.originalName, userId);
+
+    return outputPath;
   });
 };
-
-export { onLoad };
 ```
 
-Keep this hook fast and deterministic. Expensive work in the upload path will slow down user-facing operations.
+Returning a path that does not exist aborts the upload with an error. Return nothing if your processing failed and you want the original to go through.
+
+### Notes
+
+- Every registered hook runs, in registration order, and each one sees the result of the previous.
+- This runs inside the upload request, so a slow hook is a slow upload for the user. Keep it quick, and do heavy processing after the fact.
+- Sharkord decides the final stored name itself. You control the file, not where it lands.
+- The hook is unregistered automatically when the plugin unloads.

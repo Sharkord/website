@@ -1,20 +1,62 @@
 ---
 title: Troubleshooting
-description: Troubleshoot common issues with Sharkord.
+description: Fixes for the problems people hit most often.
 icon: Bug
 ---
 
-<AccordionItem title="Voice and video not working">
-Make sure you:
-- are in a secure context (HTTPS or http://localhost)
-- have allowed microphone and camera permissions in your browser
-- have configured the correct `webRtc.port` in your `config.ini` and opened those ports in your firewall/router for UDP traffic. In some setups, you might also need to set `webRtc.announcedAddress` to your public IP address or domain name, especially if you're behind a NAT.
+<Accordion>
+  <AccordionItem title="Voice, webcam, or screen sharing does not work">
+    Check, in this order:
 
-</AccordionItem>
+    - You are on HTTPS, or on `http://localhost`. Browsers block media devices anywhere else. See [Why HTTPS](/docs/https/why).
+    - The browser has permission to use the microphone and camera for this site.
+    - Port `40000` is open in your firewall and router, on **both UDP and TCP**.
+    - If the server is behind NAT, Docker, or a cloud provider, set `webRtc.announcedAddress` to your public IP or domain in [`config.ini`](/docs/configuration). Without it, clients may be told to send media to a private address they cannot reach.
+    - If you changed `webRtc.port`, open the new port and restart the server.
 
-<AccordionItem title="I keep getting disconnected from the server (code 1006)">
-This is most likely a network issue. Please read the following issues for possible solutions:
-  - [https://github.com/Sharkord/sharkord/issues/46](https://github.com/Sharkord/sharkord/issues/46)
-  - [https://github.com/Sharkord/sharkord/issues/289](https://github.com/Sharkord/sharkord/issues/289)
-  - [https://github.com/Sharkord/sharkord/issues/259](https://github.com/Sharkord/sharkord/issues/259)
-</AccordionItem>
+  </AccordionItem>
+  <AccordionItem title="Everyone gets 'Too many requests'">
+    Your reverse proxy's address is being rate limited instead of the users behind it. Add the proxy to `trustedProxies` in [`config.ini`](/docs/configuration) and restart Sharkord.
+  </AccordionItem>
+  <AccordionItem title="File uploads fail">
+    Large uploads that fail immediately are usually stopped by the reverse proxy, not by Sharkord. Nginx caps request bodies at 1 MB by default; set `client_max_body_size 0`. See the [Nginx guide](/docs/https/nginx).
+
+    If the error mentions the file size or the quota, it comes from Sharkord itself: per-role upload limits and the server storage quota are set in the server settings.
+
+  </AccordionItem>
+  <AccordionItem title="I keep getting disconnected (code 1006)">
+    This is the browser reporting that the WebSocket closed abnormally, almost always a network or proxy problem. Check the proxy's read timeout (Sharkord holds one long-lived connection) and any idle timeout between you and the server.
+
+    These issues collect the known cases:
+    - [#46](https://github.com/Sharkord/sharkord/issues/46)
+    - [#289](https://github.com/Sharkord/sharkord/issues/289)
+    - [#259](https://github.com/Sharkord/sharkord/issues/259)
+
+  </AccordionItem>
+  <AccordionItem title="The server will not start">
+    - **Windows**: install the [Microsoft Visual C++ 2015-2022 Redistributable (x64)](https://aka.ms/vs/17/release/vc_redist.x64.exe). Without it the binary exits immediately.
+    - **Port in use**: another process is on `4991`. Change `server.port`, or stop the other process.
+    - **Permissions**: the user running Sharkord must be able to write to its [data directory](/docs/data-dir). In Docker, use `PUID` and `PGID` to match the owner of the mounted volume.
+
+  </AccordionItem>
+  <AccordionItem title="My config.ini changes did nothing">
+    The file is only read at startup, so restart the server. Sharkord also rewrites the file on every boot: comments and unknown keys are dropped, and a file that fails validation is replaced by the defaults, with the reason logged. Check the console output if a value keeps reverting.
+  </AccordionItem>
+  <AccordionItem title="A plugin does not load">
+    Open the plugin's logs in the server settings; load failures are recorded there with the reason. The usual causes:
+
+    - Plugins are disabled server-wide. Turn them on in the server settings first.
+    - The plugin folder name does not match the `id` in its `manifest.json`.
+    - `server/index.js` or `client/index.js` is missing from the plugin folder. Both are required, even if the plugin has no UI.
+    - The plugin does not export both `onLoad` and `onUnload`.
+    - The manifest's `sdkVersion` does not match the server's plugin SDK version.
+
+    See [Installation](/docs/plugins/installation).
+
+  </AccordionItem>
+  <AccordionItem title="I lost the owner access token">
+    It cannot be recovered. If you still have owner access, grant the roles you need from the server settings. If you do not, the only reset is a fresh [data directory](/docs/data-dir), which starts the server from scratch.
+  </AccordionItem>
+</Accordion>
+
+Still stuck? Search the [issues](https://github.com/Sharkord/sharkord/issues) or ask in [discussions](https://github.com/Sharkord/sharkord/discussions). Turning on `debug` in [`config.ini`](/docs/configuration) makes the server log a lot more, which is worth including in a report.

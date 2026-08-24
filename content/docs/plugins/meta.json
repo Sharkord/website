@@ -10,12 +10,14 @@
     "commands",
     "actions",
     "components",
+    "client-sdk",
     "events",
     "settings",
+    "messages",
     "data",
     "hooks",
+    "http",
     "voice",
-    "client-sdk",
     "api-reference"
   ]
 }

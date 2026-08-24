@@ -1,0 +1,35 @@
+---
+title: macOS
+description: Run the Sharkord server on macOS.
+icon: Apple
+---
+
+<Alert type="warning" title="Lightly tested">
+  Sharkord is developed and tested mainly on Linux. The macOS build is
+  published for Apple Silicon only and gets far less testing than Linux or
+  Docker.
+</Alert>
+
+Download the Apple Silicon binary and run it:
+
+```bash
+curl -L https://github.com/Sharkord/sharkord/releases/latest/download/sharkord-macos-arm64 -o sharkord
+chmod +x sharkord
+./sharkord
+```
+
+Then open `http://localhost:4991` in your browser.
+
+The binary is not notarized, so Gatekeeper blocks the first run. Either allow it under **System Settings → Privacy & Security** after the warning appears, or clear the quarantine flag yourself:
+
+```bash
+xattr -d com.apple.quarantine ./sharkord
+```
+
+Sharkord stores its data in `~/Library/Application Support/sharkord`. See [Data Directory](/docs/data-dir).
+
+On Intel Macs, use [Docker](/docs/introduction/installation/docker) instead.
+
+### Next Steps
+
+Set up [HTTPS](/docs/https/caddy). Without it, browsers block the microphone, webcam, and screen sharing.

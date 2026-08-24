@@ -1,18 +1,71 @@
 ---
 title: Overview
-description: Extend Sharkord with custom plugins.
+description: Extend Sharkord with plugins.
 icon: Wrench
 ---
 
-Sharkord plugins let you extend server behavior with custom logic such as automations, integrations, and commands. **This is still an experimental feature, major changes are expected as we iterate on the design and API.**
+A plugin is a folder of JavaScript that Sharkord loads into the server and, optionally, into every user's browser. Plugins add commands, buttons and whole screens, react to events, expose HTTP endpoints, and push audio and video into voice channels.
 
-<Alert type="attention" title="Security Warning">
-  Before installing plugins, please read the [Security](./security) page to
-  understand the potential risks.
+<Alert type="attention" title="Experimental">
+  The plugin SDK is version 1 and still moving. Expect breaking changes between
+  releases; a plugin's `sdkVersion` must match the server exactly or it will not
+  load.
 </Alert>
 
-### Plugin SDK
+<Alert type="attention" title="Security warning">
+  A plugin runs with the full privileges of the server process and of every
+  user's browser session. Read [Security](./security) before installing
+  anything.
+</Alert>
 
-Use the official SDK for type-safe plugin development: [packages/plugin-sdk](https://github.com/Sharkord/sharkord/tree/development/packages/plugin-sdk).
+### Shape of a Plugin
 
-Read [Create a Plugin](./create-plugin) first, then use the specific API pages for [commands](./commands), [actions](./actions), [components](./components), [events](./events), [settings](./settings), [hooks](./hooks), [data](./data), [voice](./voice), and the [client runtime](./client-sdk).
+Every plugin is a folder inside `plugins/` in the [data directory](/docs/data-dir), containing:
+
+```
+my-plugin/
+  manifest.json    # id, name, version, sdkVersion
+  server/index.js  # runs in the server process
+  client/index.js  # runs in every user's browser
+```
+
+All three are required, even when a plugin has no interface. The folder name must match the `id` in the manifest.
+
+`server/index.js` must export two functions:
+
+```ts
+const onLoad = async (ctx: PluginContext) => {
+  // register everything here
+};
+
+const onUnload = async (ctx: UnloadPluginContext) => {
+  // stop timers, close connections, remove streams
+};
+
+export { onLoad, onUnload };
+```
+
+`onLoad` runs at server start and when the plugin is enabled. `onUnload` runs when it is disabled, removed, or updated. Commands, actions, events, settings, hooks, and HTTP routes are unregistered for you; anything you started yourself is not.
+
+### What the Context Gives You
+
+| API           | Use it for                                            |
+| ------------- | ----------------------------------------------------- |
+| [Commands](./commands)   | Slash commands users can run                |
+| [Actions](./actions)     | Server functions your UI can call           |
+| [Components](./components) | React components in fixed slots of the app |
+| [Events](./events)       | Reacting to messages, joins, and voice      |
+| [Settings](./settings)   | Typed options an admin edits in the UI      |
+| [Messages](./messages)   | Sending, editing, and deleting messages     |
+| [Data](./data)           | Reading users and channels                  |
+| [Hooks](./hooks)         | Intercepting file saves                     |
+| [HTTP](./http)           | Your own HTTP endpoints                     |
+| [Voice](./voice)         | Publishing external audio and video streams |
+
+The [Client SDK](./client-sdk) covers the browser half, and [API Reference](./api-reference) lists the whole surface in one place.
+
+### Getting Started
+
+Start with [Create a Plugin](./create-plugin), then [Installation](./installation). To share what you build, see [Marketplace](./marketplace).
+
+The SDK source is the ground truth: [packages/plugin-sdk](https://github.com/Sharkord/sharkord/tree/development/packages/plugin-sdk).

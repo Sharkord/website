@@ -1,34 +1,92 @@
 ---
 title: API Reference
-description: Reference index for the current Sharkord plugin SDK.
+description: The whole plugin SDK surface in one page.
 icon: BookMarked
 ---
 
-The plugin SDK is still experimental, but the main surfaces are documented in this section.
+Plugin SDK version **1**. Everything here is experimental and can change between releases.
 
-### Server Runtime
+### Module Exports
 
-- [Commands](./commands)
-- [Actions](./actions)
-- [Events](./events)
-- [Settings](./settings)
-- [Data](./data)
-- [Hooks](./hooks)
-- [Voice](./voice)
+`@sharkord/plugin-sdk` exports:
 
-### Client Runtime
+| Export                                          | What it is                                              |
+| ----------------------------------------------- | ------------------------------------------------------- |
+| `PluginContext`, `UnloadPluginContext`          | The context types passed to `onLoad` and `onUnload`      |
+| `createRegisterCommand`, `createRegisterAction` | Typed wrappers for registering [commands](./commands) and [actions](./actions) |
+| `createCallAction`                              | Typed action caller for [client code](./client-sdk)      |
+| `PluginSlot`                                    | The [component slots](./components) enum                 |
+| `FileSaveType`                                  | File categories for the [file save hook](./hooks)        |
+| `PLUGIN_SDK_VERSION`                            | The SDK version this build targets                       |
+| `ServerEvent`, `EventPayloads`                  | [Event](./events) names and payloads                     |
+| `TPluginComponentsMapBySlotId`                  | The slot map your client entry exports                   |
+| `TCreateStreamOptions`, `TExternalStreamHandle` | [Voice](./voice) stream types                            |
+| mediasoup types                                 | `Router`, `Producer`, `PlainTransport`, `RtpParameters`, and others, re-exported |
 
-- [Components](./components)
-- [Client SDK](./client-sdk)
+### Plugin Lifecycle
 
-### Source Of Truth
+```ts
+export const onLoad = async (ctx: PluginContext) => {};
+export const onUnload = async (ctx: UnloadPluginContext) => {};
+```
 
-If a documented example and the SDK types ever disagree, treat the current source as authoritative:
+Both are required. The unload context is a subset: `path`, `logger`, `voice`, `messages`, `ui`, and the deprecated log aliases. Registration APIs are absent, because unregistering is automatic.
+
+### `PluginContext`
+
+| Member                                   | Notes                                                  |
+| ---------------------------------------- | ------------------------------------------------------ |
+| `pluginId`                               | Your plugin's id                                       |
+| `path`                                   | Your plugin's folder on disk                           |
+| `logger.log / debug / error`             | Writes to the plugin log shown in the interface        |
+| `log / debug / error`                    | Deprecated aliases of the above                        |
+| `events.on(event, handler)`              | Returns an unsubscribe function. [Events](./events)    |
+| `events.off(event, handler)`             |                                                        |
+| `commands.register(command)`             | [Commands](./commands)                                 |
+| `actions.register(action)`               | [Actions](./actions)                                   |
+| `settings.register(definitions)`         | Async, returns `{ get, set }`. [Settings](./settings)  |
+| `messages.send / edit / delete`          | Async. [Messages](./messages)                          |
+| `data.getUser / getChannel / getPublicUsers` | Async. [Data](./data)                              |
+| `hooks.onBeforeFileSave(handler)`        | [Hooks](./hooks)                                       |
+| `http.register / get / post / patch / delete / options` | [HTTP routes](./http)                    |
+| `voice.getRouter / createStream / getListenInfo` | [Voice](./voice)                               |
+| `ui.enable() / disable()`                | Whether your [components](./components) are rendered   |
+
+### Limits and Defaults
+
+| Thing                          | Value                                    |
+| ------------------------------ | ---------------------------------------- |
+| Command execution timeout      | 30 seconds                               |
+| Action execution timeout       | 30 seconds                               |
+| Event handler timeout          | 10 seconds                               |
+| Command and action rate limit  | 60 per minute per user (configurable)    |
+| HTTP routes per plugin         | 100                                      |
+| Permission to run commands and actions | `USE_PLUGINS`                    |
+| Permission to install and toggle plugins | `MANAGE_PLUGINS`               |
+
+### Manifest
+
+```json
+{
+  "id": "my-plugin",
+  "name": "My Plugin",
+  "author": "Me",
+  "description": "Does something useful.",
+  "homepage": "https://example.com",
+  "logo": "https://example.com/logo.png",
+  "sdkVersion": 1,
+  "version": "0.0.1"
+}
+```
+
+`id`, `name`, `author`, `description`, `sdkVersion`, and `version` are required. `id` must be lowercase letters, numbers, and dashes, and must match the folder name. `version` must be semver. `homepage` and `logo` must be HTTP(S) URLs when present.
+
+### Source of Truth
+
+When an example here and the code disagree, the code wins:
 
 - [packages/plugin-sdk/src/index.ts](https://github.com/Sharkord/sharkord/blob/development/packages/plugin-sdk/src/index.ts)
 - [packages/plugin-sdk/src/actions.ts](https://github.com/Sharkord/sharkord/blob/development/packages/plugin-sdk/src/actions.ts)
 - [packages/plugin-sdk/src/commands.ts](https://github.com/Sharkord/sharkord/blob/development/packages/plugin-sdk/src/commands.ts)
-- [packages/shared/src/plugins/client-sdk.ts](https://github.com/Sharkord/sharkord/blob/development/packages/shared/src/plugins/client-sdk.ts)
 - [packages/shared/src/plugins/index.ts](https://github.com/Sharkord/sharkord/blob/development/packages/shared/src/plugins/index.ts)
-
-Expect signatures and behavior to keep evolving while plugins remain experimental.
+- [packages/shared/src/plugins/client-sdk.ts](https://github.com/Sharkord/sharkord/blob/development/packages/shared/src/plugins/client-sdk.ts)

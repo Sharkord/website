@@ -1,27 +1,59 @@
 ---
 title: Data Directory
-description: Manage Sharkord's data directory.
+description: Where Sharkord stores your server.
 icon: Folder
 ---
 
-Sharkord stores its data in a directory. This includes configuration files, logs, and other runtime data. The location of this directory depends on your operating system.
+Everything Sharkord owns lives in one directory: the database, uploaded files, logs, config, and plugins. Back up that directory and you have backed up your server.
 
-### Linux
+### Location
 
-`~/.config/sharkord`
+| Platform | Path                                     |
+| -------- | ---------------------------------------- |
+| Linux    | `~/.config/sharkord`                     |
+| macOS    | `~/Library/Application Support/sharkord` |
+| Windows  | `%APPDATA%\sharkord`                     |
+| Docker   | `/home/bun/.config/sharkord`             |
 
-### Windows
+On Linux, `XDG_CONFIG_HOME` is respected if you set it. In Docker, mount that path to a directory on the host, otherwise your server disappears with the container.
 
-`%APPDATA%\sharkord`
+To put the data somewhere else entirely, set `SHARKORD_DATA_PATH`:
 
-### macOS
+```bash
+SHARKORD_DATA_PATH=/srv/sharkord ./sharkord
+```
 
-`~/Library/Application Support/sharkord`
+### What's Inside
 
-### Docker
+| Entry              | Contents                                                    |
+| ------------------ | ----------------------------------------------------------- |
+| `config.ini`       | Server [configuration](/docs/configuration)                  |
+| `db.sqlite`        | The database: users, roles, channels, messages, settings     |
+| `uploads/`         | Files being uploaded, before they are confirmed              |
+| `public/`          | Stored attachments, avatars, banners, and emojis. See [Storage and Uploads](/docs/administration/storage) |
+| `tmp/`             | Scratch space for in-flight operations                       |
+| `logs/`            | Server logs                                                  |
+| `plugins/`         | Installed [plugins](/docs/plugins/installation), one folder each |
+| `interface/`       | The web client for the running version                       |
+| `mediasoup/`       | The media worker binary                                      |
+| `drizzle/`         | Database migration state                                     |
 
-When running Sharkord in a Docker container, the data directory is typically mounted as a volume or bind mount. You can specify the location of the data directory on your host machine when starting the container.
+Only `config.ini` is meant to be edited by hand. Do not edit `db.sqlite` while the server is running.
 
-## Migrating Your Server
+### Backups
 
-To migrate your Sharkord server to a new machine or location, simply copy the entire data directory to the new location. This will preserve all your settings, logs, and other data.
+Stop the server, copy the directory, start it again. Copying `db.sqlite` while the server is writing to it can produce a backup that will not open.
+
+Back up before every update. Sharkord is in alpha and migrations are not guaranteed to be reversible.
+
+### Migrating to Another Machine
+
+1. Stop the server.
+2. Copy the whole data directory to the new machine, into the location for that platform.
+3. Start the same Sharkord version there.
+
+Settings, users, messages, files, and plugins all come along. If the server's public address changed, update `webRtc.announcedAddress` in `config.ini`.
+
+### Resetting the Server
+
+Deleting the data directory wipes everything, including your account, the owner access token, and every uploaded file. The next start creates a fresh server and prints a new token.

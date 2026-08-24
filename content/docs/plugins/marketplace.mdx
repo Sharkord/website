@@ -1,55 +1,52 @@
 ---
 title: Marketplace
-description: Learn about the Sharkord plugin marketplace.
+description: Find plugins, and publish your own.
 icon: Store
 ---
 
-Sharkord's plugin marketplace is a centralized platform where developers can publish their plugins and users can discover and install them. The marketplace provides a convenient way for users to find plugins that enhance their Sharkord experience, while also giving developers a way to share their creations with the community.
+The marketplace is a registry of plugins, browsable from inside Sharkord. It is a single JSON file in a public repository: [github.com/Sharkord/plugins](https://github.com/Sharkord/plugins).
 
 ### For Users
 
-The marketplace is a feature built into the Sharkord interface, allowing you to browse and search for plugins directly from your Sharkord instance. You can view detailed information about each plugin, including its features, screenshots, and user reviews. When you find a plugin you like, you can easily install it with just a few clicks.
+Open the server settings, browse the marketplace, and install with one click. Sharkord downloads the release from the URL in the registry and checks it against the published checksum before unpacking it.
 
-<Alert type="attention" title="Security Warning">
-  Before installing plugins, please read the [Security](./security) page to
-  understand the potential risks.
+<Alert type="attention" title="A listing is not a review">
+  Anyone can publish. The `verified` badge means the maintainers recognise the
+  publisher, not that the code was audited. See [Security](./security).
 </Alert>
 
 ### For Developers
 
-To publish your plugin on the marketplace, you need to open a PR at the marketplace repository at [https://github.com/Sharkord/plugins](https://github.com/Sharkord/plugins). Follow the existing structure and guidelines to ensure your plugin is properly listed. Once your PR is reviewed and merged, your plugin will be available for users to discover and install.
+Publishing is a pull request against the registry repository, adding an entry that points at a GitHub release of your plugin.
 
-### How To Publish Your Plugin
+Each entry carries the plugin's metadata (id, name, description, author, logo, optional homepage, tags, categories, screenshots) and a list of versions. Each version has a `version`, an HTTPS `downloadUrl`, a `checksum`, the `sdkVersion` it targets, its `size`, and a `timestamp`.
 
-The default plugin template includes a `publish` script that automates part the process of preparing your plugin for publication. This process is for public github repositories, if you want to publish your plugin in any other way, you need to do this process manually.
+#### Step 1: Create a GitHub Token
 
-#### Step 1: Get a GitHub Personal Access Token
+The publish script needs a Personal Access Token with the `repo` scope, so it can create a release in your plugin's repository.
 
-To publish your plugin, you need to have a GitHub Personal Access Token (PAT) with the `repo` scope. You can create a PAT by following these steps:
+1. GitHub → **Settings** → **Developer settings**.
+2. **Personal access tokens** → **Generate new token**.
+3. Select the `repo` scope and generate it.
 
-1. Go to your GitHub account settings.
-2. Click on "Developer settings" in the left sidebar.
-3. Click on "Personal access tokens" and then "Generate new token".
-4. Give your token a name and select the `repo` scope.
-5. Click "Generate token" and copy the token to a safe place.
+Copy `.env.example` to `.env` in your plugin and add it:
 
-Then move the `.env.example` file to `.env` and add your token there as `GITHUB_TOKEN=your_token_here`.
+```
+GITHUB_TOKEN=your_token_here
+```
 
-#### Step 2: Run the Publish Script
-
-In your plugin directory, run the following command:
+#### Step 2: Publish
 
 ```bash
 bun run publish
 ```
 
-This script will do the following:
+The script syncs `manifest.json` with your `package.json`, builds the plugin, creates a GitHub release with the bundle attached, and writes a `version` file containing the metadata the registry needs, including the checksum.
 
-1. Sync fields in `manifest.json` with the `package.json` values.
-2. Bundle your plugin using the `build` script.
-3. Create a new release on GitHub with the bundled plugin as an asset.
-4. Create a `version` file with some metadata about the release.
+This assumes a public GitHub repository. Hosting the release elsewhere means assembling that metadata by hand.
 
-#### Step 3: Open a PR in the Marketplace Repository
+#### Step 3: Open a PR
 
-After running the publish script, you need to open a PR in the marketplace repository at [https://github.com/Sharkord/plugins](https://github.com/Sharkord/plugins). Include the generated `version` file in your PR. This will allow your plugin to be listed in the marketplace with the correct version and download link.
+Add your generated `version` file to [github.com/Sharkord/plugins](https://github.com/Sharkord/plugins), following the layout of the existing entries. Once it is merged, your plugin shows up in every server's marketplace.
+
+Publishing a new version is the same flow again: run the script, open a PR with the new `version` file.

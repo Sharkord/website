@@ -4,25 +4,23 @@ description: Claim a free subdomain for your Sharkord server.
 icon: Globe
 ---
 
-Sharkord offers a free service that provides subdomains under the `shrkrd.site` domain. This allows anyone to host Sharkord with https even if they don't own a domain of their own. This is especially useful for users who want to quickly set up a server for testing or small communities without the hassle of purchasing and configuring their own domain.
+Sharkord runs a free subdomain service on `shrkrd.site`, so you can host a server with HTTPS without buying a domain. Handy for testing and for small communities.
 
-## Claim Your Subdomain
+## Claim One
 
-Go to [https://domains.sharkord.com](https://domains.sharkord.com), register and claim your free subdomain. Everyone gets up to 3 subdomains, so you can create different ones for testing, friends, or different communities.
+Go to [domains.sharkord.com](https://domains.sharkord.com), register, and claim your subdomain. Each account gets up to 3, so you can keep separate ones for testing, friends, and a real server.
 
-## Subdomain Format
+Your subdomain looks like `yourname.shrkrd.site`. Pick `myserver` and your instance lives at `myserver.shrkrd.site`.
 
-Your subdomain will be in the format `yourname.shrkrd.site`. For example, if you choose `myserver`, your server will be accessible at `myserver.shrkrd.site`.
+## Point It at Your Server
 
-## How It Works
+When you claim a subdomain, set it to your Sharkord server's public IP address. DNS propagation usually takes a few minutes.
 
-When you claim a subdomain, you should also point it to your Sharkord server's IP address. This allows users to access your server using the subdomain instead of an IP address, making it easier to remember and share.
+Once it resolves, follow one of the [HTTPS guides](/docs/https/why) to get a certificate for it. Let's Encrypt issues certificates for `shrkrd.site` subdomains like any other domain.
 
-After claiming your subdomain, you should wait a few minutes for DNS propagation. Once it's ready, you can access your Sharkord server using the subdomain you claimed.
+## Rules
 
-## No Abuse Policy
-
-- Any subdomain that is found to be used for abuse, spam, or violating our terms of service may be suspended or removed without notice.
-- Any other purpose than hosting a Sharkord server. Using them for other services will result in a ban from the service.
-- Subdomains that are inactive for more than 7 days may be reclaimed and made available for others to claim.
+- Subdomains are for hosting Sharkord servers. Pointing one at another service gets you banned from the service.
+- Subdomains used for abuse, spam, or anything against the terms of service are suspended or removed without notice.
+- Subdomains inactive for more than 7 days may be reclaimed and made available to someone else.
 - We reserve the right to suspend or remove any subdomain at our discretion.

@@ -1,27 +1,57 @@
 ---
 title: Updating
-description: Update Sharkord to the latest version.
+description: Update Sharkord to a newer version.
 icon: CloudDownload
 ---
 
-To update Sharkord, you have multiple options:
+<Alert type="warning" title="Back up first">
+  Sharkord is in alpha and database migrations are not reversible. Copy your
+  [data directory](/docs/data-dir) somewhere safe before every update, so you
+  can roll back by restoring it alongside the old binary.
+</Alert>
 
-- **Via the Admin panel**: You can trigger an update from there. This will download and install the latest version of Sharkord. Not available in Docker.
-- **Manual update**: You can also manually download the latest release from the [GitHub releases page](https://github.com/sharkord/sharkord/releases) and simply run the new version. Your existing configuration and data will be preserved.
-- **Docker**: If you're running Sharkord in a Docker container, you can pull the latest image from Docker Hub and restart your container to update to the latest version.
+### Manual Update (Recommended)
+
+1. Stop the server.
+2. Download the [latest release](https://github.com/Sharkord/sharkord/releases/latest) for your platform.
+3. Replace the old binary with the new one and start it again.
+
+Your configuration and data are untouched; they live in the data directory, not next to the binary.
+
+### Docker
+
+```bash
+docker pull sharkord/sharkord:latest
+docker rm -f sharkord
+# start the container again with the same command
+```
+
+Or with Compose:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+### From the Admin Panel
+
+If you have the `MANAGE_UPDATES` permission, the server settings show the current version, the latest release, and a button to update. The server downloads the new binary and restarts itself.
+
+This is unavailable in Docker, where the image is the unit of update, and in development builds.
 
 ### Automatic Updates
 
-Sharkord can automatically check for updates and install them. To enable this feature, set the `autoupdate` option to `true` in your `config.ini` file. Note that automatic updates are not available when running Sharkord in a Docker container.
+Set `autoupdate` in [`config.ini`](/docs/configuration):
 
-<Alert type="warning" title="Attention">
-  Triggering the update from the Admin panel OR relying the automatic update may
-  not work in some environments. For now, it's recommended to update manually by
-  downloading the latest release from GitHub or pulling the latest Docker image.
+```ini
+[server]
+autoupdate=true
+```
+
+The server then checks GitHub for a new release at startup and once an hour, and restarts itself when it installs one. It is off by default, and unavailable in Docker.
+
+<Alert type="attention" title="Both automatic paths are unreliable for now">
+  Self-updating does not work in every environment, and a failed update can
+  leave the server down until you replace the binary by hand. Until this is
+  more solid, prefer the manual update or a fresh Docker image.
 </Alert>
-
-### Backup Your Data
-
-Sharkord is still in alpha, and while we strive to make updates as smooth as possible, it's always a good idea to back up your data before performing an update. This way, you can restore your previous state if anything goes wrong during the update process.
-
-To do this, simply copy the [data](./data-dir) directory to a safe location before updating. If something goes wrong, you can restore your data by copying it back to the Sharkord directory after the update.
