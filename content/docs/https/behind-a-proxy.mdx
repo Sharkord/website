@@ -1,0 +1,197 @@
+---
+title: Behind a Proxy
+description: Trusted proxies, forwarded IPs, and what a reverse proxy has to pass through.
+icon: Waypoints
+---
+
+When Sharkord sits behind Caddy, Nginx, Apache, a Docker network, or a CDN, every request arrives from the proxy rather than from the user. This page covers what that breaks and how to fix it.
+
+## Why It Matters
+
+Sharkord uses the client address for two things:
+
+- **Rate limiting anything that happens before login**, and uploads. Connecting, logging in, joining the server and uploading files are all counted per IP, because there is no user to count against yet or, for uploads, because the limiter runs before the session is resolved.
+- **Showing where a user connected from**, which is what `VIEW_USER_SENSITIVE_DATA` reveals and what lands in the activity log.
+
+If every request looks like it came from the proxy, all your users share a single rate limit bucket. One person reconnecting in a loop then locks everyone else out, and the user list shows your proxy's address for everybody.
+
+## Trusted Proxies
+
+`server.trustedProxies` is the list of addresses whose forwarded headers Sharkord will believe. It defaults to loopback plus every private range:
+
+```ini
+[server]
+trustedProxies[]=127.0.0.1
+trustedProxies[]=::1
+trustedProxies[]=10.0.0.0/8
+trustedProxies[]=172.16.0.0/12
+trustedProxies[]=192.168.0.0/16
+trustedProxies[]=fc00::/7
+```
+
+A proxy can only reach Sharkord from one of two kinds of address: a private one, if it runs on the same machine, in another container, or elsewhere on your network, or a public one. The default covers the whole first group, so the ordinary setups need no configuration at all.
+
+No public address is trusted by default, and that is the case you have to configure: a CDN such as Cloudflare reaches you from its own public addresses, and until they are listed its forwarded headers are ignored. [Common setups](#common-setups) has the details.
+
+Entries can be plain addresses or CIDR ranges, IPv4 or IPv6. With environment variables, use a comma-separated list:
+
+```bash
+SHARKORD_TRUSTED_PROXIES="127.0.0.1,::1,10.0.0.0/8"
+```
+
+Setting the option replaces the defaults rather than adding to them, so include the private ranges you still need.
+
+<Alert type="warning" title="What the default assumes">
+  Anything in this list can claim to be forwarding for any client, which means
+  picking its own rate limit bucket and choosing the address that shows up in
+  your logs. The default assumes your private network is yours. That holds for
+  a normal VPS or home server, and it does not hold if Sharkord's port is
+  reachable by machines you do not control: a shared provider network, an
+  office or campus LAN, a multi-tenant Kubernetes cluster. There, narrow the
+  list to the proxy itself.
+</Alert>
+
+## How the Client Address Is Resolved
+
+1. If the connecting address is **not** in `trustedProxies`, the socket address is used and every forwarded header is ignored. This over-limits rather than trusting a stranger.
+2. If it is trusted, Sharkord reads `X-Forwarded-For`, then `Forwarded`, up to 20 entries.
+3. From that chain it takes the **right-most entry that is not itself a trusted proxy**. Everything to the left of it was written by whoever connected to your proxy and can say anything.
+4. If the whole chain is your own infrastructure, the left-most entry is used.
+5. If nothing usable is found, it falls back to the socket address.
+
+Only those two chain headers are read. Single-value vendor headers such as `CF-Connecting-IP` and `X-Real-IP` are deliberately ignored: they carry no hop information, so a value your proxy set and one a client invented are indistinguishable.
+
+## Common Setups
+
+### Caddy, Nginx or Apache on the Same Machine
+
+Nothing to configure. The proxy connects over loopback, which is trusted by default.
+
+The one thing to check is that the proxy actually sends the header. Caddy and Apache add `X-Forwarded-For` on their own. Nginx does not, so the site needs it explicitly, as in the [Nginx guide](./nginx):
+
+```nginx
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+```
+
+### Proxy in Another Container
+
+Nothing to configure. Docker bridge networks live in `172.16.0.0/12`, and a custom Compose network in one of the other private ranges, all of which are trusted by default.
+
+To narrow it to the exact subnet instead, `docker network inspect <name>` prints the one in use:
+
+```yaml
+services:
+  sharkord:
+    environment:
+      SHARKORD_TRUSTED_PROXIES: "127.0.0.1,::1,172.18.0.0/16"
+```
+
+### Proxy on Another Host
+
+Nothing to configure if it reaches Sharkord over a private address, which is the normal case for two machines on the same network.
+
+If it connects over a public address, add that one address, and only that one:
+
+```ini
+[server]
+trustedProxies[]=127.0.0.1
+trustedProxies[]=::1
+trustedProxies[]=203.0.113.9
+```
+
+Either way, Sharkord's own port should not be reachable from anywhere except that host. Trusting an address decides which headers are believed; it does not stop anyone else connecting directly.
+
+### Cloudflare in Front of Your Proxy
+
+This is the case that catches people out. With the orange cloud on, there are two hops: Cloudflare, then your own proxy. Cloudflare sets `X-Forwarded-For` to the visitor address, and your proxy then appends the Cloudflare edge address it received the request from, so Sharkord sees:
+
+```
+X-Forwarded-For: 203.0.113.7, 172.68.0.1
+```
+
+The right-most entry is Cloudflare's edge. Unless Sharkord knows that address is a proxy, that is the address every one of your users gets rate limited on. Trusting only your local proxy is not enough here.
+
+Cloudflare's edge is public, so nothing in the default list covers it. Add its ranges, published at [cloudflare.com/ips-v4](https://www.cloudflare.com/ips-v4/) and [cloudflare.com/ips-v6](https://www.cloudflare.com/ips-v6/), keeping the private ranges you still need for your own proxy:
+
+```ini
+[server]
+trustedProxies[]=127.0.0.1
+trustedProxies[]=::1
+trustedProxies[]=172.16.0.0/12
+trustedProxies[]=173.245.48.0/20
+trustedProxies[]=103.21.244.0/22
+# ...the rest of the published list
+```
+
+The alternative, if you would rather keep that list in one place, is to have your proxy resolve the visitor address itself and hand Sharkord a single clean entry. In Nginx:
+
+```nginx
+# repeat for every published cloudflare range
+set_real_ip_from 173.245.48.0/20;
+real_ip_header CF-Connecting-IP;
+
+proxy_set_header X-Forwarded-For $remote_addr;
+```
+
+Either way, the list changes occasionally, so re-check it when Cloudflare announces new ranges.
+
+<Alert type="warning" title="Media cannot go through Cloudflare">
+  The orange cloud proxies HTTP and WebSocket traffic only. Voice and video use
+  UDP and TCP on port `40000` and never reach it, so `webRtc.announcedAddress`
+  must point at your server's real address: either the raw IP, or a second
+  DNS-only (grey cloud) record such as `media.example.com`. Point it at a
+  proxied record and every client will try to send media to Cloudflare and
+  hear nothing.
+</Alert>
+
+Sharkord pings its WebSocket every 30 seconds from both ends, so Cloudflare's idle timeout is not something you need to work around.
+
+### Cloudflare Tunnel
+
+`cloudflared` runs on the server and connects outward, so requests reach Sharkord from loopback, which is already trusted, and the visitor address arrives in the `X-Forwarded-For` that Cloudflare set. Nothing to configure.
+
+Media still does not go through the tunnel. Port `40000` has to be reachable directly, with `webRtc.announcedAddress` set to an address that is not proxied.
+
+### Kubernetes Ingress
+
+Usually nothing to configure, since pod and service CIDRs are private by default. Two things are worth checking: that the ingress controller passes `X-Forwarded-For` at all, and whether the cluster is shared with workloads you do not control, in which case narrow the list to the controller's pod CIDR rather than trusting everything private.
+
+## Is It Working?
+
+If forwarded headers arrive from an address that is not trusted, the server logs a warning once per run:
+
+```
+Requests are arriving from 172.18.0.4 with forwarded headers, but that address is
+not in server.trustedProxies, so the headers are ignored and every client is rate
+limited as one.
+```
+
+That line is the fastest confirmation that something is missing, and it tells you the exact address to add. To check the other direction, open a user in the server settings with `VIEW_USER_SENSITIVE_DATA` and confirm the IP shown is the user's, not your proxy's.
+
+## What the Proxy Has to Pass Through
+
+Whichever proxy you use, four things need to be right. The [Caddy](./caddy), [Nginx](./nginx) and [Apache](./apache) guides each set them up.
+
+| Requirement | Why |
+| --- | --- |
+| WebSocket upgrade | Sharkord runs on one long-lived WebSocket. Without the upgrade headers, the client never connects. |
+| A long read timeout | That connection is idle between messages. A 60 second default drops users constantly. |
+| No request body limit | Uploads stream through the proxy. Nginx caps bodies at 1 MB by default, which fails every attachment. |
+| `X-Forwarded-For` | Everything above. |
+
+## Media Does Not Go Through the Proxy
+
+Only HTTP and WebSocket traffic on port `4991` passes through the reverse proxy. Voice, webcam and screen sharing go straight to port `40000` on UDP and TCP, so that port stays open in your firewall and is not something the proxy can terminate.
+
+Behind NAT or Docker, also set `webRtc.announcedAddress` to the public address clients should send media to. See [Configuration](/docs/configuration).
+
+## Browser Origins
+
+`server.allowedOrigins` defaults to `*`, which lets any origin call the server. If you serve the client from exactly one hostname, narrow it:
+
+```ini
+[server]
+allowedOrigins[]=https://chat.example.com
+```
+
+Requests from other origins then get no CORS headers back and are blocked by the browser. This also applies to [plugin HTTP routes](/docs/plugins/http).

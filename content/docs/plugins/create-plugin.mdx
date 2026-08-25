@@ -78,7 +78,7 @@ bun link @sharkord/plugin-builder
 
 ### 4. Write the Server Half
 
-Edit `src/server/index.ts`. Both `onLoad` and `onUnload` are required exports:
+Edit `src/server/index.ts`. `onLoad` is required, and `onUnload` should be there too:
 
 ```ts
 import {

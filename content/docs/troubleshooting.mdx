@@ -16,7 +16,15 @@ icon: Bug
 
   </AccordionItem>
   <AccordionItem title="Everyone gets 'Too many requests'">
-    Your reverse proxy's address is being rate limited instead of the users behind it. Add the proxy to `trustedProxies` in [`config.ini`](/docs/configuration) and restart Sharkord.
+    Your reverse proxy's address is being rate limited instead of the users behind it. The server logs this once at the point it happens, naming the address to add:
+
+```
+Requests are arriving from 172.18.0.4 with forwarded headers, but that address is
+not in server.trustedProxies, so the headers are ignored and every client is rate
+limited as one.
+```
+
+Loopback and private ranges are trusted by default, so this normally only comes up when a CDN such as Cloudflare sits in front of your proxy, or when you narrowed the list yourself. See [Behind a Proxy](/docs/https/behind-a-proxy).
   </AccordionItem>
   <AccordionItem title="File uploads fail">
     Large uploads that fail immediately are usually stopped by the reverse proxy, not by Sharkord. Nginx caps request bodies at 1 MB by default; set `client_max_body_size 0`. See the [Nginx guide](/docs/https/nginx).
@@ -48,7 +56,7 @@ icon: Bug
     - Plugins are disabled server-wide. Turn them on in the server settings first.
     - The plugin folder name does not match the `id` in its `manifest.json`.
     - `server/index.js` or `client/index.js` is missing from the plugin folder. Both are required, even if the plugin has no UI.
-    - The plugin does not export both `onLoad` and `onUnload`.
+    - The plugin does not export an `onLoad` function. A missing `onUnload` only logs a warning.
     - The manifest's `sdkVersion` does not match the server's plugin SDK version.
 
     See [Installation](/docs/plugins/installation).

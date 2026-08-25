@@ -36,6 +36,18 @@ The access token is printed once, on the first start. If you missed it:
 docker logs sharkord
 ```
 
+### Health Check
+
+`/healthz` answers with `{"status":"ok"}` and needs no authentication, which makes it a usable container health check:
+
+```yaml
+healthcheck:
+  test: ["CMD", "curl", "-f", "http://localhost:4991/healthz"]
+  interval: 30s
+  timeout: 5s
+  retries: 3
+```
+
 ### File Ownership
 
 The container drops to the `bun` user. If the mounted directory belongs to another UID on the host, set `PUID` and `PGID` and the entrypoint remaps the user before starting:
@@ -56,8 +68,8 @@ docker run -e SHARKORD_WEBRTC_ANNOUNCED_ADDRESS=203.0.113.10 ...
 
 <Alert type="info" title="Behind a NAT or a reverse proxy?">
   Set `SHARKORD_WEBRTC_ANNOUNCED_ADDRESS` to the public IP or domain clients
-  should send media to, and `SHARKORD_TRUSTED_PROXIES` to the address of your
-  proxy. See [Configuration](/docs/configuration).
+  should send media to. Forwarded client addresses need no setup unless a CDN
+  is involved: see [Behind a Proxy](/docs/https/behind-a-proxy).
 </Alert>
 
 ### Updating

@@ -55,7 +55,7 @@ trustedProxies[]=127.0.0.1
 | `autoupdate`          | `false`  | Check for new releases every hour and install them. Ignored in Docker. See [Updating](/docs/updating). |
 | `maxRequestBodyBytes` | `262144` | Maximum size of an HTTP request body, in bytes. File uploads are not affected; their limits live in the server settings. |
 | `allowedOrigins`      | `*`      | Origins allowed to call the server from a browser. `*` allows any.                                    |
-| `trustedProxies`      | empty    | Addresses or CIDR ranges of your reverse proxies. See [Running behind a proxy](#running-behind-a-proxy). |
+| `trustedProxies`      | loopback and private ranges | Addresses or CIDR ranges whose forwarded headers are believed. See [Behind a Proxy](/docs/https/behind-a-proxy). |
 
 ## WebRTC
 
@@ -119,7 +119,7 @@ Every option above can be set with an environment variable, which is usually eas
 List options take a comma-separated value:
 
 ```bash
-SHARKORD_TRUSTED_PROXIES="127.0.0.1,172.16.0.0/12"
+SHARKORD_TRUSTED_PROXIES="127.0.0.1,::1,10.0.0.0/8"
 ```
 
 Rate limiters cannot be set through environment variables. Use `config.ini` for those.
@@ -128,16 +128,18 @@ There is one more variable, `SHARKORD_DATA_PATH`, which moves the whole data dir
 
 ## Running Behind a Proxy
 
-When Sharkord sits behind Caddy, Nginx, Apache, or a Docker network, every request arrives from the proxy's address. Anything limited per IP, such as connecting, logging in, joining, and uploading files, then lands in a single shared bucket, and one busy user locks out everyone else.
-
-Listing your proxy in `trustedProxies` fixes that: Sharkord then reads the real client address from the `X-Forwarded-For` or `Forwarded` header the proxy sets.
+`trustedProxies` defaults to loopback and every private range:
 
 ```ini
 [server]
 trustedProxies[]=127.0.0.1
 trustedProxies[]=::1
+trustedProxies[]=10.0.0.0/8
+trustedProxies[]=172.16.0.0/12
+trustedProxies[]=192.168.0.0/16
+trustedProxies[]=fc00::/7
 ```
 
-Only list addresses you control. Anything listed here is allowed to claim, on behalf of a client, an address it was not connected from. If the list is empty, Sharkord ignores those headers completely and uses the socket address, which over-limits rather than letting anyone spoof their way around a limit.
+So a proxy on the same machine, in another container, or elsewhere on your network is believed without any configuration. Public addresses are not, which is why a CDN such as Cloudflare has to be added by hand. Setting the option replaces the list rather than extending it.
 
-See the [HTTPS setup guides](/docs/https/why) for full reverse proxy examples.
+[Behind a Proxy](/docs/https/behind-a-proxy) covers this in full, including how the client address is resolved, when to narrow the default, and what the proxy itself has to pass through.

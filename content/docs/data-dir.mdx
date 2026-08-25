@@ -29,6 +29,7 @@ SHARKORD_DATA_PATH=/srv/sharkord ./sharkord
 | ------------------ | ----------------------------------------------------------- |
 | `config.ini`       | Server [configuration](/docs/configuration)                  |
 | `db.sqlite`        | The database: users, roles, channels, messages, settings     |
+| `backups/`         | Snapshots taken automatically before [migrations](/docs/migrations) |
 | `uploads/`         | Files being uploaded, before they are confirmed              |
 | `public/`          | Stored attachments, avatars, banners, and emojis. See [Storage and Uploads](/docs/administration/storage) |
 | `tmp/`             | Scratch space for in-flight operations                       |
@@ -44,7 +45,9 @@ Only `config.ini` is meant to be edited by hand. Do not edit `db.sqlite` while t
 
 Stop the server, copy the directory, start it again. Copying `db.sqlite` while the server is writing to it can produce a backup that will not open.
 
-Back up before every update. Sharkord is in alpha and migrations are not guaranteed to be reversible.
+Back up before every update. Sharkord is in alpha and migrations only move forward.
+
+Sharkord also snapshots the database into `backups/` on its own whenever an update has schema changes to apply. That covers the database only, never your uploaded files, and the snapshots are never pruned. See [Database Migrations](/docs/migrations).
 
 ### Migrating to Another Machine
 

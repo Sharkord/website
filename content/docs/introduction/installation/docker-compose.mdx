@@ -23,8 +23,6 @@ services:
       SHARKORD_PORT: "4991"
       # the address clients send voice and video to
       SHARKORD_WEBRTC_ANNOUNCED_ADDRESS: "your-domain.com"
-      # caddy is the only thing talking to sharkord, so trust its address
-      SHARKORD_TRUSTED_PROXIES: "172.16.0.0/12"
     volumes:
       - ./data:/home/bun/.config/sharkord
   caddy:
@@ -65,6 +63,6 @@ Caddy requests a certificate from Let's Encrypt on the first request, so your in
 ### Notes
 
 - **Media ports are published directly.** Caddy proxies HTTP and WebSocket traffic only; WebRTC media goes straight to port `40000` on both TCP and UDP. Open it in your firewall.
-- **`SHARKORD_TRUSTED_PROXIES`** tells Sharkord that requests arriving from the Caddy container are proxied, so rate limits are applied per user instead of per proxy. `172.16.0.0/12` covers the default Docker bridge range; narrow it to your actual network if you defined one.
+- **Forwarded addresses work out of the box.** Sharkord trusts private ranges by default, which covers the Compose network Caddy talks to it over, so rate limits apply per user rather than per proxy. See [Behind a Proxy](/docs/https/behind-a-proxy) if you put a CDN in front of Caddy.
 - **The access token** from the first launch is in `docker compose logs sharkord`.
 - **Your data** lives in `./data`. Back it up before updating.

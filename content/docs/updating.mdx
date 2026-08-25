@@ -5,9 +5,11 @@ icon: CloudDownload
 ---
 
 <Alert type="warning" title="Back up first">
-  Sharkord is in alpha and database migrations are not reversible. Copy your
-  [data directory](/docs/data-dir) somewhere safe before every update, so you
-  can roll back by restoring it alongside the old binary.
+  Copy your [data directory](/docs/data-dir) somewhere safe before every
+  update, so you can roll back by restoring it alongside the old binary.
+  Sharkord also snapshots the database by itself before applying schema
+  changes, but that covers the database only. See [Database
+  Migrations](/docs/migrations).
 </Alert>
 
 ### Manual Update (Recommended)
@@ -16,7 +18,15 @@ icon: CloudDownload
 2. Download the [latest release](https://github.com/Sharkord/sharkord/releases/latest) for your platform.
 3. Replace the old binary with the new one and start it again.
 
-Your configuration and data are untouched; they live in the data directory, not next to the binary.
+Your configuration and data are untouched; they live in the data directory, not next to the binary. On the first start, the new version applies any [database migrations](/docs/migrations) it ships, taking a snapshot first.
+
+### Which Version Is Running?
+
+The settings show it, and every HTTP response carries it:
+
+```bash
+curl -sI https://your-server/healthz | grep -i x-sharkord-version
+```
 
 ### Docker
 

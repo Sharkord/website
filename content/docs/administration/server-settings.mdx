@@ -4,7 +4,9 @@ description: Everything on the General tab, and what each option changes.
 icon: Settings2
 ---
 
-Server settings live in the interface, not in a config file. Open the server menu and choose settings. Editing anything here needs the `MANAGE_SETTINGS` permission, and the owner always has it.
+Server settings live in the interface, not in a config file. Open the server menu and choose settings.
+
+Editing the General tab needs `MANAGE_SETTINGS`. The Storage tab is gated separately by `MANAGE_STORAGE`, so you can hand out storage administration without handing over the rest of the server. Other tabs have their own permissions, listed below. The owner has all of them.
 
 Machine-level options (ports, rate limits, proxies) live in [`config.ini`](/docs/configuration) instead.
 

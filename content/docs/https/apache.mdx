@@ -116,17 +116,9 @@ sudo systemctl restart apache2
 
 ### Step 7: Tell Sharkord About the Proxy
 
-Apache forwards the client address in `X-Forwarded-For`, but Sharkord ignores that header unless it knows the request came from your proxy. Without this, every user shares one rate limit bucket.
+No configuration needed. Sharkord trusts forwarded headers from loopback and from private networks by default, so a proxy on this machine is believed and the real client address is read from `X-Forwarded-For`.
 
-Add to `config.ini` in your [data directory](/docs/data-dir):
-
-```ini
-[server]
-trustedProxies[]=127.0.0.1
-trustedProxies[]=::1
-```
-
-Restart Sharkord afterwards.
+Two exceptions are worth knowing: a CDN such as Cloudflare in front of this proxy has to be added by hand, and a network you do not fully control should be narrowed rather than trusted wholesale. Both are covered in [Behind a Proxy](./behind-a-proxy).
 
 ### Step 8: Configure the Firewall
 

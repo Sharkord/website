@@ -42,7 +42,12 @@ icon: Info
     Not yet. Sharkord runs in the browser, including mobile browsers. Native clients are a possibility for the future.
   </AccordionItem>
   <AccordionItem title="Does Sharkord phone home?">
-    There is no telemetry or analytics. The server does make outbound requests in three cases: to look up its own public IP at startup, unless you set `webRtc.announcedAddress`; to GitHub, if you enable automatic updates or open the update panel; and to the plugin marketplace when you browse or install plugins.
+    There is no telemetry or analytics, and nothing about your server or its users is reported anywhere. The server does make outbound requests in four cases:
+
+    - To look up its own public IP at startup, unless you set `webRtc.announcedAddress`.
+    - To GitHub, if you enable automatic updates or open the update panel.
+    - To the plugin marketplace, when you browse or install plugins.
+    - To `ipinfo.io`, when a user logs in, to record the city and country shown in their login history. The user's IP address is sent to that service, and results are cached.
   </AccordionItem>
   <AccordionItem title="Is Sharkord vibecoded?">
     No. AI is used as a tool for development, documentation, and testing, but design and implementation decisions are made by the developers.

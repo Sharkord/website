@@ -31,7 +31,7 @@ my-plugin/
 
 All three are required, even when a plugin has no interface. The folder name must match the `id` in the manifest.
 
-`server/index.js` must export two functions:
+`server/index.js` exports its lifecycle functions:
 
 ```ts
 const onLoad = async (ctx: PluginContext) => {
@@ -45,7 +45,9 @@ const onUnload = async (ctx: UnloadPluginContext) => {
 export { onLoad, onUnload };
 ```
 
-`onLoad` runs at server start and when the plugin is enabled. `onUnload` runs when it is disabled, removed, or updated. Commands, actions, events, settings, hooks, and HTTP routes are unregistered for you; anything you started yourself is not.
+`onLoad` is required and runs at server start and when the plugin is enabled. `onUnload` runs when the plugin is disabled, removed, or updated.
+
+`onUnload` is optional for now: a plugin without one loads, and the server logs a warning saying it will be required in a future SDK version. Write it anyway. Commands, actions, events, settings, hooks, and HTTP routes are unregistered for you, but timers, sockets, and voice streams you started are not.
 
 ### What the Context Gives You
 

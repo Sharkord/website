@@ -44,7 +44,7 @@ Managing these needs `MANAGE_ROLES`.
 | Manage users               | Ban, unban, kick, and delete users, and assign roles.                    |
 | Move members               | Move other users between voice channels.                                 |
 | Manage messages            | Edit and delete anyone's messages, including messages posted by plugins. |
-| Manage storage             | Change the storage settings.                                             |
+| Manage storage             | Change the storage settings. Required on its own, without Manage server settings. |
 | Manage invites             | Create, edit, and revoke invites.                                        |
 | Manage updates             | See the update panel and trigger updates.                                |
 | Manage plugins             | Install, update, enable, disable, and remove plugins.                    |
@@ -72,7 +72,11 @@ So a private channel is closed until you grant view to somebody, and one user ca
 
 ### Voice Channels
 
-Joining a voice channel needs the server-level **Join voice channels** permission plus the channel-level **Join**. Publishing then checks the channel level: **Speak** for the microphone, **Enable webcam** for video, **Share screen** for screen sharing. Losing one of these while connected takes the corresponding stream away rather than disconnecting you.
+Joining a voice channel needs the server-level **Join voice channels** permission plus the channel-level **Join**.
+
+Publishing is checked twice. The channel permission is always required (**Speak** for the microphone, **Enable webcam** for video, **Share screen** for screen sharing and its audio), and video and screen sharing additionally require the matching server-level permission. So removing **Share screen** from a role stops that role sharing anywhere, public channels included, while a channel-level override restricts it to one channel.
+
+Losing one of these while connected takes the corresponding stream away rather than disconnecting you.
 
 Moving someone else between voice channels needs **Move members**, and the target has to be allowed to join the destination.
 
