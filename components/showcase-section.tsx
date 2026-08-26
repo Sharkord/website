@@ -87,7 +87,6 @@ export function ShowcaseSection() {
       id="screenshots"
       className="relative overflow-hidden border-b border-border/40 py-24 md:py-28"
     >
-
       <div className="container relative mx-auto px-4">
         <div className="mb-14 max-w-2xl">
           <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
@@ -158,19 +157,24 @@ export function ShowcaseSection() {
             </button>
           </div>
 
-          <div className="mt-5 flex items-center justify-center gap-2">
+          <div className="mt-3 flex items-center justify-center">
             {screenshots.map((_, index) => (
               <button
                 key={index}
                 type="button"
                 onClick={() => emblaApi?.scrollTo(index)}
-                className={`h-2.5 rounded-full transition-all ${
-                  index === selectedIndex
-                    ? "w-7 bg-primary"
-                    : "w-2.5 bg-muted-foreground/35 hover:bg-muted-foreground/55"
-                }`}
+                className="flex h-6 items-center justify-center px-2"
                 aria-label={`Go to screenshot ${index + 1}`}
-              />
+                aria-current={index === selectedIndex}
+              >
+                <span
+                  className={`block h-2.5 rounded-full transition-all ${
+                    index === selectedIndex
+                      ? "w-7 bg-primary"
+                      : "w-2.5 bg-muted-foreground/35"
+                  }`}
+                />
+              </button>
             ))}
           </div>
         </div>

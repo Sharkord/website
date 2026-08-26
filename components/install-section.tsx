@@ -136,7 +136,7 @@ export function InstallSection() {
           No domain of your own?{" "}
           <Link
             href="/docs/domains"
-            className="text-foreground/80 underline-offset-4 hover:text-foreground hover:underline"
+            className="text-foreground/80 underline underline-offset-4 transition-colors hover:text-foreground"
           >
             We give you one for free
           </Link>

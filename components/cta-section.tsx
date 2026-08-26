@@ -49,10 +49,10 @@ export function CTASection() {
             </Button>
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-x-5 text-sm text-muted-foreground">
             <Link
               href="/docs"
-              className="inline-flex items-center gap-1.5 underline-offset-4 transition hover:text-foreground hover:underline"
+              className="inline-flex items-center gap-1.5 py-1.5 underline underline-offset-4 transition-colors hover:text-foreground"
             >
               <BookOpen className="h-3.5 w-3.5" />
               Documentation
@@ -60,7 +60,7 @@ export function CTASection() {
             <Link
               href="https://github.com/Sharkord/sharkord"
               target="_blank"
-              className="inline-flex items-center gap-1.5 underline-offset-4 transition hover:text-foreground hover:underline"
+              className="inline-flex items-center gap-1.5 py-1.5 underline underline-offset-4 transition-colors hover:text-foreground"
             >
               <Github className="h-3.5 w-3.5" />
               Source and issues
@@ -68,7 +68,7 @@ export function CTASection() {
             <Link
               href="https://github.com/Sharkord/sharkord/releases/latest"
               target="_blank"
-              className="underline-offset-4 transition hover:text-foreground hover:underline"
+              className="inline-block py-1.5 underline underline-offset-4 transition-colors hover:text-foreground"
             >
               Latest release
             </Link>

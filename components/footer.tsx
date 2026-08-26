@@ -16,7 +16,10 @@ const columns = [
     title: "Run it",
     links: [
       { label: "Configuration", href: "/docs/configuration" },
-      { label: "Roles and permissions", href: "/docs/administration/roles-permissions" },
+      {
+        label: "Roles and permissions",
+        href: "/docs/administration/roles-permissions",
+      },
       { label: "Updating", href: "/docs/updating" },
       { label: "Troubleshooting", href: "/docs/troubleshooting" },
     ],
@@ -25,7 +28,10 @@ const columns = [
     title: "Build",
     links: [
       { label: "Plugin docs", href: "/docs/plugins/overview" },
-      { label: "Plugin marketplace", href: "https://github.com/Sharkord/plugins" },
+      {
+        label: "Plugin marketplace",
+        href: "https://github.com/Sharkord/plugins",
+      },
       { label: "Contributing", href: "/docs/contributing" },
       { label: "License", href: "/docs/license" },
     ],
@@ -52,12 +58,13 @@ export function Footer() {
               A self-hosted place for your group to talk. Open source, MIT
               licensed, currently in alpha.
             </p>
-            <div className="mt-4 flex items-center gap-3">
+
+            <div className="mt-3 -ml-2 flex items-center">
               <Link
                 href="https://github.com/Sharkord/sharkord"
                 target="_blank"
                 aria-label="GitHub"
-                className="text-muted-foreground transition-colors hover:text-foreground"
+                className="p-2 text-muted-foreground transition-colors hover:text-foreground"
               >
                 <Github className="h-5 w-5" />
               </Link>
@@ -65,7 +72,7 @@ export function Footer() {
                 href="https://x.com/sharkordapp"
                 target="_blank"
                 aria-label="Sharkord on X"
-                className="text-muted-foreground transition-colors hover:text-foreground"
+                className="p-2 text-muted-foreground transition-colors hover:text-foreground"
               >
                 <Twitter className="h-5 w-5" />
               </Link>
@@ -73,7 +80,7 @@ export function Footer() {
                 href="https://ko-fi.com/B0B71U3476"
                 target="_blank"
                 aria-label="Support Sharkord on Ko-fi"
-                className="text-muted-foreground transition-colors hover:text-foreground"
+                className="p-2 text-muted-foreground transition-colors hover:text-foreground"
               >
                 <Heart className="h-5 w-5" />
               </Link>
@@ -83,13 +90,15 @@ export function Footer() {
           {columns.map((column) => (
             <div key={column.title}>
               <h3 className="text-sm font-semibold">{column.title}</h3>
-              <ul className="mt-3 space-y-2">
+              <ul className="mt-2 space-y-0.5">
                 {column.links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      target={link.href.startsWith("http") ? "_blank" : undefined}
-                      className="text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
+                      target={
+                        link.href.startsWith("http") ? "_blank" : undefined
+                      }
+                      className="inline-block py-1 text-sm text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
                     >
                       {link.label}
                     </Link>

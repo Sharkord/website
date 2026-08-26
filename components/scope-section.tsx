@@ -23,7 +23,7 @@ export function ScopeSection() {
             Wondering whether it will handle your group?{" "}
             <Link
               href="/docs/common-questions"
-              className="text-foreground/80 underline-offset-4 hover:text-foreground hover:underline"
+              className="text-foreground/80 underline underline-offset-4 transition-colors hover:text-foreground"
             >
               We answer that here
             </Link>

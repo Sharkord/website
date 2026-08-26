@@ -156,7 +156,7 @@ export function ComparisonSection() {
           <Link
             href="https://github.com/Sharkord/sharkord/issues"
             target="_blank"
-            className="underline-offset-4 hover:text-foreground hover:underline"
+            className="underline underline-offset-4 transition-colors hover:text-foreground"
           >
             Tell us and we will fix it
           </Link>
