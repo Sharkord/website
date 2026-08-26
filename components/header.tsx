@@ -1,55 +1,44 @@
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
 import { BookOpen, Github } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4">
-        <div className="flex items-center gap-1.5 sm:gap-2">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto flex h-14 items-center justify-between gap-4 px-4 sm:h-16">
+        <Link href="/" className="flex items-center gap-2">
           <Image
             src="/logo.webp"
-            alt="Sharkord Logo"
-            width={40}
-            height={40}
-            className="sm:w-12 sm:h-12"
+            alt=""
+            width={32}
+            height={32}
+            className="size-8 sm:size-9"
           />
-          <span className="text-lg sm:text-xl font-bold">Sharkord</span>
-        </div>
+          <span className="text-lg font-semibold sm:text-xl">Sharkord</span>
+        </Link>
 
-        <nav className="flex items-center gap-1.5 sm:gap-3">
-          <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
-            <Link href="/docs">Docs</Link>
-          </Button>
-          <Button variant="ghost" size="sm" asChild className="sm:hidden px-2">
-            <Link href="/docs" aria-label="Docs">
-              <BookOpen className="w-5 h-5" />
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <Button variant="ghost" size="icon-sm" asChild>
+            <Link href="/docs" aria-label="Documentation">
+              <BookOpen className="h-4 w-4" />
             </Link>
           </Button>
-          <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
-            <Link href="https://github.com/sharkord/sharkord" target="_blank">
-              GitHub
-            </Link>
-          </Button>
-          <Button variant="ghost" size="sm" asChild className="sm:hidden px-2">
+          <Button variant="ghost" size="icon-sm" asChild>
             <Link
-              href="https://github.com/sharkord/sharkord"
+              href="https://github.com/Sharkord/sharkord"
               target="_blank"
-              aria-label="GitHub"
+              aria-label="Sharkord on GitHub"
             >
-              <Github className="w-5 h-5" />
+              <Github className="h-4 w-4" />
             </Link>
           </Button>
-          <Button size="sm" asChild className="text-xs sm:text-sm px-2 sm:px-4">
+          <Button size="sm" asChild>
             <Link href="https://demo.sharkord.com" target="_blank">
-              Demo
+              Live demo
             </Link>
           </Button>
-          <Button size="sm" asChild className="text-xs sm:text-sm px-2 sm:px-4">
-            <Link href="#get-started">Get Started</Link>
-          </Button>
-        </nav>
+        </div>
       </div>
     </header>
   );

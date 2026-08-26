@@ -28,21 +28,21 @@ Three modes, plus off. All of them run in your browser, not on the server.
 | RNNoise | Medium | Medium | Cleaner in noisy rooms, can sound more processed |
 | DTLN | High | High | Strong suppression, more likely to affect tone or add artefacts |
 
-**Standard** is the browser's own suppression: the most compatible option and the right default. **RNNoise** is worth trying when Standard leaves too much background noise. **DTLN** is the heaviest and suits fast hardware.
+**RNNoise** is the default, and it is the one to keep unless you have a reason not to. **Standard** is the browser's own suppression: lighter, the most compatible, and the fallback if RNNoise misbehaves on your setup. **DTLN** is the heaviest of the three and suits fast hardware.
 
-RNNoise and DTLN are experimental and do not work on every browser, device, and microphone combination. The figures above are approximate; real cost depends on your machine.
+RNNoise and DTLN are still marked experimental and do not work on every browser, device, and microphone combination. The figures above are approximate; real cost depends on your machine.
 
 ### Other Microphone Options
 
-| Option | What it does |
-| --- | --- |
-| Echo cancellation | Stops your speakers being picked up by your microphone. Leave it on unless you use headphones and want the rawest audio. |
-| Automatic gain control | Evens out your volume as you move relative to the microphone. Turn it off if it pumps or amplifies room noise between sentences. |
-| Noise gate | Cuts the microphone below a threshold, so quiet background noise sends nothing at all. Unavailable in some browsers, in which case audio is sent ungated. |
+| Option | Default | What it does |
+| --- | --- | --- |
+| Echo cancellation | On | Stops your speakers being picked up by your microphone. Leave it on unless you use headphones and want the rawest audio. |
+| Automatic gain control | On | Evens out your volume as you move relative to the microphone. Turn it off if it pumps or amplifies room noise between sentences. |
+| Noise gate | Off | Cuts the microphone below a threshold, so quiet background noise sends nothing at all. Unavailable in some browsers, in which case audio is sent ungated. |
 
 ## Webcam
 
-Choose the camera, then set resolution (144p to 2160p) and framerate (5 to 120 fps). **Start video preview** shows what others will see. **Mirror own video** flips your local preview only, not what anyone else receives.
+Choose the camera, then set resolution (144p to 2160p) and framerate (5 to 120 fps). It starts at 720p and 30 fps, which is the right trade for most people. **Start video preview** shows what others will see. **Mirror own video** flips your local preview only, not what anyone else receives.
 
 ## Simulcast
 

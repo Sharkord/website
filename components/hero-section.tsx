@@ -1,54 +1,69 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Github } from "lucide-react";
+import { ArrowRight, Github, Play } from "lucide-react";
 import Link from "next/link";
 
 export function HeroSection() {
   return (
     <section className="relative overflow-hidden border-b border-border/40">
-      <div className="absolute inset-0 bg-linear-to-b from-primary/5 to-transparent" />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-40 [mask-image:radial-gradient(70%_50%_at_50%_0%,black,transparent)]"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px)",
+          backgroundSize: "64px 64px",
+        }}
+      />
 
-      <div className="container relative mx-auto px-4 py-24 md:py-32 lg:py-40">
-        <div className="mx-auto max-w-4xl text-center">
-          <h1 className="mb-6 text-4xl font-bold tracking-tight text-balance sm:text-5xl md:text-6xl lg:text-7xl">
-            <span className="bg-linear-to-r from-foreground via-foreground to-foreground/80 bg-clip-text text-transparent">
-              Your conversations.
-            </span>{" "}
-            <span className="bg-linear-to-r from-primary via-primary to-primary/70 bg-clip-text text-transparent">
-              Your data.
-            </span>{" "}
-            <span className="bg-linear-to-r from-foreground/80 via-foreground to-foreground bg-clip-text text-transparent">
-              Your control.
-            </span>
+      <div className="container relative mx-auto px-4 py-24 md:py-32">
+        <div className="mx-auto max-w-3xl text-center">
+          <h1 className="mt-6 text-4xl font-semibold tracking-tight text-balance sm:text-5xl md:text-6xl">
+            Your conversations. Your data. Your control.
           </h1>
 
-          <p className="mb-10 text-lg text-muted-foreground text-pretty md:text-xl max-w-3xl mx-auto leading-relaxed">
+          <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground text-pretty">
             Open-source chat platform for friends who value privacy. Voice,
-            video, and screen sharing without the bloat or surveillance.{" "}
-            <Link href="/docs" className="text-primary hover:underline">
-              Read the docs
-            </Link>
-            .
+            video, and screen sharing without the bloat or surveillance.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="w-full sm:w-auto group" asChild>
-              <Link href="#get-started">
-                Get Started{" "}
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Button size="lg" className="w-full sm:w-auto" asChild>
+              <Link href="https://demo.sharkord.com" target="_blank">
+                <Play className="h-4 w-4" />
+                Try it right now
               </Link>
             </Button>
             <Button
               size="lg"
               variant="outline"
-              className="w-full sm:w-auto group"
+              className="w-full sm:w-auto"
               asChild
             >
-              <Link href="https://github.com/sharkord/sharkord" target="_blank">
-                <Github className="mr-2 h-4 w-4 transition-transform group-hover:rotate-12" />{" "}
-                Star on GitHub
+              <Link href="#install">
+                Set up your own
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+            <Button
+              size="lg"
+              variant="ghost"
+              className="w-full sm:w-auto"
+              asChild
+            >
+              <Link
+                href="https://github.com/Sharkord/sharkord"
+                target="_blank"
+                aria-label="Sharkord on GitHub"
+              >
+                <Github className="h-4 w-4" />
+                GitHub
               </Link>
             </Button>
           </div>
+
+          <p className="mt-6 text-sm text-muted-foreground">
+            No account with us. No subscription. No upsells, ever.
+          </p>
         </div>
       </div>
     </section>

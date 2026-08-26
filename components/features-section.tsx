@@ -1,79 +1,76 @@
-import { Shield, Server, Code, Zap, Users, Video } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import Link from "next/link";
+import {
+  EyeOff,
+  Infinity as InfinityIcon,
+  Lock,
+  MonitorPlay,
+  Puzzle,
+  Users,
+} from "lucide-react";
 
 const features = [
   {
-    icon: Shield,
-    title: "Your Data, Your Rules",
+    icon: Lock,
+    title: "Your conversations stay yours",
     description:
-      "Host it yourself. Your messages and files stay on your machine, not in someone else's cloud.",
+      "Everything anyone says or shares sits on your machine. No company reads it, sells it, trains on it, or hands it to anyone else.",
   },
   {
-    icon: Server,
-    title: "Run It Anywhere",
-    description: "Lightweight by design. Run it on modest hardware or a VPS",
+    icon: MonitorPlay,
+    title: "Hang out, not just chat",
+    description:
+      "Voice, webcam and screen sharing with sound, so you can play something together or watch a film without anyone paying for a better picture.",
   },
   {
-    icon: Video,
-    title: "Crystal Clear Quality",
+    icon: InfinityIcon,
+    title: "No limits and no upsells",
     description:
-      "WebRTC voice, video, and smooth screen sharing. Encrypted in transit with TLS/SRTP when served over HTTPS.",
-  },
-  {
-    icon: Zap,
-    title: "Lightweight & Fast",
-    description:
-      "Clean, minimal interface that doesn't hog your RAM or slow down your computer. Just the features you actually use.",
-  },
-  {
-    icon: Code,
-    title: "Fully Open Source",
-    description:
-      "Inspect the code, customize it, contribute improvements. No hidden telemetry or mysterious updates.",
+      "No premium tier, no member cap, no locked features. The only limit is the machine you put it on, and it asks for very little.",
   },
   {
     icon: Users,
-    title: "No Artificial Limits",
+    title: "You decide who does what",
     description:
-      "No premium tiers or user caps. Your hardware and bandwidth set the ceiling.",
+      "Give people the run of the place or keep them to one room. Who can talk, post, invite or change things is entirely up to you.",
+  },
+  {
+    icon: Puzzle,
+    title: "Make it your own",
+    description:
+      "Add a music bot, a soundboard, or something nobody has built yet. Extras are one click away, and anyone can make more.",
+  },
+  {
+    icon: EyeOff,
+    title: "Nobody is watching",
+    description:
+      "No ads, no tracking, no algorithm deciding what you see. Nothing about your server is reported to us, because there is no us to report it to.",
   },
 ];
 
 export function FeaturesSection() {
   return (
-    <section id="features" className="py-24 md:py-32 border-b border-border/40">
+    <section id="features" className="border-b border-border/40 py-24 md:py-28">
       <div className="container mx-auto px-4">
-        <div className="mx-auto max-w-2xl text-center mb-16">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl mb-4 text-balance">
-            Everything You Need, Nothing You Don&apos;t
+        <div className="mb-14 max-w-2xl">
+          <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+            Everything you liked about group chat, none of the landlord
           </h2>
-          <p className="text-lg text-muted-foreground text-pretty leading-relaxed">
-            Voice, video, text, and screen sharing without the bloat, memory
-            leaks, or corporate surveillance.
-          </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
-          {features.map((feature, index) => {
+        <div className="mx-auto grid overflow-hidden rounded-xl border-l border-t border-border/60 md:grid-cols-2 lg:grid-cols-3">
+          {features.map((feature) => {
             const Icon = feature.icon;
+
             return (
-              <Card
-                key={index}
-                className="bg-card border-border/50 hover:border-primary/50 transition-all duration-200 group"
+              <div
+                key={feature.title}
+                className="group flex flex-col gap-3 border-b border-r border-border/60 p-7 transition-colors hover:bg-card/60"
               >
-                <CardContent className="p-6">
-                  <div className="mb-4 inline-flex items-center justify-center rounded-lg bg-primary/10 p-3 group-hover:bg-primary/20 transition-colors">
-                    <Icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="mb-2 text-xl font-semibold">
-                    {feature.title}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {feature.description}
-                  </p>
-                </CardContent>
-              </Card>
+                <Icon className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-foreground" />
+                <h3 className="text-base font-semibold">{feature.title}</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {feature.description}
+                </p>
+              </div>
             );
           })}
         </div>

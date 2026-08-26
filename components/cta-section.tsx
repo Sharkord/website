@@ -1,153 +1,78 @@
 import { Button } from "@/components/ui/button";
-import { Download, Github, Terminal, AlertCircle } from "lucide-react";
+import { ArrowRight, BookOpen, Github, Play } from "lucide-react";
 import Link from "next/link";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function CTASection() {
   return (
     <section
       id="get-started"
-      className="py-24 md:py-32 border-b border-border/40 bg-linear-to-b from-primary/5 to-transparent"
+      className="relative overflow-hidden border-b border-border/40 py-24 md:py-28"
     >
-      <div className="container mx-auto px-4">
-        <div className="mx-auto max-w-2xl text-center mb-12">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl mb-4 text-balance">
-            Ready to Take Control?
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-40 [mask-image:radial-gradient(60%_60%_at_50%_100%,black,transparent)]"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px)",
+          backgroundSize: "64px 64px",
+        }}
+      />
+
+      <div className="container relative mx-auto px-4">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+            Ready to take control?
           </h2>
-          <p className="text-lg text-muted-foreground text-pretty leading-relaxed">
-            Set up your own Sharkord server in minutes. Choose your deployment
-            method and start chatting on your terms.
+          <p className="mt-4 text-lg leading-relaxed text-muted-foreground text-pretty">
+            The demo is a real server you can wander around in, no sign-up. It
+            is a small one, so bring a friend rather than a football team, and
+            see if it feels right.
           </p>
-        </div>
 
-        <div className="mx-auto max-w-3xl">
-          <Alert className="mb-8 text-left border-amber-500/50 bg-amber-500/10">
-            <AlertCircle className="h-4 w-4 text-amber-600" />
-            <AlertDescription className="text-sm text-foreground">
-              <strong>Alpha Release:</strong> Sharkord is under active
-              development. Expect bugs and potential breaking changes between
-              updates.
-            </AlertDescription>
-          </Alert>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-            <Button size="lg" className="w-full sm:w-auto group" asChild>
-              <Link
-                href="https://github.com/sharkord/sharkord/releases/latest"
-                target="_blank"
-              >
-                <Download className="mr-2 h-4 w-4 transition-transform group-hover:translate-y-0.5" />
-                Download Latest
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Button size="lg" className="w-full sm:w-auto" asChild>
+              <Link href="https://demo.sharkord.com" target="_blank">
+                <Play className="h-4 w-4" />
+                Open the demo
               </Link>
             </Button>
             <Button
               size="lg"
               variant="outline"
-              className="w-full sm:w-auto group"
+              className="w-full sm:w-auto"
               asChild
             >
-              <Link href="https://github.com/sharkord/sharkord" target="_blank">
-                <Github className="mr-2 h-4 w-4 transition-transform group-hover:rotate-12" />
-                View on GitHub
-              </Link>
-            </Button>
-
-            <Button
-              size="lg"
-              variant="outline"
-              className="w-full sm:w-auto group"
-              asChild
-            >
-              <Link href="/docs">
-                <Terminal className="mr-2 h-4 w-4 transition-transform group-hover:translate-y-0.5" />
-                Read the Docs
+              <Link href="#install">
+                Set up your own
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
           </div>
 
-          <div className="mb-8 text-center">
-            <h3 className="text-2xl font-bold mb-2 text-balance">
-              Quick Start
-            </h3>
-            <p className="text-muted-foreground">
-              Choose your preferred deployment method
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div className="bg-card border border-border/50 rounded-lg p-6 text-left hover:border-primary/50 transition-colors">
-              <div className="flex items-center gap-2 mb-3">
-                <Terminal className="h-5 w-5 text-primary" />
-                <span className="font-semibold">Standalone Binary</span>
-                <span className="ml-auto text-xs text-muted-foreground">
-                  Linux x64
-                </span>
-              </div>
-              <pre className="bg-muted p-4 rounded text-sm overflow-x-auto">
-                <code className="text-foreground font-mono">
-                  {`curl -L https://github.com/sharkord/sharkord/releases/latest/download/sharkord-linux-x64 -o sharkord
- chmod +x sharkord
- ./sharkord`}
-                </code>
-              </pre>
-              <div className="mt-3 text-right text-xs">
-                <Link
-                  href="/docs/introduction/installation/linux"
-                  className="text-primary hover:underline"
-                >
-                  Full Linux install guide
-                </Link>
-              </div>
-            </div>
-
-            <div className="bg-card border border-border/50 rounded-lg p-6 text-left hover:border-primary/50 transition-colors">
-              <div className="flex items-center gap-2 mb-3">
-                <Terminal className="h-5 w-5 text-primary" />
-                <span className="font-semibold">Docker</span>
-                <span className="ml-auto text-xs text-muted-foreground">
-                  All platforms
-                </span>
-              </div>
-              <pre className="bg-muted p-4 rounded text-sm overflow-x-auto">
-                <code className="text-foreground font-mono">
-                  {`docker run \\
-   -p 4991:4991/tcp \\
-   -p 40000:40000/tcp \\
-   -p 40000:40000/udp \\
-   -v ./data:/home/bun/.config/sharkord \\
-   --name sharkord \\
-   sharkord/sharkord:latest`}
-                </code>
-              </pre>
-              <div className="mt-3 text-right text-xs">
-                <Link
-                  href="/docs/introduction/installation/docker"
-                  className="text-primary hover:underline"
-                >
-                  Full Docker guide
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          <p className="text-xs text-muted-foreground mt-4 text-center">
-            Windows builds are experimental; Docker or WSL2 is recommended. See{" "}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
             <Link
-              href="/docs/introduction/installation/windows"
-              className="text-primary hover:underline"
+              href="/docs"
+              className="inline-flex items-center gap-1.5 underline-offset-4 transition hover:text-foreground hover:underline"
             >
-              Windows Installation
+              <BookOpen className="h-3.5 w-3.5" />
+              Documentation
             </Link>
-            .
-          </p>
-
-          <p className="text-sm text-muted-foreground mt-8 text-center">
-            Need help? Check out the{" "}
-            <Link href="/docs" className="text-primary hover:underline">
-              documentation
-            </Link>{" "}
-            or open an issue on GitHub.
-          </p>
+            <Link
+              href="https://github.com/Sharkord/sharkord"
+              target="_blank"
+              className="inline-flex items-center gap-1.5 underline-offset-4 transition hover:text-foreground hover:underline"
+            >
+              <Github className="h-3.5 w-3.5" />
+              Source and issues
+            </Link>
+            <Link
+              href="https://github.com/Sharkord/sharkord/releases/latest"
+              target="_blank"
+              className="underline-offset-4 transition hover:text-foreground hover:underline"
+            >
+              Latest release
+            </Link>
+          </div>
         </div>
       </div>
     </section>

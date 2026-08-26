@@ -1,14 +1,10 @@
 ---
 title: Windows
-description: Run the Sharkord server on Windows.
+description: Install and run the Sharkord server on Windows, from the runtime it needs to the firewall.
 icon: AppWindow
 ---
 
-<Alert type="warning" title="Windows support is rough">
-  Sharkord is developed and tested mainly on Linux. The Windows build still has
-  problems, especially with voice. If you hit them, run Sharkord under
-  [Docker](/docs/introduction/installation/docker) or WSL2 instead.
-</Alert>
+Sharkord runs on Windows as a single `.exe` that contains the server, the web client, and the media worker.
 
 ### 1. Install the Runtime
 
@@ -31,6 +27,8 @@ Keep the window open. Closing it stops the server.
 Then open `http://localhost:4991` in your browser.
 
 Sharkord stores its data in `%APPDATA%\sharkord`. See [Data Directory](/docs/data-dir).
+
+Windows Firewall will ask for permission on the first run. Allow it, or voice and video will not reach anyone outside this machine. Port `40000` needs to be open on both TCP and UDP.
 
 ### Next Steps
 
