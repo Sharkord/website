@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { CodeBlock } from "@/components/ui/code-block";
-import { ArrowRight, Download, ShieldCheck } from "lucide-react";
+import { ArrowRight, Download, ShieldCheck, Youtube } from "lucide-react";
 import Link from "next/link";
+
+const SETUP_VIDEO_URL = "https://www.youtube.com/watch?v=Baa7uEKUkgQ";
 
 const steps = [
   {
@@ -114,6 +116,12 @@ export function InstallSection() {
                   <Link href="/docs/introduction/installation/docker-compose">
                     The recommended setup
                     <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button variant="ghost" asChild>
+                  <Link href={SETUP_VIDEO_URL} target="_blank">
+                    <Youtube className="h-4 w-4" />
+                    Watch it in one minute
                   </Link>
                 </Button>
                 <Button variant="ghost" asChild>
