@@ -28,6 +28,7 @@ Before applying anything, Sharkord writes a consistent snapshot:
 
 Worth knowing:
 
+- **On by default, and controllable.** `server.backupDatabase` in [`config.ini`](/docs/configuration) turns it off. See below before you do.
 - **Only when there is something to apply.** A restart with no pending migrations writes nothing.
 - **One per pre-migration state.** A server stuck in a restart loop on a failing migration does not fill your disk with copies, because the database has not changed between attempts.
 - **Never deleted.** Each upgrade that migrates costs you another copy of the database. Prune them yourself.
@@ -35,12 +36,24 @@ Worth knowing:
 
 These snapshots are a safety net for upgrades, not a backup strategy. They say nothing about your uploaded files, and they only appear when a migration runs. Back up the whole [data directory](/docs/data-dir) on your own schedule.
 
+### Turning It Off
+
+```ini
+[server]
+backupDatabase=false
+```
+
+Or `SHARKORD_BACKUP_DATABASE=false`.
+
+Migrations then run without a snapshot, and the server logs a warning saying so each time it applies any. The reason to do it is a database large enough that copying it on every upgrade costs real disk or real time, and the price is that a migration which loses data has nothing to restore from. If you turn this off, take your own backup before every update.
+
 ## Reading the Logs
 
 | Line | Meaning |
 | --- | --- |
 | `Database backed up to <path>` | The snapshot was written. |
 | `Database already backed up to <path>` | A snapshot for this exact state exists, so this is a retry. |
+| `Applying N migration(s) with server.backupDatabase off` | Snapshots are disabled, so nothing was written. |
 | `Migration <tag> ran` | That migration was applied. One line per migration. |
 | `No migrations to run` | Your database was already current. Only shown with `debug` on. |
 | `Migration failed while applying <tags>. The database was rolled back and is unchanged` | See below. |

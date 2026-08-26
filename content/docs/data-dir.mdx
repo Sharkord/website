@@ -47,7 +47,7 @@ Stop the server, copy the directory, start it again. Copying `db.sqlite` while t
 
 Back up before every update. Sharkord is in alpha and migrations only move forward.
 
-Sharkord also snapshots the database into `backups/` on its own whenever an update has schema changes to apply. That covers the database only, never your uploaded files, and the snapshots are never pruned. See [Database Migrations](/docs/migrations).
+Sharkord also snapshots the database into `backups/` on its own whenever an update has schema changes to apply, unless you turn `server.backupDatabase` off. That covers the database only, never your uploaded files, and the snapshots are never pruned. See [Database Migrations](/docs/migrations).
 
 ### Migrating to Another Machine
 

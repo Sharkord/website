@@ -24,8 +24,15 @@ It is a plain INI file with one section per group:
 port=4991
 debug=false
 autoupdate=false
+backupDatabase=true
 maxRequestBodyBytes=262144
 allowedOrigins[]=*
+trustedProxies[]=127.0.0.1
+trustedProxies[]=::1
+trustedProxies[]=10.0.0.0/8
+trustedProxies[]=172.16.0.0/12
+trustedProxies[]=192.168.0.0/16
+trustedProxies[]=fc00::/7
 
 [webRtc]
 port=40000
@@ -53,6 +60,7 @@ trustedProxies[]=127.0.0.1
 | `port`                | `4991`   | Port for HTTP and WebSocket traffic.                                                                 |
 | `debug`               | `false`  | Verbose debug logging.                                                                               |
 | `autoupdate`          | `false`  | Check for new releases every hour and install them. Ignored in Docker. See [Updating](/docs/updating). |
+| `backupDatabase`      | `true`   | Snapshot the database before applying migrations. See [Database Migrations](/docs/migrations). |
 | `maxRequestBodyBytes` | `262144` | Maximum size of an HTTP request body, in bytes. File uploads are not affected; their limits live in the server settings. |
 | `allowedOrigins`      | `*`      | Origins allowed to call the server from a browser. `*` allows any.                                    |
 | `trustedProxies`      | loopback and private ranges | Addresses or CIDR ranges whose forwarded headers are believed. See [Behind a Proxy](/docs/https/behind-a-proxy). |
@@ -109,6 +117,7 @@ Every option above can be set with an environment variable, which is usually eas
 | `SHARKORD_PORT`                     | `server.port`               |
 | `SHARKORD_DEBUG`                    | `server.debug`              |
 | `SHARKORD_AUTOUPDATE`               | `server.autoupdate`         |
+| `SHARKORD_BACKUP_DATABASE`          | `server.backupDatabase`     |
 | `SHARKORD_MAX_REQUEST_BODY_BYTES`   | `server.maxRequestBodyBytes` |
 | `SHARKORD_ALLOWED_ORIGINS`          | `server.allowedOrigins`     |
 | `SHARKORD_TRUSTED_PROXIES`          | `server.trustedProxies`     |
