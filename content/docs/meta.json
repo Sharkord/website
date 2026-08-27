@@ -2,6 +2,7 @@
   "pages": [
     "introduction",
     "configuration",
+    "oidc",
     "administration",
     "https",
     "domains",

@@ -34,6 +34,14 @@ trustedProxies[]=172.16.0.0/12
 trustedProxies[]=192.168.0.0/16
 trustedProxies[]=fc00::/7
 
+[oidc]
+enabled=false
+issuer=
+clientId=
+clientSecret=
+redirectUri=
+disableLocalLogin=false
+
 [webRtc]
 port=40000
 announcedAddress=
@@ -64,6 +72,19 @@ trustedProxies[]=127.0.0.1
 | `maxRequestBodyBytes` | `262144` | Maximum size of an HTTP request body, in bytes. File uploads are not affected; their limits live in the server settings. |
 | `allowedOrigins`      | `*`      | Origins allowed to call the server from a browser. `*` allows any.                                    |
 | `trustedProxies`      | loopback and private ranges | Addresses or CIDR ranges whose forwarded headers are believed. See [Behind a Proxy](/docs/https/behind-a-proxy). |
+
+## Single Sign-On
+
+| Field | Default | Description |
+| --- | --- | --- |
+| `enabled` | `false` | Turn on OIDC sign-in. |
+| `issuer` | empty | Your provider's issuer URL. |
+| `clientId` | empty | Client id from your provider. |
+| `clientSecret` | empty | Client secret from your provider. |
+| `redirectUri` | empty | Override the callback URL. Empty means it is derived from the request. |
+| `disableLocalLogin` | `false` | Refuse password sign-in, leaving the provider as the only way in. |
+
+These live under `[oidc]`. See [Single Sign-On](/docs/oidc) for the provider side and how accounts are matched.
 
 ## WebRTC
 
@@ -105,6 +126,7 @@ Each limiter takes `maxRequests` and `windowMs`. Requests are counted per user o
 | `voiceStream`           | `200`        | `60000`  | Voice and video stream updates    |
 | `useSecretToken`        | `5`          | `60000`  | Owner token claims                |
 | `pluginExecute`         | `60`         | `60000`  | Plugin commands and actions       |
+| `oidc`                  | `30`         | `60000`  | Single sign-on requests           |
 
 Most servers never need to touch these. Raise a limit if legitimate users hit it; lower it if you are being abused.
 
@@ -121,6 +143,12 @@ Every option above can be set with an environment variable, which is usually eas
 | `SHARKORD_MAX_REQUEST_BODY_BYTES`   | `server.maxRequestBodyBytes` |
 | `SHARKORD_ALLOWED_ORIGINS`          | `server.allowedOrigins`     |
 | `SHARKORD_TRUSTED_PROXIES`          | `server.trustedProxies`     |
+| `SHARKORD_OIDC_ENABLED`             | `oidc.enabled`              |
+| `SHARKORD_OIDC_ISSUER`              | `oidc.issuer`               |
+| `SHARKORD_OIDC_CLIENT_ID`           | `oidc.clientId`             |
+| `SHARKORD_OIDC_CLIENT_SECRET`       | `oidc.clientSecret`         |
+| `SHARKORD_OIDC_REDIRECT_URI`        | `oidc.redirectUri`          |
+| `SHARKORD_OIDC_DISABLE_LOCAL_LOGIN` | `oidc.disableLocalLogin`    |
 | `SHARKORD_WEBRTC_PORT`              | `webRtc.port`               |
 | `SHARKORD_WEBRTC_ANNOUNCED_ADDRESS` | `webRtc.announcedAddress`   |
 | `SHARKORD_WEBRTC_MAX_BITRATE`       | `webRtc.maxBitrate`         |
