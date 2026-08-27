@@ -1,0 +1,63 @@
+---
+title: Messages
+description: Send, edit, and delete messages from a plugin.
+icon: MessageSquare
+---
+
+`ctx.messages` lets a plugin post to text channels on its own behalf. Messages sent this way are attributed to the plugin, not to a user.
+
+### Send
+
+```ts
+import type { PluginContext } from "@sharkord/plugin-sdk";
+
+const onLoad = (ctx: PluginContext) => {
+  ctx.events.on("user:joined", async ({ userId, username }) => {
+    const { messageId } = await ctx.messages.send(
+      1,
+      `<p>Welcome, ${username}!</p>`,
+    );
+
+    ctx.logger.debug("sent welcome message", messageId, userId);
+  });
+};
+```
+
+```ts
+send(
+  channelId: number,
+  content: string,
+  options?: { parentMessageId?: number; replyToMessageId?: number }
+): Promise<{ messageId: number }>
+```
+
+- `parentMessageId` posts the message as a thread reply. Threads are one level deep, so the parent cannot itself be a reply.
+- `replyToMessageId` posts it as an inline reply.
+- Both must point at a message in the same channel.
+
+### Edit and Delete
+
+```ts
+await ctx.messages.edit(messageId, "<p>Updated</p>");
+await ctx.messages.delete(messageId);
+```
+
+A plugin can only edit and delete its **own** messages. Anything else fails with a permission error. Deleting a message also deletes the files attached to it.
+
+Users cannot edit plugin messages, but a user with `MANAGE_MESSAGES` can delete them.
+
+### Content Format
+
+`content` is HTML, and it is sanitized before it is stored. Only a small set of tags survives:
+
+`p`, `br`, `strong`, `em`, `code`, `pre`, `a`, and `span`/`img` for emoji and mentions.
+
+Everything else, including scripts, styles, and arbitrary attributes, is stripped. A message that ends up empty after sanitizing is rejected.
+
+Wrap your text in `<p>` and escape anything that came from a user before you interpolate it. Sanitizing protects the server, not your formatting.
+
+### Notes
+
+- These calls raise the usual [events](./events), including for your own plugin. Check `pluginId` in your handlers or you can build a loop.
+- The plugin must be enabled; calls from a disabled plugin are rejected.
+- `ctx.messages` is also available in `onUnload`, so a plugin can post a goodbye or clean up its own messages on the way out.

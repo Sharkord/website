@@ -1,0 +1,6 @@
+{
+  "title": "Administration",
+  "icon": "SlidersHorizontal",
+  "defaultOpen": false,
+  "pages": ["server-settings", "roles-permissions", "storage"]
+}

@@ -1,0 +1,55 @@
+---
+title: Server Settings
+description: Everything on the General tab, and what each option changes.
+icon: Settings2
+---
+
+Server settings live in the interface, not in a config file. Open the server menu and choose settings.
+
+Editing the General tab needs `MANAGE_SETTINGS`. The Storage tab is gated separately by `MANAGE_STORAGE`, so you can hand out storage administration without handing over the rest of the server. Other tabs have their own permissions, listed below. The owner has all of them.
+
+Machine-level options (ports, rate limits, proxies) live in [`config.ini`](/docs/configuration) instead.
+
+## General
+
+| Setting | Limits | What it does |
+| --- | --- | --- |
+| Name | 2 to 24 characters | The server name shown on the connect screen and in the browser tab. |
+| Description | up to 128 characters | Shown on the connect screen under the name. |
+| Password | up to 32 characters, empty for none | Users must enter it to join. |
+| Only ask for password on first join | toggle | Users enter the password once, on their first join, instead of on every connection. |
+| Allow new users | toggle | When off, nobody new can register. Existing users are unaffected, and you can still let people in with [invites](#invites). |
+| Plugins | toggle | Turns the whole plugin system on or off. See [Plugins](/docs/plugins/overview). |
+| Simulcast | toggle | Lets users send several video quality layers so viewers on weak connections get a smoother stream. Costs bandwidth and CPU on the server. |
+| Direct messages | toggle | When off, users can only talk in channels. |
+| Search | toggle | Message and file search across the server. |
+| Show welcome dialog | toggle | Shows a profile setup dialog the first time someone joins. |
+| Logo | image upload | The server logo. It is the one file that stays reachable without a signed URL, so it can render on the connect screen before login. |
+
+Changes apply immediately, with no restart. Toggling Plugins off unloads every plugin right away, and toggling it back on loads them again.
+
+Every settings change is written to the activity log with the values that changed. The server password is the one field excluded from that log.
+
+## The Other Tabs
+
+| Tab | What it covers |
+| --- | --- |
+| Roles | Roles, server permissions, per-role storage overrides. See [Roles and Permissions](./roles-permissions). |
+| Storage | Quotas, upload limits, signed URLs, image optimization. See [Storage and Uploads](./storage). |
+| Users | The member list, role assignment, bans, kicks, and deletions. Needs `MANAGE_USERS`. |
+| Invites | Invite links with an optional role, use limit, and expiry. Needs `MANAGE_INVITES`. |
+| Emojis | Custom server emojis. Needs `MANAGE_EMOJIS`. |
+| Updates | Current version, latest release, and the update button. See [Updating](/docs/updating). |
+| Plugins | Installed plugins and the marketplace. See [Plugin installation](/docs/plugins/installation). |
+
+## Invites
+
+An invite is a code with an optional role attached, an optional maximum number of uses, and an optional expiry. Anyone joining through it gets that role instead of the default one, which is the usual way to run a server with **Allow new users** switched off.
+
+Invites are listed with their use count and status, and can be revoked at any time.
+
+## Channels and Categories
+
+Channels are text or voice, and live inside categories. Creating, renaming, reordering, and deleting them needs `MANAGE_CHANNELS`, and the same for categories with `MANAGE_CATEGORIES`.
+
+A channel is either public or private. Public channels are visible to everyone, and per-channel permission overrides only take effect on private ones. That distinction matters more than it looks: see [Roles and Permissions](./roles-permissions).

@@ -1,148 +1,100 @@
 ---
 title: Voice
-description: Work with voice routers and external streams.
+description: Push external audio and video into voice channels.
 icon: Mic
 ---
 
-The voice API exposes low-level media integration points for advanced plugins.
+The voice API is the low-level integration point for plugins that produce media: music bots, IPTV bridges, soundboards. It hands you the raw [mediasoup](https://mediasoup.org) router for a channel and lets you register the resulting producers as a stream users can see and hear.
 
-### Available Methods
+This assumes you know mediasoup. If you do not, read its documentation first; nothing here replaces it.
 
-- `ctx.voice.getRouter(channelId)` returns the mediasoup `Router` for a voice channel.
-- `ctx.voice.createStream(options)` creates an external stream visible inside Sharkord.
-- `ctx.voice.getListenInfo()` returns the IP and announced address that external publishers should target.
+### The API
 
-The usual flow is:
+| Method                         | Returns                                        |
+| ------------------------------ | ---------------------------------------------- |
+| `ctx.voice.getRouter(channelId)` | The mediasoup `Router` for that voice channel |
+| `ctx.voice.getListenInfo()`      | `{ ip, announcedAddress }`                    |
+| `ctx.voice.createStream(options)` | A handle to the stream you created           |
 
-1. Get the voice router for the channel.
-2. Create your mediasoup transports and producers.
-3. Pass those producers into `ctx.voice.createStream(...)`.
+`getRouter` and `createStream` **throw** if the channel has no voice runtime. A runtime exists only while someone is in the channel, so wait for the [`voice:runtime_initialized` event](./events) rather than assuming one is there.
 
-### Creating An External Stream
+`getListenInfo` is synchronous and returns the address Sharkord is listening on and the address it advertises to clients (`webRtc.announcedAddress`, when set). Use it when building your own transports.
+
+### Creating a Stream
+
+The flow is: get the router, create your transports and producers, then register them.
 
 ```ts
 import type { PluginContext } from "@sharkord/plugin-sdk";
 
 const VIDEO_SSRC = 11111111;
 const AUDIO_SSRC = 22222222;
-const VIDEO_PAYLOAD_TYPE = 102;
-const AUDIO_PAYLOAD_TYPE = 111;
 
 const onLoad = async (ctx: PluginContext) => {
-  // usually this comes from the command invoker or your plugin state
-  const channelId = 1;
-  const router = ctx.voice.getRouter(channelId);
+  ctx.events.on("voice:runtime_initialized", async ({ channelId }) => {
+    const router = ctx.voice.getRouter(channelId);
+    const { ip, announcedAddress } = ctx.voice.getListenInfo();
 
-  if (!router) {
-    throw new Error("Voice router not found for this channel.");
-  }
+    const transport = await router.createPlainTransport({
+      listenInfo: { ip, protocol: "udp", announcedAddress },
+      rtcpMux: true,
+      comedia: true,
+    });
 
-  const { ip, announcedAddress } = await ctx.voice.getListenInfo();
-
-  // create your video ingest transport using the address Sharkord exposes
-  const videoTransport = await router.createPlainTransport({
-    listenInfo: {
-      ip,
-      protocol: "udp",
-      announcedAddress,
-    },
-    rtcpMux: true,
-    comedia: true,
-  });
-
-  // create your audio ingest transport
-  const audioTransport = await router.createPlainTransport({
-    listenInfo: {
-      ip,
-      protocol: "udp",
-      announcedAddress,
-    },
-    rtcpMux: true,
-    comedia: true,
-  });
-
-  // produce video from the RTP you ingest into the transport
-  const videoProducer = await videoTransport.produce({
-    kind: "video",
-    rtpParameters: {
-      codecs: [
-        {
-          mimeType: "video/H264",
-          payloadType: VIDEO_PAYLOAD_TYPE,
-          clockRate: 90000,
-          parameters: {
-            "packetization-mode": 1,
-            "profile-level-id": "42e01f",
-            "level-asymmetry-allowed": 1,
+    const audioProducer = await transport.produce({
+      kind: "audio",
+      rtpParameters: {
+        codecs: [
+          {
+            mimeType: "audio/opus",
+            payloadType: 111,
+            clockRate: 48000,
+            channels: 2,
+            parameters: {},
+            rtcpFeedback: [],
           },
-          rtcpFeedback: [],
-        },
-      ],
-      encodings: [{ ssrc: VIDEO_SSRC }],
-    },
-  });
+        ],
+        encodings: [{ ssrc: AUDIO_SSRC }],
+      },
+    });
 
-  // produce audio from the RTP you ingest into the transport
-  const audioProducer = await audioTransport.produce({
-    kind: "audio",
-    rtpParameters: {
-      codecs: [
-        {
-          mimeType: "audio/opus",
-          payloadType: AUDIO_PAYLOAD_TYPE,
-          clockRate: 48000,
-          channels: 2,
-          parameters: {},
-          rtcpFeedback: [],
-        },
-      ],
-      encodings: [{ ssrc: AUDIO_SSRC }],
-    },
-  });
+    const stream = ctx.voice.createStream({
+      channelId,
+      title: "Studio Feed",
+      key: "studio-feed",
+      producers: { audio: audioProducer },
+    });
 
-  const stream = ctx.voice.createStream({
-    channelId,
-    title: "Studio Feed",
-    key: "studio-feed",
-    // pass the mediasoup producers that back this external stream
-    producers: {
-      audio: audioProducer,
-      video: videoProducer,
-    },
-    // only used when simulcast is enabled on the server
-    videoLayers: [
-      { spatialLayer: 0, label: "360p" },
-      { spatialLayer: 1, label: "720p" },
-    ],
+    stream.update({ title: "Studio Feed Live" });
+    // stream.remove() when you are done
   });
-
-  stream.update({
-    title: "Studio Feed Live",
-  });
-
-  stream.remove();
 };
-
-export { onLoad };
 ```
 
-`createStream(...)` returns a handle with:
+Send RTP to the transport's address and port, and it appears in the channel. Video works the same way, with a `video` producer on its own transport; the SDK re-exports the mediasoup types you need (`Router`, `PlainTransport`, `Producer`, `RtpParameters`, and friends).
 
-- `streamId`
-- `update(options)`
-- `remove()`
+### `createStream` Options
 
-### Listen Info
+| Option        | Required | Description                                                         |
+| ------------- | -------- | ------------------------------------------------------------------- |
+| `channelId`   | yes      | The voice channel to publish into                                   |
+| `title`       | yes      | Shown to users                                                      |
+| `key`         | yes      | Your identifier for the stream                                      |
+| `producers`   | yes      | `{ audio?, video? }` mediasoup producers                            |
+| `avatarUrl`   | no       | Avatar shown next to the stream                                     |
+| `bannerUrl`   | no       | Banner image for the stream                                         |
+| `videoLayers` | no       | Simulcast layer labels, only used when simulcast is on in the server settings |
 
-`ctx.voice.getListenInfo()` returns:
+It returns:
 
 ```ts
 {
-  ip: string;
-  announcedAddress: string | undefined;
+  streamId: number;
+  update(options): void;  // title, avatarUrl, bannerUrl, producers, videoLayers
+  remove(): void;
 }
 ```
 
-Use this when an external publisher needs to know which address Sharkord is advertising to voice clients.
+### Cleaning Up
 
-Keep a reference to every stream handle you create and remove it on unload.
+Keep every handle you create and call `remove()` in `onUnload`. `ctx.voice` is available on the unload context for exactly this. Streams left behind stay visible to users until the channel's runtime closes.

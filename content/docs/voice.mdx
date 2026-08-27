@@ -1,0 +1,76 @@
+---
+title: Voice & Devices
+description: Microphone, noise suppression, webcam, and screen sharing settings.
+icon: Mic
+---
+
+Voice settings are per user and per browser, under **User Settings → Devices**. Nothing here is shared with other users or stored on the server.
+
+<Alert type="warning" title="HTTPS is required">
+  Browsers only hand out the microphone, camera, and screen on HTTPS or on
+  `http://localhost`. On plain HTTP, every control on this page is unavailable.
+  See [Why HTTPS](/docs/https/why).
+</Alert>
+
+Voice also needs UDP and TCP port `40000` open on the server. See [Troubleshooting](/docs/troubleshooting) if you can join a channel but nobody hears you.
+
+## Microphone
+
+Pick the input device, or leave it on the system default. **Microphone test** shows a live level meter so you can confirm the right device is selected before joining a channel. You stay muted to others during the test.
+
+### Noise Suppression
+
+Three modes, plus off. All of them run in your browser, not on the server.
+
+| Mode | CPU | Memory | Voice quality |
+| --- | --- | --- | --- |
+| Standard | Low | Low | Good, usually the most natural sounding |
+| RNNoise | Medium | Medium | Cleaner in noisy rooms, can sound more processed |
+| DTLN | High | High | Strong suppression, more likely to affect tone or add artefacts |
+
+**RNNoise** is the default, and it is the one to keep unless you have a reason not to. **Standard** is the browser's own suppression: lighter, the most compatible, and the fallback if RNNoise misbehaves on your setup. **DTLN** is the heaviest of the three and suits fast hardware.
+
+RNNoise and DTLN are still marked experimental and do not work on every browser, device, and microphone combination. The figures above are approximate; real cost depends on your machine.
+
+### Other Microphone Options
+
+| Option | Default | What it does |
+| --- | --- | --- |
+| Echo cancellation | On | Stops your speakers being picked up by your microphone. Leave it on unless you use headphones and want the rawest audio. |
+| Automatic gain control | On | Evens out your volume as you move relative to the microphone. Turn it off if it pumps or amplifies room noise between sentences. |
+| Noise gate | Off | Cuts the microphone below a threshold, so quiet background noise sends nothing at all. Unavailable in some browsers, in which case audio is sent ungated. |
+
+## Webcam
+
+Choose the camera, then set resolution (144p to 2160p) and framerate (5 to 120 fps). It starts at 720p and 30 fps, which is the right trade for most people. **Start video preview** shows what others will see. **Mirror own video** flips your local preview only, not what anyone else receives.
+
+## Simulcast
+
+Sends low, medium, and high quality layers of your webcam and screen share at the same time, so viewers on slow connections get a lower layer instead of a stuttering stream. It costs you more upload bandwidth and CPU, and it forces the VP8 codec.
+
+The server has to allow it first: if the server-wide simulcast setting is off, the control tells you so and does nothing.
+
+## Screen Sharing
+
+Resolution, framerate, codec, and maximum bitrate are all configurable, with the bitrate defaulting to 6000 kbps.
+
+Codec choice is VP8, VP9, H264, or AV1. VP8 is the safest for compatibility, the others can look better at the same bitrate where both ends support them. With simulcast on, VP8 is used regardless.
+
+| Option | What it does |
+| --- | --- |
+| Restrict own audio | Keeps Sharkord's own audio out of the audio you capture, which prevents echo when you share a tab. |
+| Suppress local audio playback | When sharing audio from a tab or app, stops it also playing on your speakers. |
+
+Both depend on browser support, and the interface tells you when yours lacks it. These settings are best effort in general: the browser decides the final resolution, framerate, and codec based on your machine and network, so what you get may not match what you picked.
+
+## Diagnostics
+
+Press **F9** to open the voice diagnostics dialog. It shows connection and stream state, which is the first thing to look at when audio or video is not arriving. The connection stats popover in the sidebar opens the same dialog.
+
+**F4** toggles plugin slot debugging, which outlines where [plugin components](/docs/plugins/components) render.
+
+## Notifications
+
+Under **User Settings → Notifications**, grant the browser permission and then choose what you get notified about: all messages or mentions only, plus separate switches for direct messages and replies.
+
+Browsers only allow the permission prompt on a secure origin, so this also needs HTTPS.

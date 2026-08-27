@@ -1,34 +1,115 @@
+import { Github, Heart, Twitter } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
-import { Github, Twitter } from "lucide-react";
+
+const columns = [
+  {
+    title: "Start",
+    links: [
+      { label: "Quick start", href: "/docs/introduction/quick-start" },
+      { label: "Installation", href: "/docs/introduction/installation/docker" },
+      { label: "HTTPS setup", href: "/docs/https/why" },
+      { label: "Free subdomain", href: "/docs/domains" },
+    ],
+  },
+  {
+    title: "Run it",
+    links: [
+      { label: "Configuration", href: "/docs/configuration" },
+      {
+        label: "Roles and permissions",
+        href: "/docs/administration/roles-permissions",
+      },
+      { label: "Updating", href: "/docs/updating" },
+      { label: "Troubleshooting", href: "/docs/troubleshooting" },
+    ],
+  },
+  {
+    title: "Build",
+    links: [
+      { label: "Plugin docs", href: "/docs/plugins/overview" },
+      {
+        label: "Plugin marketplace",
+        href: "https://github.com/Sharkord/plugins",
+      },
+      { label: "Contributing", href: "/docs/contributing" },
+      { label: "License", href: "/docs/license" },
+    ],
+  },
+];
 
 export function Footer() {
   return (
-    <footer className="border-t border-border/40 py-6 md:py-8">
+    <footer className="py-14">
       <div className="container mx-auto px-4">
-        <div className="flex justify-center">
-          <div className="flex flex-col items-center gap-3">
-            <div className="flex items-center gap-3">
+        <div className="grid gap-10 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
+          <div>
+            <div className="flex items-center gap-2">
+              <Image
+                src="/logo.webp"
+                alt=""
+                width={28}
+                height={28}
+                className="size-7"
+              />
+              <span className="font-semibold">Sharkord</span>
+            </div>
+            <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">
+              A self-hosted place for your group to talk. Open source, MIT
+              licensed, currently in alpha.
+            </p>
+
+            <div className="mt-3 -ml-2 flex items-center">
               <Link
-                href="https://github.com/sharkord"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                aria-label="GitHub"
+                href="https://github.com/Sharkord/sharkord"
                 target="_blank"
+                aria-label="GitHub"
+                className="p-2 text-muted-foreground transition-colors hover:text-foreground"
               >
-                <Github className="h-6 w-6" />
+                <Github className="h-5 w-5" />
               </Link>
               <Link
                 href="https://x.com/sharkordapp"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                aria-label="Twitter"
                 target="_blank"
+                aria-label="Sharkord on X"
+                className="p-2 text-muted-foreground transition-colors hover:text-foreground"
               >
-                <Twitter className="h-6 w-6" />
+                <Twitter className="h-5 w-5" />
+              </Link>
+              <Link
+                href="https://ko-fi.com/B0B71U3476"
+                target="_blank"
+                aria-label="Support Sharkord on Ko-fi"
+                className="p-2 text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <Heart className="h-5 w-5" />
               </Link>
             </div>
           </div>
+
+          {columns.map((column) => (
+            <div key={column.title}>
+              <h3 className="text-sm font-semibold">{column.title}</h3>
+              <ul className="mt-2 space-y-0.5">
+                {column.links.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      target={
+                        link.href.startsWith("http") ? "_blank" : undefined
+                      }
+                      className="inline-block py-1 text-sm text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
-        <div className="pt-4 text-center text-sm text-muted-foreground">
+        <div className="mt-12 border-t border-border/40 pt-6 text-center text-sm text-muted-foreground">
           <p>© {new Date().getFullYear()} Sharkord</p>
         </div>
       </div>

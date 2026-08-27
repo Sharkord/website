@@ -4,9 +4,8 @@
   "collapsible": false,
   "defaultOpen": true,
   "pages": [
-    "quick-start",
     "what-is-sharkord",
-    "live-demo",
+    "quick-start",
     "installation",
     "owner-permissions"
   ]

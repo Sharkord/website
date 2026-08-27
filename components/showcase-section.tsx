@@ -7,22 +7,25 @@ import Image from "next/image";
 
 const screenshots = [
   {
-    src: "/screenshots/ss1.png",
-    alt: "Main chat view with channels, messages, and member list",
-    title: "Real-time chat",
-    description: "Text channels, rich embeds, and reactions in one clean flow.",
+    src: "/screenshots/ss4.png",
+    alt: "A film playing on a shared screen while the people in the voice room watch",
+    title: "Watch something together",
+    description:
+      "Share your screen with the sound, put your cameras on, and hang out like you are in the same room.",
   },
   {
-    src: "/screenshots/ss4.png",
-    alt: "Live video and screen sharing session in Sharkord",
-    title: "Voice and screen share",
-    description: "Smooth calling with a focused, low-noise interface.",
+    src: "/screenshots/ss1.png",
+    alt: "The chat view, with rooms down the side, a conversation in the middle and people online on the right",
+    title: "Rooms for whatever you are into",
+    description:
+      "Replies, reactions, your own emojis and a list of who is around. It works the way you already expect.",
   },
   {
     src: "/screenshots/ss3.png",
-    alt: "Server settings page for Sharkord",
-    title: "Server controls",
-    description: "Manage server settings without clutter.",
+    alt: "The settings screen, showing the server name, description and a few switches",
+    title: "Settings that fit on one screen",
+    description:
+      "Name it, decide who can join, hand out roles. Everything you need and nothing you have to learn.",
   },
 ];
 
@@ -82,19 +85,14 @@ export function ShowcaseSection() {
   return (
     <section
       id="screenshots"
-      className="relative overflow-hidden border-b border-border/40 py-24 md:py-32"
+      className="relative overflow-hidden border-b border-border/40 py-24 md:py-28"
     >
-      <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-primary/5 via-transparent to-transparent" />
-
       <div className="container relative mx-auto px-4">
-        <div className="mx-auto mb-14 max-w-2xl text-center">
-          <p className="mb-3 text-sm font-medium uppercase tracking-[0.2em] text-primary/80">
-            Product Tour
-          </p>
-          <h2 className="mb-4 text-3xl font-bold tracking-tight text-balance sm:text-4xl md:text-5xl">
+        <div className="mb-14 max-w-2xl">
+          <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
             See Sharkord in Action
           </h2>
-          <p className="text-lg leading-relaxed text-muted-foreground text-pretty">
+          <p className="mt-4 text-lg leading-relaxed text-muted-foreground text-pretty">
             A glimpse into Sharkord&apos;s sleek interface and powerful
             features.
           </p>
@@ -159,19 +157,24 @@ export function ShowcaseSection() {
             </button>
           </div>
 
-          <div className="mt-5 flex items-center justify-center gap-2">
+          <div className="mt-3 flex items-center justify-center">
             {screenshots.map((_, index) => (
               <button
                 key={index}
                 type="button"
                 onClick={() => emblaApi?.scrollTo(index)}
-                className={`h-2.5 rounded-full transition-all ${
-                  index === selectedIndex
-                    ? "w-7 bg-primary"
-                    : "w-2.5 bg-muted-foreground/35 hover:bg-muted-foreground/55"
-                }`}
+                className="flex h-6 items-center justify-center px-2"
                 aria-label={`Go to screenshot ${index + 1}`}
-              />
+                aria-current={index === selectedIndex}
+              >
+                <span
+                  className={`block h-2.5 rounded-full transition-all ${
+                    index === selectedIndex
+                      ? "w-7 bg-primary"
+                      : "w-2.5 bg-muted-foreground/35"
+                  }`}
+                />
+              </button>
             ))}
           </div>
         </div>

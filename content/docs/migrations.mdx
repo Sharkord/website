@@ -1,0 +1,113 @@
+---
+title: Database Migrations
+description: How schema changes are applied, what happens when one fails, and how to roll back.
+icon: DatabaseZap
+---
+
+Sharkord stores everything in a single SQLite file, `db.sqlite`, in the [data directory](/docs/data-dir). When a release changes the schema, it ships migrations that bring your existing database up to date. You do not run anything: they are applied at startup.
+
+## What Happens on Boot
+
+1. The binary extracts its migrations to `<data>/drizzle`.
+2. Sharkord works out which ones are pending, by comparing the shipped list against what the database records as applied.
+3. If anything is pending, it **snapshots the database** to `<data>/backups/` first.
+4. Foreign keys are switched off on the connection, the whole pending batch runs inside one transaction, and foreign keys go back on.
+5. The database is checked for rows pointing at rows that no longer exist, and the server starts.
+
+Nothing serves traffic until this finishes. Migrations only move forward: there are no down migrations, and a newer database is not made older by installing an older binary.
+
+The foreign key step is not cosmetic. A migration that rebuilds a table drops the old one along the way, and with foreign keys live that drop fires every cascade hanging off it. Disabling them for the run is what stops a schema change from deleting your attachments and reactions.
+
+## Automatic Backups
+
+Before applying anything, Sharkord writes a consistent snapshot:
+
+```
+~/.config/sharkord/backups/db.sqlite.1756108800000.before-0018_message_parent_reply_foreign_keys.sqlite
+```
+
+Worth knowing:
+
+- **On by default, and controllable.** `server.backupDatabase` in [`config.ini`](/docs/configuration) turns it off. See below before you do.
+- **Only when there is something to apply.** A restart with no pending migrations writes nothing.
+- **One per pre-migration state.** A server stuck in a restart loop on a failing migration does not fill your disk with copies, because the database has not changed between attempts.
+- **Never deleted.** Each upgrade that migrates costs you another copy of the database. Prune them yourself.
+- **If the snapshot cannot be written, the server refuses to start.** Migrating with no way back is treated as worse than not booting. A full disk is the usual cause.
+
+These snapshots are a safety net for upgrades, not a backup strategy. They say nothing about your uploaded files, and they only appear when a migration runs. Back up the whole [data directory](/docs/data-dir) on your own schedule.
+
+### Turning It Off
+
+```ini
+[server]
+backupDatabase=false
+```
+
+Or `SHARKORD_BACKUP_DATABASE=false`.
+
+Migrations then run without a snapshot, and the server logs a warning saying so each time it applies any. The reason to do it is a database large enough that copying it on every upgrade costs real disk or real time, and the price is that a migration which loses data has nothing to restore from. If you turn this off, take your own backup before every update.
+
+## Reading the Logs
+
+| Line | Meaning |
+| --- | --- |
+| `Database backed up to <path>` | The snapshot was written. |
+| `Database already backed up to <path>` | A snapshot for this exact state exists, so this is a retry. |
+| `Applying N migration(s) with server.backupDatabase off` | Snapshots are disabled, so nothing was written. |
+| `Migration <tag> ran` | That migration was applied. One line per migration. |
+| `No migrations to run` | Your database was already current. Only shown with `debug` on. |
+| `Migration failed while applying <tags>. The database was rolled back and is unchanged` | See below. |
+| `Database has N row(s) pointing at rows that do not exist` | See below. |
+
+## When a Migration Fails
+
+The batch runs in a single transaction, so a failure rolls back **all** of it. Your database is left exactly as it was, and the previous version of Sharkord still runs against it.
+
+What to do:
+
+1. Keep the error. The log line names the migration that failed and why.
+2. Reinstall the version you were running before and start it. It will boot, because nothing changed.
+3. Open an issue with that error, the version you came from, and the version you tried.
+
+Do not delete rows from the internal migrations table or hand-edit the database to get past it. That produces a database whose schema and recorded state disagree, which is much harder to recover from than a failed upgrade.
+
+## When Foreign Key Violations Are Reported
+
+After a successful run, Sharkord checks for rows referencing rows that no longer exist and logs a count per table if it finds any. This is a report, not a failure: the server starts normally.
+
+A handful of orphaned rows is usually harmless leftovers from an older version. Large counts, especially across `message_files`, `message_reactions` or `channel_read_states`, mean a migration removed more than it should have. If that happens right after an upgrade, stop the server and compare against the snapshot in `backups/` before doing anything else.
+
+## Rolling Back
+
+You need a snapshot from before the migration, either one Sharkord took or one of your own.
+
+1. **Stop the server.**
+2. **Move the current database aside.** Rename `db.sqlite`, and also `db.sqlite-wal` and `db.sqlite-shm` if they exist. Do not delete them until you are happy with the result.
+3. **Restore the snapshot** by copying the file from `backups/` to `db.sqlite`. Copy, do not move, so the snapshot survives a second attempt.
+4. **Put back the binary that matches it.** Restoring a pre-migration database and starting the new version just runs the same migration again.
+5. **Start the server** and check that your data is there.
+
+Uploaded files live outside the database, in `public/`, and are not affected by any of this. A message row that came back from a snapshot still points at the file it always did.
+
+<Alert type="warning" title="Downgrading after a successful migration">
+  An older binary against a newer database is not supported. It may start and
+  behave strangely rather than fail cleanly. Restore the snapshot from before
+  the upgrade instead.
+</Alert>
+
+## For Contributors
+
+Migrations live in `apps/server/src/db/migrations` and are generated, not hand-written, from the schema:
+
+```bash
+bun run db:gen
+```
+
+Commit the generated `.sql` file together with the updated `meta/` snapshot and `_journal.json`. Data migrations, such as backfills, are hand-written SQL added the same way.
+
+Two rules worth repeating, because breaking either is silent:
+
+- Separate statements with exactly `--> statement-breakpoint`, including the space. Get it wrong and every statement after the first is skipped, while the migration is still recorded as applied.
+- Never edit a migration that has been committed, and never hand-edit `meta/` or `_journal.json`. Add a new migration instead. `bun run db:check` verifies consistency.
+
+See the [Contributing guide](/docs/contributing).

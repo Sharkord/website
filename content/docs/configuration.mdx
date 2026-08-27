@@ -1,41 +1,182 @@
 ---
 title: Configuration
-description: Configure Sharkord using config.ini.
+description: Configure Sharkord with config.ini and environment variables.
 icon: Settings
 ---
 
-On first run, Sharkord creates a config file at `~/.config/sharkord/config.ini`.
+On first run, Sharkord writes a `config.ini` in its [data directory](/docs/data-dir) (`~/.config/sharkord/config.ini` on Linux). Edit it and restart the server to apply changes.
 
-Update this file to customize runtime behavior.
+This file covers how the process runs: ports, limits, proxies. Everything about how the community runs, from permissions to storage quotas, is in the interface instead. See [Server Settings](/docs/administration/server-settings).
 
-### Options
+<Alert type="info" title="The file is rewritten on every start">
+  Sharkord merges your file with its defaults on boot and writes the result
+  back, so new options appear automatically after an update. Comments and
+  unknown keys are removed in the process, and a file that fails validation is
+  replaced with the defaults.
+</Alert>
 
-| Field                                          | Default  | Description                                                                                           |
-| ---------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------- |
-| `port`                                         | `4991`   | HTTP and WebSocket listening port                                                                     |
-| `debug`                                        | `false`  | Enables verbose debug logging                                                                         |
-| `webRtc.port`                                  | `40000`  | Port where the WebRTC server listens                                                                  |
-| `webRtc.announcedAddress`                      |          | Optional public address for WebRTC server. If not set, the server will use the public IP address.     |
-| `webRtc.maxBitrate`                            | 30000000 | Maximum bitrate for WebRTC connections in bits per second. Adjust based on your network capabilities. |
-| `rateLimiters.sendAndEditMessages.maxRequests` | `15`     | Max messages sent/edited per window per user before being rate limited                                |
-| `rateLimiters.sendAndEditMessages.windowMs`    | `60000`  | Time window for rate limiting in milliseconds                                                         |
-| `rateLimiters.joinVoiceChannel.maxRequests`    | `20`     | Max voice channel joins per window per user before being rate limited                                 |
-| `rateLimiters.joinVoiceChannel.windowMs`       | `60000`  | Time window for rate limiting in milliseconds                                                         |
-| `rateLimiters.joinServer.maxRequests`          | `5`      | Max server joins per window per user before being rate limited                                        |
-| `rateLimiters.joinServer.windowMs`             | `60000`  | Time window for rate limiting in milliseconds                                                         |
-| `autoupdate`                                   | `false`  | Enables automatic updates. Not available in Docker.                                                   |
+### Format
 
-### Environment Variables
+It is a plain INI file with one section per group:
 
-You can override some configuration options using environment variables. This is especially useful when running Sharkord in a containerized environment like Docker.
+```ini
+[server]
+port=4991
+debug=false
+autoupdate=false
+backupDatabase=true
+maxRequestBodyBytes=262144
+allowedOrigins[]=*
+trustedProxies[]=127.0.0.1
+trustedProxies[]=::1
+trustedProxies[]=10.0.0.0/8
+trustedProxies[]=172.16.0.0/12
+trustedProxies[]=192.168.0.0/16
+trustedProxies[]=fc00::/7
 
-| Variable Name                       | Description                                                     |
-| ----------------------------------- | --------------------------------------------------------------- |
-| `SHARKORD_PORT`                     | Overrides the `port` option in `config.ini`.                    |
-| `SHARKORD_DEBUG`                    | Overrides the `debug` option in `config.ini`.                   |
-| `SHARKORD_WEBRTC_PORT`              | Overrides the `webRtc.port` option in `config.ini`.             |
-| `SHARKORD_WEBRTC_ANNOUNCED_ADDRESS` | Overrides the `webRtc.announcedAddress` option in `config.ini`. |
-| `SHARKORD_WEBRTC_MAX_BITRATE`       | Overrides the `webRtc.maxBitrate` option in `config.ini`.       |
-| `SHARKORD_AUTOUPDATE`               | Overrides the `autoupdate` option in `config.ini`.              |
+[oidc]
+enabled=false
+issuer=
+clientId=
+clientSecret=
+redirectUri=
+disableLocalLogin=false
 
-|
+[webRtc]
+port=40000
+announcedAddress=
+maxBitrate=30000000
+
+[rateLimiters.sendAndEditMessage]
+maxRequests=15
+windowMs=60000
+```
+
+List values repeat the key with `[]`, one line per entry:
+
+```ini
+[server]
+allowedOrigins[]=https://chat.example.com
+allowedOrigins[]=https://www.example.com
+trustedProxies[]=127.0.0.1
+```
+
+## Server
+
+| Field                 | Default  | Description                                                                                          |
+| --------------------- | -------- | ---------------------------------------------------------------------------------------------------- |
+| `port`                | `4991`   | Port for HTTP and WebSocket traffic.                                                                 |
+| `debug`               | `false`  | Verbose debug logging.                                                                               |
+| `autoupdate`          | `false`  | Check for new releases every hour and install them. Ignored in Docker. See [Updating](/docs/updating). |
+| `backupDatabase`      | `true`   | Snapshot the database before applying migrations. See [Database Migrations](/docs/migrations). |
+| `maxRequestBodyBytes` | `262144` | Maximum size of an HTTP request body, in bytes. File uploads are not affected; their limits live in the server settings. |
+| `allowedOrigins`      | `*`      | Origins allowed to call the server from a browser. `*` allows any.                                    |
+| `trustedProxies`      | loopback and private ranges | Addresses or CIDR ranges whose forwarded headers are believed. See [Behind a Proxy](/docs/https/behind-a-proxy). |
+
+## Single Sign-On
+
+| Field | Default | Description |
+| --- | --- | --- |
+| `enabled` | `false` | Turn on OIDC sign-in. |
+| `issuer` | empty | Your provider's issuer URL. |
+| `clientId` | empty | Client id from your provider. |
+| `clientSecret` | empty | Client secret from your provider. |
+| `redirectUri` | empty | Override the callback URL. Empty means it is derived from the request. |
+| `disableLocalLogin` | `false` | Refuse password sign-in, leaving the provider as the only way in. |
+
+These live under `[oidc]`. See [Single Sign-On](/docs/oidc) for the provider side and how accounts are matched.
+
+## WebRTC
+
+| Field              | Default    | Description                                                                                            |
+| ------------------ | ---------- | ------------------------------------------------------------------------------------------------------ |
+| `port`             | `40000`    | Port used for voice, webcam, and screen sharing media. Listens on both UDP and TCP; open both.          |
+| `announcedAddress` | empty      | Public address clients should send media to. Set this if the server is behind NAT, Docker, or a cloud firewall. |
+| `maxBitrate`       | `30000000` | Maximum bitrate per connection, in bits per second.                                                     |
+
+<Alert type="info" title="Public IP lookup">
+  When `announcedAddress` is empty, the server asks an external service
+  (icanhazip, ipify, or ifconfig.me) for its public IP at startup. Setting
+  `announcedAddress` explicitly skips that request entirely.
+</Alert>
+
+## Rate Limiters
+
+Each limiter takes `maxRequests` and `windowMs`. Requests are counted per user once logged in, and per client IP before that. Going over the limit returns an error to the client and logs a line when `debug` is on.
+
+| Limiter                 | Max requests | Window   | Applies to                        |
+| ----------------------- | ------------ | -------- | --------------------------------- |
+| `sendAndEditMessage`    | `15`         | `60000`  | Sending and editing messages      |
+| `joinVoiceChannel`      | `20`         | `60000`  | Joining voice channels            |
+| `moveMembers`           | `20`         | `60000`  | Moving members between channels   |
+| `login`                 | `5`          | `60000`  | Login attempts                    |
+| `joinServer`            | `5`          | `60000`  | Joining the server                |
+| `upload`                | `30`         | `60000`  | File uploads                      |
+| `search`                | `15`         | `60000`  | Message search                    |
+| `signalTyping`          | `40`         | `5000`   | Typing indicators                 |
+| `getMessages`           | `60`         | `10000`  | Loading message history           |
+| `markAsRead`            | `60`         | `10000`  | Marking channels as read          |
+| `toggleMessageReaction` | `60`         | `10000`  | Adding and removing reactions     |
+| `addEmoji`              | `10`         | `60000`  | Uploading custom emojis           |
+| `openDirectMessage`     | `10`         | `60000`  | Opening direct message channels   |
+| `handshake`             | `10`         | `60000`  | Initial connection handshakes     |
+| `updatePassword`        | `5`          | `60000`  | Password changes                  |
+| `adminCreate`           | `60`         | `60000`  | Creating roles and invites        |
+| `voiceTransport`        | `30`         | `60000`  | Voice transport setup             |
+| `voiceStream`           | `200`        | `60000`  | Voice and video stream updates    |
+| `useSecretToken`        | `5`          | `60000`  | Owner token claims                |
+| `pluginExecute`         | `60`         | `60000`  | Plugin commands and actions       |
+| `oidc`                  | `30`         | `60000`  | Single sign-on requests           |
+
+Most servers never need to touch these. Raise a limit if legitimate users hit it; lower it if you are being abused.
+
+## Environment Variables
+
+Every option above can be set with an environment variable, which is usually easier in Docker. Environment variables win over `config.ini`, and empty values are ignored.
+
+| Variable                            | Overrides                   |
+| ----------------------------------- | --------------------------- |
+| `SHARKORD_PORT`                     | `server.port`               |
+| `SHARKORD_DEBUG`                    | `server.debug`              |
+| `SHARKORD_AUTOUPDATE`               | `server.autoupdate`         |
+| `SHARKORD_BACKUP_DATABASE`          | `server.backupDatabase`     |
+| `SHARKORD_MAX_REQUEST_BODY_BYTES`   | `server.maxRequestBodyBytes` |
+| `SHARKORD_ALLOWED_ORIGINS`          | `server.allowedOrigins`     |
+| `SHARKORD_TRUSTED_PROXIES`          | `server.trustedProxies`     |
+| `SHARKORD_OIDC_ENABLED`             | `oidc.enabled`              |
+| `SHARKORD_OIDC_ISSUER`              | `oidc.issuer`               |
+| `SHARKORD_OIDC_CLIENT_ID`           | `oidc.clientId`             |
+| `SHARKORD_OIDC_CLIENT_SECRET`       | `oidc.clientSecret`         |
+| `SHARKORD_OIDC_REDIRECT_URI`        | `oidc.redirectUri`          |
+| `SHARKORD_OIDC_DISABLE_LOCAL_LOGIN` | `oidc.disableLocalLogin`    |
+| `SHARKORD_WEBRTC_PORT`              | `webRtc.port`               |
+| `SHARKORD_WEBRTC_ANNOUNCED_ADDRESS` | `webRtc.announcedAddress`   |
+| `SHARKORD_WEBRTC_MAX_BITRATE`       | `webRtc.maxBitrate`         |
+
+List options take a comma-separated value:
+
+```bash
+SHARKORD_TRUSTED_PROXIES="127.0.0.1,::1,10.0.0.0/8"
+```
+
+Rate limiters cannot be set through environment variables. Use `config.ini` for those.
+
+There is one more variable, `SHARKORD_DATA_PATH`, which moves the whole data directory. See [Data Directory](/docs/data-dir).
+
+## Running Behind a Proxy
+
+`trustedProxies` defaults to loopback and every private range:
+
+```ini
+[server]
+trustedProxies[]=127.0.0.1
+trustedProxies[]=::1
+trustedProxies[]=10.0.0.0/8
+trustedProxies[]=172.16.0.0/12
+trustedProxies[]=192.168.0.0/16
+trustedProxies[]=fc00::/7
+```
+
+So a proxy on the same machine, in another container, or elsewhere on your network is believed without any configuration. Public addresses are not, which is why a CDN such as Cloudflare has to be added by hand. Setting the option replaces the list rather than extending it.
+
+[Behind a Proxy](/docs/https/behind-a-proxy) covers this in full, including how the client address is resolved, when to narrow the default, and what the proxy itself has to pass through.

@@ -1,8 +1,10 @@
 ---
 title: Podman
-description: Run Sharkord using Podman.
+description: Run Sharkord with Podman, as a quick container or as a systemd service through Quadlets.
 icon: Container
 ---
+
+The quickest way to see it running:
 
 ```bash
 podman run \
@@ -15,6 +17,9 @@ podman run \
   docker.io/sharkord/sharkord:latest
 ```
 
+Port `4991` is bound to loopback, so it is reachable through a reverse proxy on the same machine and not from the internet. Port `40000` carries voice and video on both TCP and UDP and does need to be open in your firewall.
+
+This page assumes rootful Podman, which is what the system-wide Quadlets below use.
 
 ## Quadlets (Recommended)
 
@@ -60,37 +65,48 @@ You can now start the Sharkord container as a service:
 systemctl start sharkord
 ```
 
-<Alert type="warning" title="Attention">
-  Quadlets are transient services. Do not use `systemctl enable`, as they are enabled automatically when an `[Install]` section is present in the Quadlet file. If you **do not** want Sharkord to start automatically, remove the `[Install]` section from the Quadlet file.
+<Alert type="warning" title="Do not run systemctl enable">
+  Quadlets are transient services. The `[Install]` section already enables them,
+  so `systemctl enable` fails. If you **do not** want Sharkord to start
+  automatically, remove the `[Install]` section from the Quadlet file.
 </Alert>
 
 Sharkord should now be running. Point your reverse proxy to `127.0.0.1:4991`.
 
-The first time you run Sharkord, it outputs an **owner access token**. Run this command to get it:
+The first time it starts, Sharkord prints an **owner access token**. It is shown once and cannot be recovered, so save it somewhere safe:
 
 ```bash
 podman logs sharkord
 ```
 
+See [Gain Owner Permissions](/docs/introduction/owner-permissions) for what to do with it.
+
 ### Configuration
 
-Files such as `config.ini` should be located under `/var/lib/containers/storage/volumes/sharkord/_data/`.
+Everything Sharkord owns, including `config.ini`, the database and uploaded files, lives in the `sharkord` volume. With rootful Podman that is `/var/lib/containers/storage/volumes/sharkord/_data/`; rootless puts it under `~/.local/share/containers/storage/volumes/`. See [Data Directory](/docs/data-dir) for what is in there.
 
-To restart the Sharkord server:
+Restart the server after editing `config.ini`:
 
 ```bash
 systemctl restart sharkord
 ```
 
-All of your Sharkord data is stored in the `sharkord` volume. You can manage this using `podman volume` commands. To learn more, run this:
+The volume itself is managed with `podman volume`, which is also how you back it up:
 
 ```bash
 podman volume --help
 ```
 
+<Alert type="info" title="Behind NAT or a cloud firewall?">
+  Set `SHARKORD_WEBRTC_ANNOUNCED_ADDRESS` to the public IP or domain clients
+  should send voice and video to, using an `Environment=` line in the Quadlet
+  file. Without it, clients may be handed an address they cannot reach. See
+  [Configuration](/docs/configuration).
+</Alert>
+
 ### Updates
 
-To update Sharkord, you must pull the latest image and spin up a new container using it. Sharkord's Automatic Updates feature is disabled by default, as it does not work in container environments.
+To update Sharkord, pull the latest image and start a new container from it. The in-app updater does nothing here: it refuses to run inside a container, so the image is the unit of update. See [Updating](/docs/updating).
 
 First, stop the Sharkord server:
 
@@ -118,7 +134,7 @@ podman image prune -f
 
 ## Caddy
 
-If you don't have a reverse proxy going yet, you can deploy Caddy as a Podman container as well.
+If you do not have a reverse proxy yet, run Caddy as a Podman container too. It gets you a domain with HTTPS, which browsers require before they will hand over a microphone, a camera or a screen. See [Why HTTPS](/docs/https/why).
 
 Pull the Caddy container image:
 
@@ -176,4 +192,10 @@ Afterwards, just restart Caddy:
 systemctl restart caddy
 ```
 
-You should now have a fully working Sharkord server running on Podman!
+Caddy requests the certificate on the first visit, so the site is live at `https://sharkord.example.com` within seconds. Your domain has to point at this server already, and no domain of your own means you can [claim a free subdomain](/docs/domains).
+
+## Next Steps
+
+- Voice and video bypass the proxy, so keep port `40000` open on TCP and UDP. See [Behind a Proxy](/docs/https/behind-a-proxy).
+- Tune ports, limits and rate limiters in [Configuration](/docs/configuration).
+- Back up the `sharkord` volume before every update. See [Updating](/docs/updating).

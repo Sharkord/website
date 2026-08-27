@@ -2,9 +2,13 @@
   "pages": [
     "introduction",
     "configuration",
+    "oidc",
+    "administration",
     "https",
     "domains",
+    "voice",
     "updating",
+    "migrations",
     "data-dir",
     "plugins",
     "common-questions",

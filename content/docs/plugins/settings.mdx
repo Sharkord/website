@@ -1,12 +1,12 @@
 ---
 title: Settings
-description: Register typed plugin settings and read or update their values.
+description: Typed options an admin can edit in the interface.
 icon: Settings
 ---
 
-Plugins can register their own settings through `ctx.settings.register(...)`. The returned `PluginSettings` object provides typed `get` and `set` methods for the keys you define.
+Register settings and they show up on your plugin's page in the server settings, where an admin can change them without touching code. Values are stored in the database and survive restarts.
 
-### Register Settings
+### Register
 
 ```ts
 import type { PluginContext } from "@sharkord/plugin-sdk";
@@ -28,30 +28,42 @@ const onLoad = async (ctx: PluginContext) => {
     },
   ]);
 
-  // you can read the current value of settings with get
-  const welcomeEnabled = await settings.get("welcome-enabled");
-
-  // and update them with set
-  await settings.set("welcome-enabled", false);
+  const enabled = settings.get("welcome-enabled"); // boolean
+  settings.set("welcome-enabled", false);
 };
-
-export { onLoad };
 ```
 
-### Supported Setting Types
+`register` is async: it reads the stored values, fills in defaults for keys it has not seen, writes them back, and hands you a typed accessor. Call it once, in `onLoad`, and keep the returned object.
 
-Each setting definition uses one of these types:
+A definition takes `key`, `name`, `type`, `defaultValue`, and an optional `description`. Types are `string`, `number`, and `boolean`.
 
-- `string`
-- `number`
-- `boolean`
+### Reading and Writing
 
-The SDK maps those definitions back into typed values for `get` and `set`.
+`get` and `set` are **synchronous**. `get` reads the value from memory; `set` updates it and persists in the background, so it does not return a promise and there is nothing to await.
 
-### Runtime Behavior
+```ts
+const channelId = settings.get("welcome-channel-id"); // number
+settings.set("welcome-channel-id", 42);
+```
 
-- `register(...)` returns the current persisted values for the definitions you provide.
-- `get(key)` reads the current value for one of your registered keys.
-- `set(key, value)` updates a value programmatically.
+`set` on a key you never registered is ignored and logged as an error in the plugin's log.
 
-If your plugin needs to react when values change, subscribe to the `setting:set` event from [Events](./events).
+### Reacting to Changes
+
+An admin editing a value in the interface does not go through your `set`, so watch the [event](./events) instead:
+
+```ts
+ctx.events.on("setting:set", ({ key, value }) => {
+  if (key !== "welcome-enabled") return;
+
+  ctx.logger.log("welcome messages are now", value);
+});
+```
+
+The event is global, so filter by `key`, since you will also see other plugins' settings.
+
+### Notes
+
+- Values written from the interface are type-checked against your definition; a `number` setting cannot be set to a string.
+- Settings are cleared from memory when the plugin unloads and reloaded from the database on the next `register`. The stored values are not deleted when a plugin is disabled.
+- Anything an admin can read in the interface is not a secret from admins. Use them for API keys if you like, but see [Security](./security).

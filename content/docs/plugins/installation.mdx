@@ -1,27 +1,52 @@
 ---
 title: Installation
-description: Add a compiled plugin to your Sharkord instance.
+description: Install a plugin on your Sharkord server.
 icon: Download
 ---
 
-After compiling your plugin, install it into your Sharkord data directory.
-
-<Alert type="attention" title="Security Warning">
-  Before installing and using plugins, please read the [Security](./security)
-  page to understand the potential risks.
+<Alert type="attention" title="Security warning">
+  Plugins run with full access to your server and to every user's browser. Read
+  [Security](./security) first.
 </Alert>
 
-### Via Marketplace
+### Enable Plugins First
 
-The easiest way to install plugins is through the built-in marketplace. This allows you to browse and install plugins with a single click, without needing to manually manage plugin files.
+Plugins are off by default. Turn the plugin system on in the [server settings](/docs/administration/server-settings). Until you do, nothing is loaded and the marketplace is unavailable.
 
-The marketplace lives in [https://github.com/Sharkord/plugins](https://github.com/Sharkord/plugins) and is open for anyone to publish their plugins. If you have developed a plugin and want to share it with the community, you can submit it to the marketplace.
+You need the `MANAGE_PLUGINS` permission to install and toggle plugins, and users need `USE_PLUGINS` to run their commands and actions.
 
-### Manual Installation
+### From the Marketplace
 
-1. Open your Sharkord data directory (see [here](../data-dir) for more info).
+The marketplace is built into the interface. Browse it in the server settings, pick a plugin, and install. Sharkord downloads the release, verifies it against the checksum in the registry, and unpacks it into your data directory.
+
+See [Marketplace](./marketplace) for what the listings mean and how to publish your own.
+
+### Manually
+
+1. Open your [data directory](/docs/data-dir).
 2. Create a `plugins` folder if it does not exist.
-3. Create a folder for your plugin, for example `my-plugin`.
-4. Copy your bundled plugin (for example, `dist/my-plugin`) into that folder.
-5. Enable the plugin in Sharkord settings under **Plugins**.
-6. Go to the plugins tab and the plugin should be listed there. Click **Enable** to activate it.
+3. Copy the built plugin folder (`dist/<plugin-id>` from the build) into it.
+4. Open **Plugins** in the server settings. The folder is scanned live, so it shows up without a restart.
+5. Enable it.
+
+The result should look like this:
+
+```
+~/.config/sharkord/plugins/
+  my-plugin/
+    manifest.json
+    server/index.js
+    client/index.js
+```
+
+The folder name has to match the `id` in `manifest.json`, and all three files must be present, even for a plugin with no interface.
+
+### Updating and Removing
+
+Marketplace plugins can be updated and removed from the same screen. Sharkord unloads the plugin, replaces the files, and loads it again.
+
+For manual installs, replace the folder's contents and toggle the plugin off and on.
+
+### If It Does Not Load
+
+Each plugin has a log view in the server settings, and load failures are recorded there with the reason. See [Troubleshooting](/docs/troubleshooting) for the common causes.

@@ -2,5 +2,5 @@
   "title": "Installation",
   "icon": "Download",
   "defaultOpen": false,
-  "pages": ["docker", "docker-compose", "podman", "linux", "windows"]
+  "pages": ["docker", "docker-compose", "podman", "linux", "windows", "macos"]
 }

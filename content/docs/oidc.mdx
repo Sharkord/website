@@ -1,0 +1,120 @@
+---
+title: Single Sign-On
+description: Let people sign in to Sharkord with your identity provider over OIDC, and optionally turn passwords off entirely.
+icon: KeySquare
+---
+
+Sharkord can hand sign-in over to an OpenID Connect provider: Authentik, Keycloak, Zitadel, Entra ID, Google Workspace, or anything else that speaks OIDC. Users click one button, authenticate with the provider they already use, and land back in your server.
+
+It is off by default, and it is configured in [`config.ini`](/docs/configuration) rather than in the interface, because it decides who can get in at all.
+
+## Before You Start
+
+- **Serve Sharkord over HTTPS.** Providers refuse plain HTTP redirect URIs, and the cookie that protects the sign-in is only marked secure on HTTPS. See [Why HTTPS](/docs/https/why).
+- **Create a confidential client** in your provider. Sharkord authenticates with a client secret, so a public or PKCE-only client will not work, even though PKCE is used as well.
+- **Know your issuer URL**, the base URL the provider publishes its configuration under.
+
+## Configure Sharkord
+
+```ini
+[oidc]
+enabled=true
+issuer=https://auth.example.com/application/o/sharkord/
+clientId=your-client-id
+clientSecret=your-client-secret
+redirectUri=
+disableLocalLogin=false
+```
+
+| Field | Default | What it does |
+| --- | --- | --- |
+| `enabled` | `false` | Turns the whole feature on. While off, the sign-in routes answer 404. |
+| `issuer` | empty | Your provider's issuer URL. Must be HTTPS, except on localhost. |
+| `clientId` | empty | The client id from your provider. |
+| `clientSecret` | empty | The client secret. Treat it like a password. |
+| `redirectUri` | empty | Overrides where the provider sends people back. Empty means Sharkord works it out from the request. |
+| `disableLocalLogin` | `false` | Refuses password sign-in, leaving the provider as the only way in. |
+
+Every one has an environment variable, which is easier in Docker:
+
+| Variable | Sets |
+| --- | --- |
+| `SHARKORD_OIDC_ENABLED` | `oidc.enabled` |
+| `SHARKORD_OIDC_ISSUER` | `oidc.issuer` |
+| `SHARKORD_OIDC_CLIENT_ID` | `oidc.clientId` |
+| `SHARKORD_OIDC_CLIENT_SECRET` | `oidc.clientSecret` |
+| `SHARKORD_OIDC_REDIRECT_URI` | `oidc.redirectUri` |
+| `SHARKORD_OIDC_DISABLE_LOCAL_LOGIN` | `oidc.disableLocalLogin` |
+
+Sharkord discovers the rest, the authorization and token endpoints and the signing keys, from `<issuer>/.well-known/openid-configuration`. If you paste the full well-known URL as the issuer, the suffix is stripped for you. Discovery is cached for five minutes, so a provider change takes effect within that, or immediately after a restart.
+
+Restart the server after editing the config.
+
+## Configure Your Provider
+
+Register Sharkord as a client with:
+
+| Setting | Value |
+| --- | --- |
+| Redirect URI | `https://your-domain.com/oidc/callback` |
+| Grant type | Authorization code, with PKCE (S256) |
+| Scopes | `openid profile email` |
+| Client authentication | `client_secret_post`, or `client_secret_basic` |
+
+Sharkord prefers `client_secret_post` and falls back to `client_secret_basic` when the provider does not advertise it.
+
+<Alert type="warning" title="The redirect URI has to match exactly">
+  Leave `redirectUri` empty and Sharkord builds it from the incoming request,
+  which is right for most setups. It reads `X-Forwarded-Proto` and
+  `X-Forwarded-Host` to do that, and only trusts them from a proxy listed in
+  `trustedProxies`. If your proxy is not trusted, or the address a user types
+  differs from what the proxy passes through, set `redirectUri` explicitly. See
+  [Behind a Proxy](/docs/https/behind-a-proxy).
+</Alert>
+
+## How Signing In Works
+
+The connect screen gains a **Sign in with SSO** button once the feature is on. From there:
+
+1. Sharkord starts a login, sets a short-lived state cookie, and sends the browser to your provider.
+2. The user authenticates there and the provider returns them to `/oidc/callback`.
+3. Sharkord checks the state and the nonce, exchanges the code for tokens, and reads the claims.
+4. The browser is sent back to the app with a one-time code, which the client swaps for its session.
+
+A pending login is valid for five minutes, and the one-time code at the end lasts sixty seconds. Both are single use, so a stale link fails rather than signing somebody in twice.
+
+Sessions from SSO last seven days, the same as password sign-in, and are cut off by the same things: kicking someone or changing their password invalidates the session immediately, and a banned user is refused the moment they try to use it.
+
+## How Accounts Are Matched
+
+Sharkord identifies a returning user by the provider's `sub` claim, which does not change even if the person renames themselves or changes email.
+
+For someone signing in for the first time:
+
+1. **A local account with the same identity is linked to the provider**, but only if the provider says `email_verified` is true. The identity is the `email` claim, lowercased, or the `sub` when there is no email.
+2. **If that identity is already linked to a different provider account**, the sign-in is refused rather than taking the account over.
+3. **Otherwise a new account is created**, named from `preferred_username`, then `name`, then `sub`. If the claims carry a `picture`, it is downloaded as the avatar.
+
+Avatar imports are deliberately paranoid: no redirects are followed, anything outside the provider's own host must be HTTPS, addresses that resolve to a private network are refused, and the download is capped by your server's avatar size limit and a five second timeout. A picture that fails any of these is skipped, and the account is still created.
+
+New accounts created this way have **no password**. The password section of their settings says so, and the API refuses to change one. Accounts that existed before keep their password, so linking an account does not take password sign-in away from it.
+
+Banned users are refused at the callback, whatever the provider says.
+
+## Turning Passwords Off
+
+```ini
+[oidc]
+disableLocalLogin=true
+```
+
+Password sign-in is then rejected with "This server only accepts sign in through its identity provider", and the connect screen sends people straight to the provider rather than showing them a form.
+
+<Alert type="attention" title="Keep a way back in">
+  If the provider goes down or the client secret is rotated out from under you,
+  nobody can sign in. The fix is to set `disableLocalLogin=false` and restart,
+  so make sure you can reach the machine and edit
+  [`config.ini`](/docs/configuration) without going through Sharkord itself.
+</Alert>
+
+Claiming ownership is unaffected: the [owner access token](/docs/introduction/owner-permissions) is not a password, so `useToken` still works for an account that signed in through the provider.

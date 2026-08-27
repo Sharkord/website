@@ -1,0 +1,62 @@
+---
+title: HTTP Routes
+description: Expose your own HTTP endpoints from a plugin.
+icon: Globe
+---
+
+`ctx.http` registers routes on the Sharkord HTTP server, under your plugin's namespace. Use them for webhooks, callbacks from external services, and anything that needs a plain URL.
+
+### Register a Route
+
+```ts
+import type { PluginContext } from "@sharkord/plugin-sdk";
+
+const onLoad = (ctx: PluginContext) => {
+  ctx.http.get("/status", (req, res) => {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ ok: true }));
+  });
+
+  ctx.http.post("/webhook", async (req, res) => {
+    // read the body yourself; nothing is parsed for you
+    res.writeHead(204);
+    res.end();
+  });
+};
+```
+
+There is a method per verb (`get`, `post`, `patch`, `delete`, `options`), plus `ctx.http.register(method, path, handler)` if the verb is dynamic.
+
+Handlers get Node's raw `IncomingMessage` and `ServerResponse`. Nothing is parsed, and nothing is written for you: your handler owns the response.
+
+### URLs
+
+A route registered as `/status` is served at:
+
+```
+https://your-server/plugins/<plugin-id>/status
+```
+
+Rules for paths:
+
+- Must start with `/`.
+- Trailing slashes are ignored, so `/status` and `/status/` are the same route.
+- `*` is allowed only as the final segment: `/api/*` matches everything below `/api/`. The most specific wildcard wins, so `/api/v1/*` beats `/api/*`.
+- Registering the same method and path twice replaces the first handler and logs an error.
+- A plugin can register at most 100 routes.
+
+Routes are removed when the plugin is disabled or unloaded, and requests to a plugin that is not loaded get a 404.
+
+<Alert type="attention" title="Plugin routes are public">
+  These routes are served without authentication and without rate limiting. The
+  SDK currently gives you no way to identify the caller. Assume anything you
+  register here is reachable by anyone on the internet who can guess the URL,
+  and do your own checks: a shared secret in a header, a signature from the
+  service calling you, whatever fits.
+</Alert>
+
+### Notes
+
+- Requests are logged like any other HTTP request when `debug` is on.
+- A handler that throws after it started writing drops the connection; one that throws before gets a generic 500.
+- CORS headers are applied by the server according to `allowedOrigins` in [`config.ini`](/docs/configuration), so browsers on other origins may be blocked before your handler runs.

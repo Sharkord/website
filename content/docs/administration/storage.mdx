@@ -1,0 +1,61 @@
+---
+title: Storage & Uploads
+description: Quotas, upload limits, signed URLs, and image optimization.
+icon: HardDrive
+---
+
+Uploaded files live on disk in the [data directory](/docs/data-dir), under `public/`. The Storage tab in the server settings controls who can upload, how much, and who can read the result. Changing these needs `MANAGE_STORAGE`.
+
+The tab also shows current disk usage per user, which is the quickest way to find out where the space went.
+
+## Uploads
+
+| Setting | Default | Range | What it does |
+| --- | --- | --- | --- |
+| Allow uploads | on | | Turns uploading off entirely. Existing files stay reachable. |
+| Allow file sharing in direct messages | on | | Only applies while uploads are on. Does not affect files already sent. |
+| Max file size | 2 GB | 1 MB to 2 GB | Largest single file. Checked before the upload is accepted, and again after image optimization. |
+| Max files per message | 10 | 0 to 20 | Extra attachments beyond the limit are ignored. |
+| Max avatar size | 3 MB | up to 50 MB | Applies to profile avatars. |
+| Max banner size | 3 MB | up to 100 MB | Applies to profile banners. |
+
+<Alert type="warning" title="Your reverse proxy has an opinion too">
+  Nginx rejects request bodies over 1 MB by default, which fails every upload
+  long before Sharkord sees it. See the [Nginx guide](/docs/https/nginx).
+</Alert>
+
+## Quotas
+
+| Setting | Default | Range | What it does |
+| --- | --- | --- | --- |
+| Quota | 100 GB | 1 GB to 1 TB | Total storage the server will use. |
+| Quota per user | unlimited | 0 to 100 GB | Per-user cap. `0` means unlimited. |
+| Overflow action | Prevent new file uploads | | What happens when the server quota is reached. |
+
+Overflow has two modes. **Prevent new file uploads** rejects the upload and tells the user. **Delete old files** deletes the oldest files to make room, which keeps the server writable at the cost of losing old attachments permanently.
+
+A per-user quota can be overridden per role, which is how you give a trusted group more room. Enable the override on the role, set the amount, and remember that `0` on an override role means unlimited. When a user holds several override roles, the largest wins. See [Roles and Permissions](./roles-permissions).
+
+## Signed URLs
+
+Off by default. This is the single most important setting on this page for a private server.
+
+**Off**: files are served from `/public/<filename>` to anyone who has the URL, with no login. Anyone who obtains a link, or guesses a filename, can read the file.
+
+**On**: every file URL carries a signed token with an expiry, and the server refuses requests without a valid one. The clients get fresh tokens as they load content, so users notice nothing. The server logo is the only exception, since it has to render before anyone logs in.
+
+The expiry is configurable from 30 minutes to 7 days, with a default of 1 hour. Shorter is safer; longer is friendlier to a link somebody pasted into another tab.
+
+## Image Optimization
+
+Off by default. When on, uploaded JPEG, PNG, WebP, HEIC, and HEIF images are converted to WebP at the quality you choose, from 1 to 100, defaulting to 80.
+
+The converted file replaces the original, and its extension changes to `.webp`. If conversion would make the file bigger, the original is kept instead. A failed conversion is logged and the original goes through unchanged. Non-image files and other formats, such as GIF and video, are untouched.
+
+Quality is a size and detail trade-off. 80 is a reasonable default; below about 60 the artefacts start to show on screenshots and text.
+
+## Deleting Files
+
+Deleting a message deletes the files attached to it, including files a plugin attached.
+
+Deleting a user has two modes. The normal one keeps their messages and files, reassigning them to a placeholder account, so nothing is freed. The wipe mode removes their data along with the account. Storage freed either way shows up in the disk usage view immediately.

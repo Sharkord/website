@@ -1,35 +1,47 @@
 ---
 title: Security
-description: Learn about the security considerations when using Sharkord plugins.
+description: What you are trusting when you install a plugin.
 icon: Shield
 ---
 
-Sharkord plugins are designed to be powerful and flexible, but with great power comes great responsibility. Before installing and using plugins, it's important to understand the security implications and best practices to keep your Sharkord instance safe.
+Installing a plugin is not like installing a browser extension with a permission prompt. There is no sandbox. A plugin is code you are choosing to run with full privileges, on your server and in your users' browsers.
 
-### Why Are Plugins a Security Concern?
+### What a Plugin Can Do on the Server
 
-Plugins can execute **ANY** code on your server, which means that a plugin can:
+Plugin server code runs inside the Sharkord process, as the user that started it. It can:
 
-- Read, modify, or delete **ANY** data that Sharkord has access to.
-- Read, modify, or delete **ANY** files on the host machine.
-- Access the network and communicate with external servers, which could be used for data exfiltration, command and control, or other malicious activities.
-- Execute arbitrary code on the host machine, which could lead to a full compromise of the system.
+- read, change, or delete anything in the database, including every message and every account;
+- read, write, or delete any file that user can reach on the host;
+- make outbound network requests, so data can leave your machine;
+- run arbitrary code, which means anything the host account can do.
 
-Plugins can also execute **ANY** code on the users browsers, which means a plugin can steal user sessions, inject malicious scripts, or perform other harmful actions.
+### What a Plugin Can Do in the Browser
 
-### What Can I Do to Mitigate These Risks?
+Plugin client code is loaded from your server and executed on your app's own origin, in the browser of **every user**, whether or not they knew a plugin was installed. It has access to the DOM, to `localStorage` (which holds the session token), and to any request the app can make.
 
-- **VERY IMPORTANT RECOMMENDATION**: use Docker or another containerization technology to isolate your Sharkord instance and plugins from the host system. This can help prevent plugins from accessing sensitive data or resources on the host machine.
-- Only install plugins from trusted sources, such as the official Sharkord plugin repository or reputable developers.
-- Review the plugin's code and documentation before installing it to understand what it does and how it works. Even if you don't have the technical expertise to fully understand the code, you can ask an AI assistant to review it for you and highlight any potential security issues.
-- Keep your Sharkord instance and plugins up to date with the latest security patches and updates.
+The admin who installs a plugin makes that decision for everyone connected to the server.
 
-Even if a plugin is on the Marketplace, it does not necessarily mean that it is safe. The marketplace is open for anyone to publish their plugins, and while there may be some review process in place, it is still possible for malicious plugins to slip through. Always exercise caution and do your due diligence before installing any plugin.
+### Plugin HTTP Routes Are Public
 
-### For Plugin Developers
+Plugins can register [HTTP routes](./http) under `/plugins/<plugin-id>/`. Those routes are served without authentication and without rate limiting; the SDK currently has nothing to identify the caller. Anything a plugin exposes there is exposed to the internet, so treat every plugin route as public and assume it will be found.
 
-- Follow secure coding practices and guidelines to minimize the risk of vulnerabilities in your plugin.
-- Regularly review and update your plugin to address any security issues that may arise.
-- Write clear and comprehensive documentation for your plugin, including any potential security risks and how to mitigate them.
+### Reducing the Risk
 
-By following these best practices, you can help ensure that your Sharkord instance remains secure while still benefiting from the powerful features that plugins can provide.
+- **Run Sharkord in a container.** Docker or an equivalent is the single most effective thing you can do: it puts a boundary between a plugin and the rest of the host.
+- **Install from sources you trust.** Prefer plugins whose source you can read.
+- **Read the code before installing.** If you cannot review it yourself, ask someone who can, or feed it to an AI assistant and ask what it does with the network and the filesystem.
+- **Keep plugins updated**, and remove the ones you stopped using.
+- **Give `USE_PLUGINS` deliberately.** Running plugin commands and actions is gated by that permission; `MANAGE_PLUGINS` controls who can install them.
+
+### About the Marketplace
+
+Downloads from the [marketplace](./marketplace) are checked against the checksum published in the registry, so you get the file the author published. That is all it guarantees.
+
+The marketplace is open to anyone. A listing is not a review, and the `verified` flag on an entry means the maintainers recognise the publisher, not that the code was audited. Do the same due diligence you would do for a plugin you found anywhere else.
+
+### For Plugin Authors
+
+- Validate everything that comes from a user, including command arguments and action payloads.
+- Assume your HTTP routes are called by strangers.
+- Keep secrets in [settings](./settings) or in files under `ctx.path`, never in the client bundle. `client/index.js` is served unauthenticated to every browser, so anything in it is public. Command arguments that carry secrets should be marked `sensitive` so the interface masks them.
+- Document what your plugin talks to and why. People installing it are trusting you.

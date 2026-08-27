@@ -1,10 +1,10 @@
 ---
 title: Commands
-description: Register commands users can run.
+description: Slash commands users can run from the chat.
 icon: Terminal
 ---
 
-Plugins can register custom commands with typed arguments and custom execution logic.
+Commands are the simplest way to give users something to do. They appear when a user types `/` in the message box, and in the plugin's command dialog in the server settings. Running one needs the `USE_PLUGINS` permission.
 
 ### Register a Command
 
@@ -21,36 +21,68 @@ type Commands = {
 const onLoad = (ctx: PluginContext) => {
   const registerCommand = createRegisterCommand<Commands>(ctx);
 
-  // by using the registerCommand helper, we get type safety for the command name, arguments and response
   registerCommand(
     "hello",
     {
-      description: "Tells the executor hello with their user id.",
+      description: "Greets someone.",
       args: [{ name: "name", type: "string", required: true }],
     },
     async (invoker, args) => {
-      return `Hello, ${args.name}!. Your user ID is: ${invoker.userId}`;
+      return `Hello, ${args.name}! Your user ID is ${invoker.userId}.`;
     },
   );
 };
-
-export { onLoad };
 ```
 
-Each argument supports `name`, `description`, `type`, `required`, and `sensitive`.
+`createRegisterCommand<Commands>` is a typed wrapper around `ctx.commands.register(...)`. The contract type gives you checked names, arguments, and return values; the raw form takes a `{ name, description, args, execute }` object.
+
+### Arguments
+
+Each entry in `args` accepts:
+
+| Field         | Type                                | Notes                                     |
+| ------------- | ----------------------------------- | ----------------------------------------- |
+| `name`        | `string`                            | Required. What the user types.            |
+| `type`        | `"string" \| "number" \| "boolean"` | Required.                                 |
+| `description` | `string`                            | Shown in the interface.                   |
+| `required`    | `boolean`                           | Defaults to optional.                     |
+| `sensitive`   | `boolean`                           | Masks the value in the interface.         |
 
 ```ts
 args: [
   {
     name: "token",
-    description: "API token used to reach the external service.",
+    description: "API token for the external service.",
     type: "string",
     required: true,
     sensitive: true,
   },
-]
+];
 ```
 
-Set `sensitive: true` for secrets. Sensitive values are masked in the interface.
+### The Invoker
 
-See also [Actions](./actions) when you need a server operation to be triggered from plugin UI.
+The first handler argument describes who ran the command:
+
+```ts
+{
+  userId: number;
+  currentVoiceChannelId?: number;
+}
+```
+
+`currentVoiceChannelId` is what a music or soundboard plugin uses to know where to play.
+
+### The Response
+
+Whatever you return goes back to the caller and is displayed in the interface. Return a string unless you have a reason not to.
+
+<Alert type="info" title="Commands time out after 30 seconds">
+  A handler that runs longer is aborted and the user gets an error. For slow
+  work, return immediately and post the result later with
+  [`ctx.messages.send`](./messages).
+</Alert>
+
+Command executions are rate limited (60 per minute per user by default) and recorded in the server activity log, arguments included. Keep secrets out of argument values where you can, and mark them `sensitive` where you cannot.
+
+See [Actions](./actions) for server functions called from your own UI instead of by a user typing.

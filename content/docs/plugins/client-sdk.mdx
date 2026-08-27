@@ -1,30 +1,50 @@
 ---
 title: Client SDK
-description: Use the Sharkord client runtime from plugin UI code.
+description: What plugin UI code can reach in the browser.
 icon: Monitor
 ---
 
-In most plugins, you only need two helpers in client components: `useStoreSelector` and `useCallAction`.
+Client code has two jobs: read Sharkord's state, and call your own server [actions](./actions). The scaffold gives you a small hook for each, in `src/client/store/`. They are template code, not SDK exports, so you can change them.
 
-### Store Helpers
-
-Use `useStoreSelector` when a component needs data from Sharkord state.
+### Reading State
 
 ```tsx
 import { useStoreSelector } from "../store";
 
 const SelectedChannel = () => {
-  const selectedChannelId = useStoreSelector((state) => state.selectedChannelId);
+  const channelId = useStoreSelector((state) => state.selectedChannelId);
 
-  return <span>Selected channel: {selectedChannelId ?? "none"}</span>;
+  return <span>Selected channel: {channelId ?? "none"}</span>;
 };
-
-export { SelectedChannel };
 ```
 
-### Action Helper
+The selector runs against this state:
 
-Use `useCallAction` to call a server [action](./actions) from a component.
+| Field                   | Type                                |
+| ----------------------- | ----------------------------------- |
+| `users`                 | public users on the server          |
+| `channels`              | channels                            |
+| `categories`            | channel categories                  |
+| `roles`                 | roles                               |
+| `emojis`                | custom emojis                       |
+| `plugins`               | loaded plugins with UI              |
+| `ownUserId`             | `number \| undefined`               |
+| `selectedChannelId`     | `number \| undefined`               |
+| `currentVoiceChannelId` | `number \| undefined`               |
+| `publicSettings`        | the server's public settings        |
+
+If you read the same value in several places, wrap it once:
+
+```ts
+import { useStoreSelector } from ".";
+
+export const useCurrentVoiceChannelId = () =>
+  useStoreSelector((state) => state.currentVoiceChannelId);
+```
+
+For derived state, `createSelector` and `createCachedSelector` are provided by the host through `window.__SHARKORD_EXPOSED_LIBS__`; the scaffold re-exports them from `src/client/libs.ts`.
+
+### Calling the Server
 
 ```tsx
 import { Button } from "@sharkord/ui";
@@ -35,40 +55,39 @@ const SumButton = memo(() => {
   const callAction = useCallAction();
 
   const onClick = async () => {
-    // calls the server action and gets the typed response back
     const result = await callAction("sum", { a: 1, b: 2 });
     console.log(result);
   };
 
   return <Button onClick={onClick}>Calculate</Button>;
 });
-
-export { SumButton };
 ```
 
-### Custom State Hooks
+`useCallAction` wraps `createCallAction<Actions>(actions)` from the SDK, so the action name, payload, and response are all checked against your contract.
 
-If you read the same piece of state often, wrap the selector in a small hook.
+### Store Actions
+
+Besides `executePluginAction`, which is what `callAction` uses, the store exposes two things your UI can do directly:
 
 ```ts
-import { useStoreSelector } from ".";
+import { actions } from "../store";
 
-export const useCurrentVoiceChannelId = () =>
-  useStoreSelector((state) => state.currentVoiceChannelId);
+await actions.sendMessage(channelId, "<p>hello</p>");
+actions.selectChannel(channelId);
 ```
 
-### Exposed Window Globals
+These run as the current user, with that user's permissions.
 
-Sharkord also exposes a few globals on `window` for plugin bundles:
+### Host Globals
 
-- `window.__SHARKORD_STORE__`
-- `window.__SHARKORD_EXPOSED_LIBS__`
-- `window.__SHARKORD_REACT__`
-- `window.__SHARKORD_REACT_JSX__`
-- `window.__SHARKORD_REACT_JSX_DEV__`
-- `window.__SHARKORD_REACT_DOM__`
-- `window.__SHARKORD_REACT_DOM_CLIENT__`
+The store and the shared libraries reach your bundle through globals, which is why your plugin does not ship its own React:
 
-Most plugins do not need to use these directly, but it helps to know they are there.
+- `window.__SHARKORD_STORE__`: `getState`, `subscribe`, `actions`
+- `window.__SHARKORD_EXPOSED_LIBS__`: `createSelector`, `createCachedSelector`
+- `window.__SHARKORD_REACT__`, `__SHARKORD_REACT_JSX__`, `__SHARKORD_REACT_JSX_DEV__`, `__SHARKORD_REACT_DOM__`, `__SHARKORD_REACT_DOM_CLIENT__`
 
-That is the main pattern: read state with `useStoreSelector`, call server code with `useCallAction`, and wrap repeated selectors in small hooks.
+The build tooling wires these up for you. Reach for them directly only when the scaffold's helpers are not enough.
+
+### Reminder
+
+Client code is public and runs in every user's browser. Do not put secrets in it, and do not treat a check you made here as security. Enforce it in a server [action](./actions).

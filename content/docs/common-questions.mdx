@@ -1,68 +1,58 @@
 ---
 title: Common Questions
-description: Answers to common questions about Sharkord.
+description: Hardware, encryption, migrating servers, file storage, mobile, and the other questions people ask.
 icon: Info
 ---
 
 <Accordion>
-  <AccordionItem title="Is this supposed to be a full blown alternative to Discord?">
-    Sharkord is a self-hosted voice and text chat server with a Discord-like
-    interface, but it does not aim to replicate all of Discord's features. It
-    focuses on providing core chat and voice functionality for small to medium
-    private groups, with extensibility through plugins. It does not aim to host
-    huge public communities or be a full social platform like Discord.
+  <AccordionItem title="Is this meant to be a full replacement for Discord?">
+    No. Sharkord covers core chat and voice for small and medium private groups, with plugins for everything else. It is not trying to replicate every Discord feature, and it is not built for large public communities.
   </AccordionItem>
-  <AccordionItem title="What specs do I need to run X number of users with X amount of voice channels?">
-    Sharkord server is lightweight and can run on modest hardware. It really
-    depends on the number of concurrent users and voice channels.
+  <AccordionItem title="What hardware do I need?">
+    The server is light on CPU and memory; bandwidth is what you actually plan for. Voice and video are routed, not mixed, so a channel with N people talking means the server forwards each stream to N-1 others. Screen sharing at a high bitrate dominates everything else, and `webRtc.maxBitrate` in [`config.ini`](/docs/configuration) is the knob that caps it.
+
+    A small VPS handles a handful of concurrent voice users comfortably. Text-only usage is negligible.
+
   </AccordionItem>
-  <AccordionItem title="Can we migrate the server to another machine without losing data?">
-    Yes. Just copy the [Data Directory](/docs/data-dir) to the new machine and
-    that's it.
+  <AccordionItem title="Can I move the server to another machine?">
+    Yes. Stop it, copy the [data directory](/docs/data-dir) across, and start the same version there. Everything comes with it.
   </AccordionItem>
-  <AccordionItem title="Does it support multiple servers/instances?">
-    No. Each Sharkord instance is a single server. You can run multiple
-    instances on the same machine with different ports and data directories, but
-    they will be separate servers.
+  <AccordionItem title="Does it support multiple servers in one instance?">
+    No. One instance is one server. You can run several instances on the same machine with different ports and different data directories, but they stay completely separate.
+  </AccordionItem>
+  <AccordionItem title="Where are the files stored? Can I use S3?">
+    Uploads are stored on disk, inside the [data directory](/docs/data-dir). There is no support for object storage such as S3. You can move the whole data directory, including uploads, with `SHARKORD_DATA_PATH`, so a mounted volume works.
+  </AccordionItem>
+  <AccordionItem title="Are messages encrypted?">
+    They are encrypted in transit when you serve Sharkord over HTTPS, and stored unencrypted in the database on your server. There is no end-to-end encryption.
+  </AccordionItem>
+  <AccordionItem title="Will messages ever be end-to-end encrypted?">
+    No.
+  </AccordionItem>
+  <AccordionItem title="Is voice and video encrypted?">
+    Yes. WebRTC media is always encrypted between the browser and the server with DTLS-SRTP, whether or not you use HTTPS. It is decrypted at the server to be routed, so this is transport encryption, not end-to-end.
+  </AccordionItem>
+  <AccordionItem title="Can I use my own domain and certificate?">
+    Yes. Sharkord does not terminate TLS itself, so put a reverse proxy in front of it. See the [HTTPS guides](/docs/https/why). If you do not own a domain, claim a [free subdomain](/docs/domains).
   </AccordionItem>
   <AccordionItem title="Can I have a music bot?">
-    Yes, via plugins. We have a minimalistic music bot plugin available in the
-    marketplace, and you can also create your own custom music bot plugin if you
-    have specific requirements or want to integrate with a particular music
-    service.
+    Yes, through plugins. There is a small music bot in the marketplace, and you can [write your own](/docs/plugins/overview).
   </AccordionItem>
-  <AccordionItem title="Does it have a Desktop/Mobile client?">
-    No. It's a possibility for the future. For now, it's only web.
+  <AccordionItem title="Is there a desktop or mobile app?">
+    Not yet. Sharkord runs in the browser, including mobile browsers. Native clients are a possibility for the future.
   </AccordionItem>
-  <AccordionItem title="Where are files stored?">
-    Files are stored in the host machine. Currently it's not possible to change
-    the storage location, but it's planned for the future.
-  </AccordionItem>
-  <AccordionItem title="Are the messages encrypted?">
-    They are encrypted in transit using TLS (when accessed via HTTPS), but not
-    end-to-end encrypted.
-  </AccordionItem>
-  <AccordionItem title="Is the voice and video communication encrypted?">
-    Yes, voice communication is encrypted in transit using TLS and SRTP.
-  </AccordionItem>
-  <AccordionItem title="Can I use my own domain and SSL certificate?">
-    Yes, you can configure a reverse proxy like Nginx or Caddy to serve Sharkord
-    on your domain with your SSL certificate. Sharkord itself does not handle
-    SSL termination, so a reverse proxy is required for custom domains and
-    certificates.
+  <AccordionItem title="Does Sharkord phone home?">
+    There is no telemetry or analytics, and nothing about your server or its users is reported anywhere. The server does make outbound requests in four cases:
+
+    - To look up its own public IP at startup, unless you set `webRtc.announcedAddress`.
+    - To GitHub, if you enable automatic updates or open the update panel.
+    - To the plugin marketplace, when you browse or install plugins.
+    - To `ipinfo.io`, when a user logs in, to record the city and country shown in their login history. The user's IP address is sent to that service, and results are cached.
   </AccordionItem>
   <AccordionItem title="Is Sharkord vibecoded?">
-    No, Sharkord is not vibecoded. AI is used as a tool to assist in
-    development, documentation and testing, but the core design and
-    implementation decisions are made by the developers. The AI is not
-    responsible for any core aspects of the project.
+    No. AI is used as a tool for development, documentation, and testing, but design and implementation decisions are made by the developers.
   </AccordionItem>
-  <AccordionItem title="How do I reset my server?">
-    To reset your server, delete the data directory. This will remove ALL data.
-    Check the [Data Directory](/docs/data-dir) for the location of the data
-    directory on your system.
-  </AccordionItem>
-  <AccordionItem title="Will messages be end to end encrypted at some point?">
-    No.
+  <AccordionItem title="How do I reset the server?">
+    Delete the [data directory](/docs/data-dir). That removes every user, message, and file, and the next start generates a new server and a new owner token.
   </AccordionItem>
 </Accordion>
