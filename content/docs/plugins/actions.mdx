@@ -4,69 +4,61 @@ description: Server functions your plugin UI can call.
 icon: Workflow
 ---
 
-An action is a function that runs on the server and is called from your plugin's [components](./components). Use one whenever the browser should not be trusted with the work: API keys, database reads, anything privileged.
+An action is a function that runs on the server and is called from your plugin's [components](./components). Use one whenever the browser should not be trusted with the work: API keys, database reads, anything privileged. Unlike a command, an action is not typed into chat and produces no message.
 
 ### Register an Action
 
 ```ts
 // src/server/index.ts
-import { createRegisterAction, type PluginContext } from "@sharkord/plugin-sdk";
+import { Permission, type PluginContext } from "@sharkord/plugin-sdk";
+import type { TPlugin } from "../types";
 
-type Actions = {
-  sum: {
-    payload: { a: number; b: number };
-    response: number;
-  };
-};
-
-const onLoad = (ctx: PluginContext) => {
-  const registerAction = createRegisterAction<Actions>(ctx);
-
-  registerAction("sum", async (invoker, payload) => {
-    // runs on the server; the return value goes back to the caller
-    return payload.a + payload.b;
+const onLoad = (ctx: PluginContext<TPlugin>) => {
+  ctx.actions.register({
+    name: "sum",
+    description: "Adds two numbers.",
+    requires: Permission.SEND_MESSAGES,
+    executes: async (invoker, payload) => payload.a + payload.b,
   });
 };
 ```
 
-`createRegisterAction<Actions>` wraps `ctx.actions.register(...)` and ties the payload and response types to your contract. Define that contract in `src/contracts/actions.ts` so both halves of the plugin import the same one.
+With a [contract](./contract) passed to `PluginContext`, `name` has to be one of its `actions` keys, and the payload and return type of `executes` follow from it.
+
+`requires` works exactly as it does for [commands](./commands#who-can-run-it): a default an admin can override, not a guarantee. Enforce anything that matters with `ctx.permissions.userCan` inside `executes`.
+
+A plugin can register at most 100 actions.
 
 ### Call It From the Client
 
 ```tsx
-// src/client/store/hooks.ts
-import { createCallAction } from "@sharkord/plugin-sdk";
-import { actions } from ".";
-import type { Actions } from "../../contracts/actions";
+// src/client/sum-button.tsx
+import { createCallAction } from "@sharkord/plugin-sdk/client";
+import { memo, useCallback } from "react";
+import type { TPlugin } from "../types";
 
-export const useCallAction = () => createCallAction<Actions>(actions);
-```
-
-```tsx
-// src/client/components/sum-button.tsx
-import { Button } from "@sharkord/ui";
-import { memo } from "react";
-import { useCallAction } from "../store/hooks";
+const callAction = createCallAction<TPlugin>();
 
 const SumButton = memo(() => {
-  const callAction = useCallAction();
-
-  const onClick = async () => {
+  const onClick = useCallback(async () => {
     const result = await callAction("sum", { a: 1, b: 2 });
-    console.log(result);
-  };
 
-  return <Button onClick={onClick}>Calculate</Button>;
+    console.log(result);
+  }, []);
+
+  return <button onClick={onClick}>Calculate</button>;
 });
 
 export { SumButton };
 ```
 
+`createCallAction<TPlugin>()` is called **once at module scope**, not inside a component. It works out which plugin it belongs to from the URL its own bundle was served from, so it only runs in plugin client code Sharkord loaded.
+
 ### Rules of the Road
 
-- The caller needs the `USE_PLUGINS` permission.
+- The caller needs the `USE_PLUGINS` permission, plus whatever the action's access rule resolves to.
 - Handlers time out after 30 seconds.
 - Calls are rate limited (60 per minute per user by default) and written to the activity log with their payload.
-- The `invoker` argument is the same `{ userId, currentVoiceChannelId? }` as for [commands](./commands). It is set by the server, so it is the one thing in the call you can trust: validate the payload yourself.
+- The `invoker` argument is the same `{ userId, currentVoiceChannelId? }` as for [commands](./commands). It is set by the server, so it is the one thing in the call you can trust: **validate the payload yourself.** The contract is compile-time typing, not runtime validation.
 
-See [Client SDK](./client-sdk) for the rest of what your UI code can reach.
+See [Client SDK](./client-sdk) for the rest of what your UI code can reach, and [Data](./data) for what an action can read and write once it is running.

@@ -9,25 +9,51 @@ icon: Globe
 ### Register a Route
 
 ```ts
-import type { PluginContext } from "@sharkord/plugin-sdk";
+import { Permission, type PluginContext } from "@sharkord/plugin-sdk";
 
 const onLoad = (ctx: PluginContext) => {
-  ctx.http.get("/status", (req, res) => {
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ ok: true }));
-  });
-
+  // public: a webhook sender has no Sharkord token to present
   ctx.http.post("/webhook", async (req, res) => {
-    // read the body yourself; nothing is parsed for you
     res.writeHead(204);
     res.end();
   });
+
+  // any signed-in user
+  ctx.http.get("/preferences", async (req, res, { userId }) => {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(await load(userId)));
+  }, { auth: true });
+
+  // a signed-in user holding a permission
+  ctx.http.post("/purge", handler, { requires: Permission.MANAGE_MESSAGES });
 };
 ```
 
-There is a method per verb (`get`, `post`, `patch`, `delete`, `options`), plus `ctx.http.register(method, path, handler)` if the verb is dynamic.
+There is a method per verb (`get`, `post`, `patch`, `delete`, `options`), plus `ctx.http.register(method, path, handler, options)` if the verb is dynamic.
 
-Handlers get Node's raw `IncomingMessage` and `ServerResponse`. Nothing is parsed, and nothing is written for you: your handler owns the response.
+Handlers get Node's raw `IncomingMessage` and `ServerResponse`, plus a context object. Nothing is parsed and nothing is written for you: body parsing, route params and content types are yours to do, and your handler owns the response.
+
+### Authentication
+
+A route is **public unless its options say otherwise**, because a webhook receiver has to be.
+
+| Options                    | Who gets through                             |
+| -------------------------- | -------------------------------------------- |
+| none                       | Anyone                                       |
+| `{ auth: true }`           | Any signed-in user                           |
+| `{ requires: Permission }` | A signed-in user holding that permission     |
+
+The host resolves the caller before your handler runs and answers `401` or `403` itself, so there is nothing to forget. The handler's third argument then carries `{ userId }`, which is absent on a public route.
+
+Unlike `requires` on a command, this is a **hard gate**, not a default an admin can override. An HTTP route is not a capability an admin curates.
+
+Tokens are accepted as `Authorization: Bearer <token>` or the `x-token` header. From your own plugin UI, call the route through the store instead of handling tokens yourself:
+
+```ts
+import { actions } from "@sharkord/plugin-sdk/client";
+
+const response = await actions.fetchPluginRoute("my-plugin", "/preferences");
+```
 
 ### URLs
 
@@ -47,16 +73,10 @@ Rules for paths:
 
 Routes are removed when the plugin is disabled or unloaded, and requests to a plugin that is not loaded get a 404.
 
-<Alert type="attention" title="Plugin routes are public">
-  These routes are served without authentication and without rate limiting. The
-  SDK currently gives you no way to identify the caller. Assume anything you
-  register here is reachable by anyone on the internet who can guess the URL,
-  and do your own checks: a shared secret in a header, a signature from the
-  service calling you, whatever fits.
-</Alert>
-
 ### Notes
 
+- Every plugin route shares one rate limit, 300 requests per minute per IP by default (`rateLimiters.pluginRoute` in [`config.ini`](/docs/configuration)). Webhooks count against it too.
 - Requests are logged like any other HTTP request when `debug` is on.
 - A handler that throws after it started writing drops the connection; one that throws before gets a generic 500.
 - CORS headers are applied by the server according to `allowedOrigins` in [`config.ini`](/docs/configuration), so browsers on other origins may be blocked before your handler runs.
+- A public route is reachable by anyone on the internet who can guess the URL. If it does something that matters, verify a shared secret or a signature from the service calling you. See [Security](./security).

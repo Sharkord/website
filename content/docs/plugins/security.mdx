@@ -4,7 +4,9 @@ description: What you are trusting when you install a plugin.
 icon: Shield
 ---
 
-Installing a plugin is not like installing a browser extension with a permission prompt. There is no sandbox. A plugin is code you are choosing to run with full privileges, on your server and in your users' browsers.
+Installing a plugin is not like installing a browser extension with a permission prompt. There is no sandbox, and isolation is deliberately not attempted. A plugin is code you are choosing to run with full privileges, on your server and in your users' browsers.
+
+Nothing in the SDK is a fence. A plugin that wants to reach the database file, spawn a process or call out to the internet does not have to go through any API to do it.
 
 ### What a Plugin Can Do on the Server
 
@@ -17,21 +19,34 @@ Plugin server code runs inside the Sharkord process, as the user that started it
 
 ### What a Plugin Can Do in the Browser
 
-Plugin client code is loaded from your server and executed on your app's own origin, in the browser of **every user**, whether or not they knew a plugin was installed. It has access to the DOM, to `localStorage` (which holds the session token), and to any request the app can make.
+Plugin client code is loaded from your server and executed on your app's own origin, in the browser of **every user**, whether or not they knew a plugin was installed. It has access to the DOM, to storage holding the session token, and to any request the app can make.
 
 The admin who installs a plugin makes that decision for everyone connected to the server.
 
-### Plugin HTTP Routes Are Public
+### Capability Access
 
-Plugins can register [HTTP routes](./http) under `/plugins/<plugin-id>/`. Those routes are served without authentication and without rate limiting; the SDK currently has nothing to identify the caller. Anything a plugin exposes there is exposed to the internet, so treat every plugin route as public and assume it will be found.
+Commands, actions and UI slots are capabilities an admin can restrict to roles, from the plugin's permissions tab. Changing those rules needs `MANAGE_PLUGIN_PERMISSIONS`, which is its own permission because anyone holding it can grant those capabilities to themselves.
+
+An unconfigured capability falls back to whatever the plugin declared with `requires`, and to public if it declared nothing. Two things follow:
+
+- A plugin's declaration can only **narrow**, so it cannot use `requires` to hand itself more access than a user already has.
+- An admin can override it in **either** direction, including opening a capability to everyone.
+
+That makes `requires` a default, not a guarantee. A plugin author who needs a hard rule checks `ctx.permissions` inside the handler. Hiding a UI component is presentation only: the server refuses nothing on its basis.
+
+### Plugin HTTP Routes
+
+Plugins can register [HTTP routes](./http) under `/plugins/<plugin-id>/`. A route is public unless the plugin passed `auth` or `requires`, because a webhook receiver has to be. When it did, the host resolves the caller and answers `401` or `403` before the handler runs, and that gate is hard: no admin setting overrides it.
+
+Every plugin route shares one rate limit. Assume any route a plugin left public is reachable by anyone on the internet who can find the URL.
 
 ### Reducing the Risk
 
 - **Run Sharkord in a container.** Docker or an equivalent is the single most effective thing you can do: it puts a boundary between a plugin and the rest of the host.
 - **Install from sources you trust.** Prefer plugins whose source you can read.
 - **Read the code before installing.** If you cannot review it yourself, ask someone who can, or feed it to an AI assistant and ask what it does with the network and the filesystem.
-- **Keep plugins updated**, and remove the ones you stopped using.
-- **Give `USE_PLUGINS` deliberately.** Running plugin commands and actions is gated by that permission; `MANAGE_PLUGINS` controls who can install them.
+- **Keep plugins updated**, and remove the ones you stopped using. Removing a plugin also deletes its data folder, its per-user data and its capability rules.
+- **Give `USE_PLUGINS` deliberately.** Running plugin commands and actions is gated by it; `MANAGE_PLUGINS` controls who can install them, and `MANAGE_PLUGIN_PERMISSIONS` who can widen access.
 
 ### About the Marketplace
 
@@ -41,7 +56,8 @@ The marketplace is open to anyone. A listing is not a review, and the `verified`
 
 ### For Plugin Authors
 
-- Validate everything that comes from a user, including command arguments and action payloads.
-- Assume your HTTP routes are called by strangers.
-- Keep secrets in [settings](./settings) or in files under `ctx.path`, never in the client bundle. `client/index.js` is served unauthenticated to every browser, so anything in it is public. Command arguments that carry secrets should be marked `sensitive` so the interface masks them.
-- Document what your plugin talks to and why. People installing it are trusting you.
+- **Validate everything that comes from a user**, including command arguments, action payloads, HTTP bodies, and anything read back from `ctx.userData`. The [contract](./contract) is compile-time typing, not runtime validation.
+- **Assume your public HTTP routes are called by strangers.** Use `auth` or `requires` where the route is for your own UI, and verify a shared secret or signature where it is a webhook.
+- **Keep secrets in `secret` [settings](./settings) or in files under `ctx.dataPath`**, never in the client bundle. `client/index.js` is served unauthenticated to every browser, so anything in it is public. Command arguments that carry secrets should be marked `sensitive`, which keeps the value out of the message chip. Plugin logs never carry command arguments at all; the server activity log does.
+- **Do not rely on `requires` alone** for anything that must never run for the wrong caller. Check `ctx.permissions` in the handler.
+- **Document what your plugin talks to and why.** People installing it are trusting you.

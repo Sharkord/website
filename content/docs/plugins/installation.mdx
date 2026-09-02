@@ -41,11 +41,24 @@ The result should look like this:
 
 The folder name has to match the `id` in `manifest.json`, and all three files must be present, even for a plugin with no interface.
 
+### Where a Plugin Keeps Its Data
+
+Two directories, side by side in the data directory:
+
+| Directory                | Contents                                                        |
+| ------------------------ | --------------------------------------------------------------- |
+| `plugins/<plugin-id>/`   | The plugin itself. Deleted and rewritten on every update.        |
+| `plugin-data/<plugin-id>/` | Whatever the plugin wrote. Survives updates, deleted with the plugin. |
+
+Settings, per-user data and capability rules live in the database, and are removed with the plugin too.
+
 ### Updating and Removing
 
-Marketplace plugins can be updated and removed from the same screen. Sharkord unloads the plugin, replaces the files, and loads it again.
+Marketplace plugins can be updated and removed from the same screen. Sharkord unloads the plugin, replaces the files, and loads it again. If the version changed and the plugin ships an `onUpgrade`, that runs first; a failed upgrade stops the load and is retried next time rather than leaving a half-migrated plugin running.
 
 For manual installs, replace the folder's contents and toggle the plugin off and on.
+
+Removing a plugin's folder from disk while the server is running is noticed within a couple of seconds: Sharkord unloads it and treats it as uninstalled.
 
 ### If It Does Not Load
 

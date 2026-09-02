@@ -4,38 +4,39 @@ description: Render your own React components inside Sharkord.
 icon: Puzzle
 ---
 
-Plugins can render React components into fixed slots of the interface. They run in every connected user's browser, on the app's own origin.
+Plugins can render React components into fixed slots of the interface, and add their own tabs to the plugin's page in the server settings. They run in every connected user's browser, on the app's own origin.
 
 ### Slots
 
-| Slot             | Where it renders                                                                 |
-| ---------------- | -------------------------------------------------------------------------------- |
-| `CONNECT_SCREEN` | Below the logo and server name on the connect screen                             |
-| `HOME_SCREEN`    | The screen a user lands on after connecting                                      |
-| `CHAT_ACTIONS`   | The chat input area, next to the existing buttons                                |
-| `TOPBAR_RIGHT`   | The right side of the top bar                                                    |
-| `FULL_SCREEN`    | A full-screen view, with a button added to the left sidebar to open it           |
+| Slot             | Where it renders                                                       |
+| ---------------- | ---------------------------------------------------------------------- |
+| `CONNECT_SCREEN` | Below the logo and server name on the connect screen                   |
+| `HOME_SCREEN`    | The screen a user lands on after connecting                            |
+| `CHAT_ACTIONS`   | The chat input area, next to the existing buttons                      |
+| `TOPBAR_RIGHT`   | The right side of the top bar                                          |
+| `FULL_SCREEN`    | A full-screen view, with a button added to the left sidebar to open it |
+| `USER_SETTINGS`  | The plugin's own entry in **user** settings, next to Profile and Notifications |
 
-A plugin can fill several slots, and each slot takes a list of components.
+A plugin can fill several slots, and each slot takes a list of components. Several plugins can fill the same slot, and you cannot control the order.
 
 ### Export a Slot Map
 
 ```tsx
 // src/client/index.ts
-import {
-  PluginSlot,
-  type TPluginComponentsMapBySlotId,
-} from "@sharkord/plugin-sdk";
-import { Home } from "./components/home";
-import { FullScreen } from "./components/full-screen";
+import { PluginSlot } from "@sharkord/plugin-sdk";
+import type { TPluginComponentsMapBySlotId } from "@sharkord/plugin-sdk/client";
+import { Home } from "./home";
+import { Preferences } from "./preferences";
 
 const components: TPluginComponentsMapBySlotId = {
   [PluginSlot.HOME_SCREEN]: [Home],
-  [PluginSlot.FULL_SCREEN]: [FullScreen],
+  [PluginSlot.USER_SETTINGS]: [Preferences],
 };
 
 export { components };
 ```
+
+Components receive no props. To learn which channel is selected or who is signed in, read the store with [`useStoreSelector`](./client-sdk).
 
 ### Turn the UI On
 
@@ -48,13 +49,58 @@ const onLoad = async (ctx: PluginContext) => {
 };
 ```
 
-`ctx.ui.disable()` takes it away again; clients are told either way and update without a reload.
+`ctx.ui.disable()` takes it away again; clients are told either way and update without a reload. Until `enable()` is called, no user's browser loads your client bundle, though an admin opening the plugin's page in the server settings still loads it for the tabs below.
+
+### Restricting a Slot
+
+`enable()` takes an optional `{ [slot]: Permission }` map, declaring what a user needs to hold before that slot's components render for them:
+
+```ts
+import { Permission, PluginSlot } from "@sharkord/plugin-sdk";
+
+ctx.ui.enable({
+  [PluginSlot.CHAT_ACTIONS]: Permission.MANAGE_MESSAGES,
+});
+```
+
+Every entry is optional, and a slot left out is public. Like `requires` on a command, this is a default an admin can override in the plugin's permissions tab.
+
+<Alert type="attention" title="Hiding a component is presentation, not security">
+  The rules reach every client and the server refuses nothing on their basis.
+  Declare the same permission on the command or action behind the component, and
+  check `ctx.permissions` inside it. That check is what is actually enforced.
+</Alert>
+
+### Admin Tabs
+
+A second export adds your own tabs to the plugin's page in the server settings, beside Settings, Commands and Logs. Only someone who can manage plugins ever sees them.
+
+```tsx
+// src/client/index.ts
+import type { TPluginTabs } from "@sharkord/plugin-sdk/client";
+import { Stats } from "./stats";
+
+const tabs: TPluginTabs = [{ id: "stats", label: "Stats", component: Stats }];
+
+export { tabs };
+```
+
+Each tab needs a unique `id`, a `label` in the language you ship, and a `component`. `settings`, `commands` and `logs` are reserved: a tab claiming one of those, or a duplicate id, is dropped with a warning in the browser console.
 
 ### Writing the Components
 
-Build with [`@sharkord/ui`](https://github.com/Sharkord/sharkord/tree/development/packages/ui) primitives first. React and the app's selector helpers come from the host through globals, so your bundle stays small and there is exactly one React on the page.
+React comes from the host through globals, so your bundle does not ship its own and there is exactly one React on the page. The build tooling rewrites `react` and `react-dom` imports for you.
 
-Keep the styling simple. Your component renders inside the host's layout, and not every Tailwind utility is guaranteed to exist in the app's build.
+Keep the styling simple. Sharkord compiles Tailwind from its own sources, so a utility class no Sharkord file uses is not in the stylesheet. Use inline styles, and reach for the host's CSS variables so you stay in the user's theme:
+
+```tsx
+const buttonStyle: CSSProperties = {
+  padding: "6px 14px",
+  borderRadius: "var(--radius)",
+  background: "var(--primary)",
+  color: "var(--primary-foreground)",
+};
+```
 
 For data, read the store with `useStoreSelector`; for anything privileged, call a server [action](./actions). See [Client SDK](./client-sdk).
 

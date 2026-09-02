@@ -1,67 +1,125 @@
 ---
 title: Hooks
-description: Intercept files before they are saved.
+description: Reject or rewrite a write before it happens.
 icon: Save
 ---
 
-`ctx.hooks.onBeforeFileSave(...)` runs just before Sharkord moves an uploaded file into permanent storage. Use it to scan uploads, or to replace the file with one you produced.
+Events tell you what already happened. Hooks run **before** the server writes, and can change or refuse it. This is where moderation, filtering, scanning, naming conventions, allowlists and gates belong.
 
-### Signature
+There are five:
+
+| Hook                    | Runs before                                                    | Can change      |
+| ----------------------- | -------------------------------------------------------------- | --------------- |
+| `onBeforeMessageSave`   | A message is stored, on both sends and edits                    | `content`       |
+| `onBeforeFileSave`      | Any file is stored: attachments, avatars, banners, emojis, logo | `bytes`, `originalName` |
+| `onBeforeChannelCreate` | A channel is created, by a person or a plugin                   | `name`          |
+| `onBeforeVoiceJoin`     | Someone joins a voice channel                                   | nothing: a gate |
+| `onBeforeLogin`         | A login is accepted, after the password is checked              | nothing: a gate |
+
+### The Three Answers
+
+Every hook answers the same way:
 
 ```ts
-ctx.hooks.onBeforeFileSave(async ({ tempFile, userId, type }) => {
-  // return nothing, or the path to a replacement file
+ctx.hooks.onBeforeMessageSave(async (payload) => {
+  if (payload.textContent.includes("badword")) {
+    return { reject: "That word is not allowed here." };
+  }
+
+  if (payload.textContent.includes("http://")) {
+    return { update: { content: payload.content.replaceAll("http://", "https://") } };
+  }
+
+  // return nothing to allow it unchanged
 });
 ```
 
-The payload is:
+- Return **nothing** to allow it.
+- Return **`{ update }`** to change what gets written.
+- Return **`{ reject: 'reason' }`** to refuse, with a reason the user sees. Reasons are capped at 200 characters.
 
-| Field      | Type           | Description                                                        |
-| ---------- | -------------- | ------------------------------------------------------------------ |
-| `tempFile` | `TTempFile`    | `{ id, originalName, size, md5, path, extension, userId }`         |
-| `userId`   | `number`       | Who is uploading                                                   |
-| `type`     | `FileSaveType` | What the file is for                                               |
+Mutating the payload does nothing: each handler gets its own copy.
 
-`tempFile` is frozen. Mutating it does nothing; to change the file, write a new one and return its path.
+<Alert type="attention" title="Throwing is not a refusal">
+  A hook that throws is treated as a broken plugin: the error is logged, the
+  user gets a generic message, and the operation fails closed. Return
+  `{ reject }` when you mean to refuse.
+</Alert>
 
-### File Types
+Hooks from several plugins run in order, each seeing the previous one's result, and the first refusal wins. Each handler is given 30 seconds. Every hook is unregistered when the plugin unloads.
 
-`FileSaveType` is exported by the SDK:
+<Alert type="info" title="Hooks are on the request path">
+  A slow hook is a slow send, upload or login for the user. `onBeforeLogin` runs
+  on an unauthenticated request, so a slow one slows down everyone signing in.
+</Alert>
 
-- `MESSAGE`
-- `AVATAR`
-- `BANNER`
-- `EMOJI`
-- `SERVER_LOGO`
+### Messages
 
-### Returning a Replacement
+```ts
+ctx.hooks.onBeforeMessageSave(async ({ content, textContent, channelId, userId, type, messageId }) => {});
+```
 
-Return **nothing** to let the upload continue untouched, or an **absolute path to a file that exists on disk** to swap it in. Sharkord then re-reads the size and checksum from your file and deletes the original temp file.
+| Field         | Notes                                                     |
+| ------------- | --------------------------------------------------------- |
+| `content`     | Sanitized HTML, which is also what an update must return  |
+| `textContent` | The plain text of that HTML, for matching against         |
+| `type`        | `MessageSaveType.CREATE` or `MessageSaveType.EDIT`        |
+| `messageId`   | Present on an edit, absent on a send                      |
+
+Match on the text and return HTML. A replacement is sanitized again, and one that leaves nothing behind is refused. Messages sent by plugins with [`ctx.messages.send`](./messages) do not run this hook.
+
+### Files
+
+```ts
+ctx.hooks.onBeforeFileSave(async ({ bytes, originalName, extension, size, userId, type }) => {});
+```
+
+`bytes` is the whole file in memory and can be replaced, so this is where scanning, stripping metadata and re-encoding belong. `type` is a `FileSaveType`: `MESSAGE`, `AVATAR`, `BANNER`, `EMOJI` or `SERVER_LOGO`. `extension` is lowercased, with the dot.
 
 ```ts
 import { FileSaveType, type PluginContext } from "@sharkord/plugin-sdk";
-import path from "path";
 
 const onLoad = (ctx: PluginContext) => {
-  ctx.hooks.onBeforeFileSave(async ({ tempFile, type, userId }) => {
+  ctx.hooks.onBeforeFileSave(async ({ bytes, type }) => {
     if (type !== FileSaveType.AVATAR) return;
 
-    const outputPath = path.join(ctx.path, `avatar-${tempFile.id}.webp`);
-
-    await convertToWebp(tempFile.path, outputPath); // your code
-
-    ctx.logger.debug("replaced avatar upload", tempFile.originalName, userId);
-
-    return outputPath;
+    return { update: { bytes: await convertToWebp(bytes) } };
   });
 };
 ```
 
-Returning a path that does not exist aborts the upload with an error. Return nothing if your processing failed and you want the original to go through.
+The hook runs before the size and quota checks, so a replacement is what gets measured, not the original. Sharkord still decides the final stored name: you control the file, not where it lands.
 
-### Notes
+### Channels
 
-- Every registered hook runs, in registration order, and each one sees the result of the previous.
-- This runs inside the upload request, so a slow hook is a slow upload for the user. Keep it quick, and do heavy processing after the fact.
-- Sharkord decides the final stored name itself. You control the file, not where it lands.
-- The hook is unregistered automatically when the plugin unloads.
+```ts
+ctx.hooks.onBeforeChannelCreate(async ({ name, type, categoryId, userId }) => {
+  return { update: { name: name.toLowerCase().replaceAll(" ", "-") } };
+});
+```
+
+`userId` is absent when a plugin is creating the channel, including your own. A replacement name that is blank is refused.
+
+### Voice and Login
+
+Both are gates: allow or refuse, nothing to change.
+
+```ts
+ctx.hooks.onBeforeVoiceJoin(async ({ channelId, userId, movedByModerator }) => {
+  if (movedByModerator) return;
+
+  if (await isBanned(userId)) return { reject: "You cannot join this channel." };
+});
+```
+
+Check `movedByModerator` before refusing, or a moderator moving someone will be blocked by rules meant for the user.
+
+```ts
+ctx.hooks.onBeforeLogin(async ({ identity, ip, isExistingUser }) => {
+  if (!isExistingUser && !invited(identity)) {
+    return { reject: "Registration is invite only." };
+  }
+});
+```
+
+`ip` is `undefined` when it cannot be determined, so treat that as unknown, not as trusted. `isExistingUser` is `false` when this login would create the account, which is what makes registration rules possible.

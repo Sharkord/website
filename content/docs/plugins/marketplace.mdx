@@ -35,18 +35,42 @@ Copy `.env.example` to `.env` in your plugin and add it:
 GITHUB_TOKEN=your_token_here
 ```
 
-#### Step 2: Publish
+#### Step 2: Point It at Your Repository
+
+`publish.ts` in the scaffold names the repository the release goes to:
+
+```ts
+import { publish } from "@sharkord/plugin-builder";
+import { PLUGIN_SDK_VERSION } from "@sharkord/plugin-sdk";
+
+const result = await publish({
+  githubToken: process.env.GITHUB_TOKEN,
+  repo: "owner/repo",
+  sdkVersion: PLUGIN_SDK_VERSION,
+});
+
+console.log("Plugin published successfully", result.releaseUrl);
+```
+
+Leave `repo` out and it is read from your git remote.
+
+#### Step 3: Publish
 
 ```bash
 bun run publish
 ```
 
-The script syncs `manifest.json` with your `package.json`, builds the plugin, creates a GitHub release with the bundle attached, and writes a `version` file containing the metadata the registry needs, including the checksum.
+The script builds the plugin, syncs `manifest.json` with your `package.json` version and the SDK version, creates a GitHub release tagged `v<version>`, and uploads two assets: the plugin archive, and a `<version>.json` file holding the metadata the registry needs, checksum and download URL included.
 
 This assumes a public GitHub repository. Hosting the release elsewhere means assembling that metadata by hand.
 
-#### Step 3: Open a PR
+#### Step 4: Open a PR
 
-Add your generated `version` file to [github.com/Sharkord/plugins](https://github.com/Sharkord/plugins), following the layout of the existing entries. Once it is merged, your plugin shows up in every server's marketplace.
+Add your generated version file to [github.com/Sharkord/plugins](https://github.com/Sharkord/plugins), following the layout of the existing entries. Once it is merged, your plugin shows up in every server's marketplace.
 
-Publishing a new version is the same flow again: run the script, open a PR with the new `version` file.
+Publishing a new version is the same flow again: bump the version in `package.json`, run the script, open a PR with the new version file.
+
+<Alert type="info" title="sdkVersion pins compatibility">
+  Servers only offer a version whose `sdkVersion` matches their own, so publish
+  a new release after every SDK bump or existing installs cannot update.
+</Alert>

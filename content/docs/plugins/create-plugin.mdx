@@ -10,18 +10,17 @@ icon: ToyBrick
 bun create github.com/Sharkord/plugin-example my-plugin
 ```
 
-That gives you a working plugin: a command, an action, a setting, an event listener, and two UI components.
+That gives you a working plugin: a slash command, a server action called from a React component, a setting, an event listener, persistent storage, and a server-to-client push.
 
 ```
 my-plugin/
-  manifest.json
-  build.ts
-  src/
-    server/index.ts     # runs on the server
-    client/index.ts     # runs in the browser
-    client/store/       # helpers for reading sharkord state
-    client/components/  # your React components
-    contracts/          # shared types for commands and actions
+  manifest.json       the plugin's identity, and the SDK version it targets
+  build.ts            builds the bundle, and installs it if you point it at a server
+  publish.ts          cuts a GitHub release for the marketplace
+  src/types.ts        the contract both halves share
+  src/server/index.ts runs in the Sharkord server process
+  src/client/index.ts declares which components render where
+  src/client/home.tsx a component
 ```
 
 ### 2. Link the SDK
@@ -32,9 +31,7 @@ The SDK is not published to npm yet, so link it from the Sharkord repository:
 git clone https://github.com/Sharkord/sharkord.git
 cd sharkord
 bun install
-
 cd packages/plugin-sdk && bun link
-cd ../ui && bun link
 ```
 
 The build tooling is a separate repository:
@@ -52,7 +49,6 @@ Then, in your plugin:
 cd my-plugin
 bun install
 bun link @sharkord/plugin-sdk
-bun link @sharkord/ui
 bun link @sharkord/plugin-builder
 ```
 
@@ -66,41 +62,63 @@ bun link @sharkord/plugin-builder
   "description": "Does something useful.",
   "homepage": "https://example.com",
   "logo": "https://placehold.co/100x100/white/black",
-  "sdkVersion": 1,
+  "sdkVersion": 2,
   "version": "0.0.1"
 }
 ```
 
-- `id`: lowercase letters, numbers, and dashes only. It **must** match the folder the plugin is installed into.
-- `sdkVersion`: the SDK version the plugin targets. It must equal the server's, or the plugin refuses to load.
-- `version`: semver, `1.2.3` or `1.2.3-beta.1`.
+- `id`: lowercase letters, numbers, and dashes, up to 64 characters. It **must** match the folder the plugin is installed into.
+- `sdkVersion`: the SDK version the plugin targets. It must equal the server's, or the plugin refuses to load. `bun run build` writes the right one in for you.
+- `version`: semver, `1.2.3` or `1.2.3-beta.1`. The build takes it from `package.json`.
 - `homepage` and `logo` are optional; both must be `http` or `https` URLs when present.
 
-### 4. Write the Server Half
+### 4. Declare the Contract
 
-Edit `src/server/index.ts`. `onLoad` is required, and `onUnload` should be there too:
+One type describes what your plugin exposes, and both halves import it. See [Contract](./contract).
 
 ```ts
-import {
-  createRegisterAction,
-  createRegisterCommand,
-  type PluginContext,
-  type UnloadPluginContext,
-} from "@sharkord/plugin-sdk";
-import type { Actions } from "../contracts/actions";
-import type { Commands } from "../contracts/commands";
+// src/types.ts
+type TPlugin = {
+  actions: { roll: { payload: { sides: number }; response: number } };
+  commands: { roll: { args: { sides: number }; response: string } };
+};
 
-const onLoad = async (ctx: PluginContext) => {
+export type { TPlugin };
+```
+
+### 5. Write the Server Half
+
+```ts
+// src/server/index.ts
+import type { PluginContext, UnloadPluginContext } from "@sharkord/plugin-sdk";
+import type { TPlugin } from "../types";
+
+const onLoad = async (ctx: PluginContext<TPlugin>) => {
   ctx.logger.log("my-plugin loaded");
 
-  const registerCommand = createRegisterCommand<Commands>(ctx);
-  const registerAction = createRegisterAction<Actions>(ctx);
+  const settings = await ctx.settings.register([
+    {
+      key: "maxSides",
+      name: "Maximum sides",
+      type: "number",
+      defaultValue: 20,
+    },
+  ] as const);
 
-  registerCommand("hello", { description: "Says hello" }, async (invoker) => {
-    return `Hello, user ${invoker.userId}`;
+  const roll = (sides: number) =>
+    1 + Math.floor(Math.random() * Math.min(sides, settings.get("maxSides")));
+
+  ctx.commands.register({
+    name: "roll",
+    description: "Rolls a die.",
+    args: [{ name: "sides", type: "number", required: true }],
+    executes: async (invoker, args) => `You rolled ${roll(args.sides)}.`,
   });
 
-  registerAction("sum", async (_invoker, payload) => payload.a + payload.b);
+  ctx.actions.register({
+    name: "roll",
+    executes: async (invoker, payload) => roll(payload.sides),
+  });
 };
 
 const onUnload = async (ctx: UnloadPluginContext) => {
@@ -110,25 +128,39 @@ const onUnload = async (ctx: UnloadPluginContext) => {
 export { onLoad, onUnload };
 ```
 
-The contracts in `src/contracts/` are plain types shared by both halves; they are what makes `registerCommand`, `registerAction`, and `callAction` type safe.
+Anything you need to keep on disk goes in `ctx.dataPath`, not `ctx.path`: installing an update deletes and rewrites the plugin folder, while the data folder survives updates and is removed with the plugin.
 
-`ctx.path` is your plugin's folder on disk. Use it for anything you need to read or write, and keep it inside that folder.
+Start with one command or one action. Once it loads cleanly, add settings, UI, hooks, or voice.
 
-Start with one command or one action. Once it loads cleanly, add settings, UI, or voice.
+### 6. Build
 
-### 5. Build
+Point `SHARKORD_PLUGINS_PATH` in `.env` at your server's plugins folder:
+
+```
+# development server
+SHARKORD_PLUGINS_PATH=<sharkord repo>/apps/server/data/plugins
+# installed server
+SHARKORD_PLUGINS_PATH=~/.config/sharkord/plugins
+```
+
+Then:
 
 ```bash
 bun run build
 ```
 
-The bundle lands in `dist/<plugin-id>/`, with `manifest.json`, `server/index.js`, and `client/index.js` inside.
+The bundle lands in `dist/<plugin-id>/`, with `manifest.json`, `server/index.js`, and `client/index.js` inside, and `build.ts` copies it into the folder you configured. That copy is most of the edit-build-reload loop; toggle the plugin off and on to pick up a rebuild.
 
-`build.ts` also ships a `copyPluginToSharkord` helper with the call commented out. Uncomment it and your build copies straight into `~/.config/sharkord/plugins`, which makes the edit-build-reload loop much shorter.
-
-### 6. Install It
+### 7. Install It
 
 See [Installation](./installation). In short: put the built folder in `plugins/`, enable plugins in the server settings, then enable your plugin.
+
+### Things That Will Bite You
+
+- **`ctx.path` is deleted on every update.** Use `ctx.dataPath`.
+- **Tailwind classes mostly do not work.** Sharkord compiles Tailwind from its own sources, so a class no Sharkord file uses is not in the stylesheet. Use inline styles with the host's CSS variables (`var(--foreground)`, `var(--primary)`, `var(--radius)`) so your UI follows the user's theme.
+- **Keep `as const` on your settings definitions**, or `settings.get` loses the type of what it returns.
+- **`bun tsc --noEmit` reports errors from the linked SDK packages**, not from your code. Yours are the ones under `src/`.
 
 ### Next
 

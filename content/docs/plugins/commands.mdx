@@ -9,36 +9,28 @@ Commands are the simplest way to give users something to do. They appear when a 
 ### Register a Command
 
 ```ts
-import { createRegisterCommand, type PluginContext } from "@sharkord/plugin-sdk";
+import { Permission, type PluginContext } from "@sharkord/plugin-sdk";
+import type { TPlugin } from "../types";
 
-type Commands = {
-  hello: {
-    args: { name: string };
-    response: string;
-  };
-};
-
-const onLoad = (ctx: PluginContext) => {
-  const registerCommand = createRegisterCommand<Commands>(ctx);
-
-  registerCommand(
-    "hello",
-    {
-      description: "Greets someone.",
-      args: [{ name: "name", type: "string", required: true }],
-    },
-    async (invoker, args) => {
-      return `Hello, ${args.name}! Your user ID is ${invoker.userId}.`;
-    },
-  );
+const onLoad = (ctx: PluginContext<TPlugin>) => {
+  ctx.commands.register({
+    name: "hello",
+    description: "Greets someone.",
+    args: [{ name: "name", type: "string", required: true }],
+    requires: Permission.SEND_MESSAGES,
+    executes: async (invoker, args) =>
+      `Hello, ${args.name}! Your user ID is ${invoker.userId}.`,
+  });
 };
 ```
 
-`createRegisterCommand<Commands>` is a typed wrapper around `ctx.commands.register(...)`. The contract type gives you checked names, arguments, and return values; the raw form takes a `{ name, description, args, execute }` object.
+With a [contract](./contract) passed to `PluginContext`, `name` has to be one of its `commands` keys, and the `args` and return type of `executes` follow from it. Without one, both are `unknown`.
+
+A plugin can register at most 100 commands. Registering the same name twice overwrites the first and logs an error. Commands are addressed by bare name in chat, so if two plugins claim the same one, the first to register keeps it and the loser is told in its log.
 
 ### Arguments
 
-Each entry in `args` accepts:
+`args` describes the fields users fill in. Each entry accepts:
 
 | Field         | Type                                | Notes                                     |
 | ------------- | ----------------------------------- | ----------------------------------------- |
@@ -46,7 +38,7 @@ Each entry in `args` accepts:
 | `type`        | `"string" \| "number" \| "boolean"` | Required.                                 |
 | `description` | `string`                            | Shown in the interface.                   |
 | `required`    | `boolean`                           | Defaults to optional.                     |
-| `sensitive`   | `boolean`                           | Masks the value in the interface.         |
+| `sensitive`   | `boolean`                           | The chip stores `****` instead of the value.                    |
 
 ```ts
 args: [
@@ -60,6 +52,8 @@ args: [
 ];
 ```
 
+A `sensitive` argument never reaches the message content: the chip is written with `****` in its place, so it is not in the channel for anyone to scroll back to. It is still sent to the server, still passed to your handler, and still recorded in the server activity log.
+
 ### The Invoker
 
 The first handler argument describes who ran the command:
@@ -71,11 +65,30 @@ The first handler argument describes who ran the command:
 }
 ```
 
-`currentVoiceChannelId` is what a music or soundboard plugin uses to know where to play.
+`currentVoiceChannelId` is what a music or soundboard plugin uses to know where to play. It is set by the server, so it is the one part of the call you can trust.
+
+### Who Can Run It
+
+`requires` names a **permission**, not a role, because roles are per install and a plugin cannot know them. It is the default that applies while no admin has configured the command in the plugin's permissions tab.
+
+```ts
+ctx.commands.register({
+  name: "purge",
+  requires: Permission.MANAGE_MESSAGES,
+  executes: async (invoker, args) => { /* ... */ },
+});
+```
+
+Two things follow from that:
+
+- **A declaration can only narrow.** No declaration means everyone with `USE_PLUGINS`, so `requires` cannot grant more access than a user already has.
+- **It is a default, not a guarantee.** An admin with `MANAGE_PLUGIN_PERMISSIONS` can override it in either direction, including opening the command to everyone. If a command must never run for the wrong caller, check `ctx.permissions.userCan` inside `executes` and refuse. That check is the guarantee.
+
+Nothing is written to the database when a plugin loads: a stored rule exists only once an admin makes a decision, which is why changing `requires` in an update takes effect on its own, and why resetting a rule in the tab returns it to your declaration.
 
 ### The Response
 
-Whatever you return goes back to the caller and is displayed in the interface. Return a string unless you have a reason not to.
+Whatever you return goes back to the caller and is rendered as a chip in the channel, so the answer is public. Return a string unless you have a reason not to.
 
 <Alert type="info" title="Commands time out after 30 seconds">
   A handler that runs longer is aborted and the user gets an error. For slow
@@ -83,6 +96,6 @@ Whatever you return goes back to the caller and is displayed in the interface. R
   [`ctx.messages.send`](./messages).
 </Alert>
 
-Command executions are rate limited (60 per minute per user by default) and recorded in the server activity log, arguments included. Keep secrets out of argument values where you can, and mark them `sensitive` where you cannot.
+Command executions are rate limited (60 per minute per user by default, `rateLimiters.pluginExecute` in [`config.ini`](/docs/configuration)) and recorded in the server activity log, arguments included. They are never written to the plugin's own log, which anyone who can manage plugins can read.
 
 See [Actions](./actions) for server functions called from your own UI instead of by a user typing.

@@ -4,7 +4,7 @@ description: Typed options an admin can edit in the interface.
 icon: Settings
 ---
 
-Register settings and they show up on your plugin's page in the server settings, where an admin can change them without touching code. Values are stored in the database and survive restarts.
+Register settings and they show up on your plugin's page in the server settings, where an admin can change them without touching code. Values are stored in the database and survive restarts. They are server-wide, not per user: see [`userData`](./data#per-user-storage) for that.
 
 ### Register
 
@@ -21,12 +21,22 @@ const onLoad = async (ctx: PluginContext) => {
       defaultValue: true,
     },
     {
-      key: "welcome-channel-id",
-      name: "Welcome channel",
-      type: "number",
-      defaultValue: 1,
+      key: "apiKey",
+      name: "API key",
+      type: "secret",
+      defaultValue: "",
     },
-  ]);
+    {
+      key: "mode",
+      name: "Mode",
+      type: "enum",
+      defaultValue: "fast",
+      options: [
+        { value: "fast", label: "Fast" },
+        { value: "thorough", label: "Thorough" },
+      ],
+    },
+  ] as const);
 
   const enabled = settings.get("welcome-enabled"); // boolean
   settings.set("welcome-enabled", false);
@@ -35,18 +45,35 @@ const onLoad = async (ctx: PluginContext) => {
 
 `register` is async: it reads the stored values, fills in defaults for keys it has not seen, writes them back, and hands you a typed accessor. Call it once, in `onLoad`, and keep the returned object.
 
-A definition takes `key`, `name`, `type`, `defaultValue`, and an optional `description`. Types are `string`, `number`, and `boolean`.
+<Alert type="info" title="Keep the `as const`">
+  Without it the definitions widen to `string`, and `settings.get` loses both
+  the checked key names and the type of what it returns.
+</Alert>
+
+### Types
+
+| Type      | Renders as        | Notes                                                     |
+| --------- | ----------------- | --------------------------------------------------------- |
+| `string`  | Text field        |                                                           |
+| `number`  | Number field      |                                                           |
+| `boolean` | Toggle            |                                                           |
+| `secret`  | Password field    | Write-only: never sent back to the client                 |
+| `enum`    | Select            | Requires `options: [{ value, label }]`                    |
+
+A definition takes `key`, `name`, `type`, `defaultValue`, an optional `description`, and `options` for an enum. `key` is how you read the value back and how it is stored, so keep it stable across versions.
+
+`secret` is the type for API keys and tokens. An admin can replace one but not read it back, and the value never leaves the server. Your plugin reads it normally with `get`.
 
 ### Reading and Writing
 
-`get` and `set` are **synchronous**. `get` reads the value from memory; `set` updates it and persists in the background, so it does not return a promise and there is nothing to await.
+`get` and `set` are **synchronous**. `get` reads the value from memory and always returns something, since a key an admin never saved falls back to its `defaultValue`. `set` updates it and persists in the background, so there is nothing to await.
 
 ```ts
 const channelId = settings.get("welcome-channel-id"); // number
 settings.set("welcome-channel-id", 42);
 ```
 
-`set` on a key you never registered is ignored and logged as an error in the plugin's log.
+`set` on a key you never registered, or with a value of the wrong type, is ignored and logged as an error in the plugin's log.
 
 ### Reacting to Changes
 
@@ -60,10 +87,10 @@ ctx.events.on("setting:set", ({ key, value }) => {
 });
 ```
 
-The event is global, so filter by `key`, since you will also see other plugins' settings.
+The event is scoped to your own plugin, so you never see another plugin's settings, but you do see your own writes as well as an admin's.
 
 ### Notes
 
-- Values written from the interface are type-checked against your definition; a `number` setting cannot be set to a string.
-- Settings are cleared from memory when the plugin unloads and reloaded from the database on the next `register`. The stored values are not deleted when a plugin is disabled.
-- Anything an admin can read in the interface is not a secret from admins. Use them for API keys if you like, but see [Security](./security).
+- Values written from the interface are validated against your definition: a `number` setting cannot be set to a string, and an `enum` cannot be set to a value outside its `options`.
+- Settings are cleared from memory when the plugin unloads and reloaded from the database on the next `register`. The stored values are not deleted when a plugin is disabled, only when it is removed.
+- Anything an admin can read in the interface is not a secret from admins. `secret` settings are hidden from the form, but a plugin running in the server process can do whatever it likes with them. See [Security](./security).
