@@ -8,16 +8,23 @@ Plugins can render React components into fixed slots of the interface, and add t
 
 ### Slots
 
-| Slot             | Where it renders                                                       |
-| ---------------- | ---------------------------------------------------------------------- |
-| `CONNECT_SCREEN` | Below the logo and server name on the connect screen                   |
-| `HOME_SCREEN`    | The screen a user lands on after connecting                            |
-| `CHAT_ACTIONS`   | The chat input area, next to the existing buttons                      |
-| `TOPBAR_RIGHT`   | The right side of the top bar                                          |
-| `FULL_SCREEN`    | A full-screen view, with a button added to the left sidebar to open it |
-| `USER_SETTINGS`  | The plugin's own entry in **user** settings, next to Profile and Notifications |
+| Slot               | Props                        | Where it renders                                                       |
+| ------------------ | ---------------------------- | ---------------------------------------------------------------------- |
+| `CONNECT_SCREEN`   | none                         | Below the logo and server name on the connect screen                   |
+| `HOME_SCREEN`      | none                         | The screen a user lands on after connecting                            |
+| `CHAT_ACTIONS`     | `{ channelId }`              | The chat input area, next to the existing buttons                      |
+| `MESSAGE_ACTIONS`  | `{ messageId, channelId }`   | The hover toolbar on a message, before the quick reactions             |
+| `MESSAGE_FOOTER`   | `{ messageId, channelId }`   | Under a message, below its reactions and above its attachments         |
+| `MEMBER_LIST_ITEM` | `{ userId }`                 | Each row of the member list in the right sidebar                       |
+| `USER_POPOVER`     | `{ userId }`                 | The card that opens when a user is clicked                             |
+| `CHANNEL_HEADER`   | `{ channelId }`              | The channel's top bar, before the pinned-messages button               |
+| `TOPBAR_RIGHT`     | none                         | The right side of the top bar                                          |
+| `FULL_SCREEN`      | none                         | A full-screen view, with a button added to the left sidebar to open it |
+| `USER_SETTINGS`    | none                         | The plugin's own entry in **user** settings, next to Profile and Notifications |
 
 A plugin can fill several slots, and each slot takes a list of components. Several plugins can fill the same slot, and you cannot control the order.
+
+`CHAT_ACTIONS` renders in the main channel composer only, not in the thread sidebar's.
 
 ### Export a Slot Map
 
@@ -26,17 +33,42 @@ A plugin can fill several slots, and each slot takes a list of components. Sever
 import { PluginSlot } from "@sharkord/plugin-sdk";
 import type { TPluginComponentsMapBySlotId } from "@sharkord/plugin-sdk/client";
 import { Home } from "./home";
+import { PinButton } from "./pin-button";
 import { Preferences } from "./preferences";
 
 const components: TPluginComponentsMapBySlotId = {
   [PluginSlot.HOME_SCREEN]: [Home],
+  [PluginSlot.MESSAGE_ACTIONS]: [PinButton],
   [PluginSlot.USER_SETTINGS]: [Preferences],
 };
 
 export { components };
 ```
 
-Components receive no props. To learn which channel is selected or who is signed in, read the store with [`useStoreSelector`](./client-sdk).
+The map types each slot's components from its props, so a component in the wrong slot is a type error, and one that takes no props still fits anywhere.
+
+### Slot Props
+
+A slot that renders inside something tells the component what that something is:
+
+```tsx
+const PinButton = ({ messageId, channelId }: { messageId: number; channelId: number }) => {
+  const onClick = () => callAction("pin", { messageId });
+
+  return <button onClick={onClick}>Pin</button>;
+};
+```
+
+This is the only way a component can know. The store's `selectedChannelId` is a guess, and it is the wrong answer inside a thread; nothing in the store says which message a row belongs to at all.
+
+Props are **ids only**. Anything else about a message or a user is a lookup you can do yourself, and the right place for it is a server [action](./actions), where your plugin has the whole row rather than the slice the client happens to hold.
+
+`TPluginSlotProps` is exported from `@sharkord/plugin-sdk` if you want to name a slot's props type instead of writing it out.
+
+<Alert type="info" title="MEMBER_LIST_ITEM renders once per member">
+  It is the one slot that scales with the size of your server. Keep it cheap:
+  no fetching, no per-row subscriptions.
+</Alert>
 
 ### Turn the UI On
 

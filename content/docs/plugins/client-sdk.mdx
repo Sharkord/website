@@ -22,6 +22,9 @@ The module reads `window.__SHARKORD_STORE__` when it loads, so it only works ins
 
 ### Reading State
 
+Read the store for what the whole app knows. For what a component's own position implies, use the [props its slot passes](./components#slot-props): `selectedChannelId` is the wrong answer inside a thread, and nothing here says which message or member a row belongs to.
+
+
 ```tsx
 import { useStoreSelector } from "@sharkord/plugin-sdk/client";
 
