@@ -16,6 +16,7 @@ Plugin SDK version **2**. Everything here is experimental and can change between
 | `PluginModule`, `TUpgradeInfo`                  | The shape of a plugin's server entry                     |
 | `TPluginContract`                               | The [contract](./contract) both halves share             |
 | `Permission`, `ChannelPermission`, `ChannelType` | Enums used by `requires`, `ctx.permissions` and `ctx.channels` |
+| `TConsumeOptions`, `TVoiceConsumerHandle`        | [Voice](./voice) consumer types                          |
 | `PluginSlot`                                    | The [component slots](./components) enum                 |
 | `FileSaveType`, `MessageSaveType`               | Payload discriminators for the [hooks](./hooks)          |
 | `PLUGIN_SDK_VERSION`                            | The SDK version this build targets                       |
@@ -30,6 +31,7 @@ Plugin SDK version **2**. Everything here is experimental and can change between
 | Export                                     | What it is                                        |
 | ------------------------------------------ | ------------------------------------------------- |
 | `createCallAction`                         | Typed caller for your own [actions](./actions)    |
+| `useCanUseAction`, `useCanUseCommand`      | Whether this user may call one, for disabling UI  |
 | `useStoreSelector`                         | Reads a slice of Sharkord's state                 |
 | `usePush`                                  | Receives what `ctx.push` sent                     |
 | `useUserData`                              | Per-user storage for the signed-in user           |
@@ -71,7 +73,7 @@ The unload context is a subset: `path`, `dataPath`, `logger`, `voice`, `messages
 | `push.toUser / toUsers / toAll`                               | Server to client. [Client SDK](./client-sdk)      |
 | `hooks.onBeforeMessageSave / onBeforeFileSave / onBeforeChannelCreate / onBeforeVoiceJoin / onBeforeLogin` | [Hooks](./hooks) |
 | `http.register / get / post / patch / delete / options`       | [HTTP routes](./http)                             |
-| `voice.getRouter / createStream / getListenInfo`              | [Voice](./voice)                                  |
+| `voice.getRouter / getListenInfo / getState / getProducers / createStream / consume` | [Voice](./voice)            |
 | `ui.enable(requirements?) / disable()`                        | Whether your [components](./components) are rendered |
 
 ### Limits and Defaults
@@ -91,6 +93,7 @@ The unload context is a subset: `path`, `dataPath`, `logger`, `voice`, `messages
 | Per-user data                            | 64 KB of JSON                            |
 | Hook reject reason                       | 200 characters                           |
 | Messages returned by `messages.list`     | 100                                      |
+| Voice consumers per plugin               | unlimited; closed on unload              |
 | Permission to run commands and actions   | `USE_PLUGINS`                            |
 | Permission to install and toggle plugins | `MANAGE_PLUGINS`                         |
 | Permission to change capability access   | `MANAGE_PLUGIN_PERMISSIONS`              |

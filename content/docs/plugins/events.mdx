@@ -69,12 +69,16 @@ Messages and reactions your own plugin creates also raise these events. Check `p
 
 ### Voice
 
-| Event                       | Payload         |
-| --------------------------- | --------------- |
-| `voice:runtime_initialized` | `{ channelId }` |
-| `voice:runtime_closed`      | `{ channelId }` |
+| Event                       | Payload                                     |
+| --------------------------- | ------------------------------------------- |
+| `voice:runtime_initialized` | `{ channelId }`                             |
+| `voice:runtime_closed`      | `{ channelId }`                             |
+| `voice:producer_added`      | `{ channelId, userId, kind, producerId }`   |
+| `voice:producer_removed`    | `{ channelId, userId, kind, producerId }`   |
 
 A voice channel's runtime is created when the first user joins and closed when the last one leaves. These are the events to wait for before touching the [Voice](./voice) API: there is no router to get before the runtime exists.
+
+A producer is added when a user starts sending audio, video or a screen, and removed however that ends: stopped, disconnected, or the channel closing. `kind` is a `StreamKind`. These are what a recorder listens to, but they only fire from the moment you subscribe, so read [`ctx.voice.getProducers`](./voice#reading-the-channel) as well or you miss everyone who was already talking.
 
 ### Settings
 

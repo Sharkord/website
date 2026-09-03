@@ -1,22 +1,25 @@
 ---
 title: Voice
-description: Push external audio and video into voice channels.
+description: Publish external audio and video into voice channels, and receive what users are sending.
 icon: Mic
 ---
 
-The voice API is the low-level integration point for plugins that produce media: music bots, IPTV bridges, soundboards. It hands you the raw [mediasoup](https://mediasoup.org) router for a channel and lets you register the resulting producers as a stream users can see and hear.
+The voice API is the low-level integration point for plugins that touch media: music bots, IPTV bridges, soundboards, recorders, transcribers. It hands you the raw [mediasoup](https://mediasoup.org) router for a channel, lets you register your own producers as a stream users can see and hear, and lets you consume what people in the channel are sending.
 
 This assumes you know mediasoup. If you do not, read its documentation first; nothing here replaces it.
 
 ### The API
 
-| Method                         | Returns                                        |
-| ------------------------------ | ---------------------------------------------- |
-| `ctx.voice.getRouter(channelId)` | The mediasoup `Router` for that voice channel |
-| `ctx.voice.getListenInfo()`      | `{ ip, announcedAddress }`                    |
-| `ctx.voice.createStream(options)` | A handle to the stream you created           |
+| Method                              | Returns                                              |
+| ----------------------------------- | ---------------------------------------------------- |
+| `ctx.voice.getRouter(channelId)`    | The mediasoup `Router` for that voice channel        |
+| `ctx.voice.getListenInfo()`         | `{ ip, announcedAddress }`                           |
+| `ctx.voice.getState(channelId)`     | Who is connected, what they muted, and plugin streams |
+| `ctx.voice.getProducers(channelId)` | Every live producer in the channel                   |
+| `ctx.voice.createStream(options)`   | A handle to the stream you created                   |
+| `ctx.voice.consume(options)`        | A handle to a user's media, as RTP packets           |
 
-`getRouter` and `createStream` **throw** if the channel has no voice runtime. A runtime exists only while someone is in the channel, so wait for the [`voice:runtime_initialized` event](./events) rather than assuming one is there.
+Everything but `getListenInfo` **throws** if the channel has no voice runtime. A runtime exists only while someone is in the channel, so wait for the [`voice:runtime_initialized` event](./events) rather than assuming one is there.
 
 `getListenInfo` is synchronous and returns the address Sharkord is listening on and the address it advertises to clients (`webRtc.announcedAddress`, when set). Use it when building your own transports.
 
@@ -95,6 +98,87 @@ It returns:
 }
 ```
 
+### Reading the Channel
+
+`getState` is the snapshot of who is in the channel and what they have turned on:
+
+```ts
+const { users, externalStreams } = ctx.voice.getState(channelId);
+
+for (const { userId, state } of users) {
+  // state: { micMuted, soundMuted, webcamEnabled, sharingScreen }
+}
+```
+
+`externalStreams` is keyed by stream id and holds every plugin stream playing in the channel, yours and other plugins'.
+
+`getProducers` is the list of live media in the channel:
+
+```ts
+const producers = ctx.voice.getProducers(channelId);
+// [{ userId, kind, producerId, paused }]
+```
+
+`kind` is a `StreamKind`: `AUDIO`, `VIDEO`, `SCREEN` or `SCREEN_AUDIO`. `paused` is true while the user has that track muted or stopped, and the producer stays in the list either way.
+
+<Alert type="info" title="StreamKind is not re-exported yet">
+  The SDK's own entry point does not export the `StreamKind` enum, so importing
+  it from `@sharkord/plugin-sdk` fails today. Until it does, take it from
+  `@sharkord/shared`.
+</Alert>
+
+### Consuming a User's Media
+
+`ctx.voice.consume` hands you a user's media as RTP packets, inside the Sharkord process. No ports are opened and no external program is involved.
+
+```ts
+import { StreamKind, type PluginContext } from "@sharkord/plugin-sdk";
+
+const onLoad = async (ctx: PluginContext) => {
+  ctx.events.on("voice:producer_added", async ({ channelId, userId, kind }) => {
+    if (kind !== StreamKind.AUDIO) return;
+
+    const consumer = await ctx.voice.consume({
+      channelId,
+      userId,
+      kind,
+      onRtp: (packet) => buffer.push(packet),
+    });
+
+    // consumer.close() when you are done
+  });
+};
+```
+
+| Option      | Description                                             |
+| ----------- | ------------------------------------------------------- |
+| `channelId` | The voice channel                                       |
+| `userId`    | Whose media to consume                                  |
+| `kind`      | `StreamKind.AUDIO`, `VIDEO`, `SCREEN` or `SCREEN_AUDIO` |
+| `onRtp`     | Called with one RTP packet, header included             |
+
+The handle carries `producerId`, the `rtpParameters` describing what the packets are, `requestKeyFrame()` for video, and `close()`.
+
+`consume` throws when that user has no producer of that kind in the channel, so a plugin that starts mid-call has to read `getProducers` as well as listening for `voice:producer_added`, or it only hears whoever unmutes after it started.
+
+<Alert type="info" title="What arrives is what the browser sent">
+  Audio is Opus at 48 kHz, and decoding it is yours to do. When what you want is
+  a file, do not decode packets yourself: create a plain transport from
+  `getRouter()` and consume the same `producerId` into ffmpeg, which gets you
+  decoding, resampling and muxing for free.
+</Alert>
+
+`onRtp` is called often, roughly every 20 ms per speaker for audio. Keep it to buffering and do the work elsewhere.
+
+<Alert type="attention" title="Consuming is recording">
+  A plugin that consumes is listening to people in a voice channel, and nothing
+  in the interface tells them so. Sharkord writes a line to the plugin's log
+  when a consumer starts and stops, which is what an admin can find later. If
+  you ship this, say so.
+</Alert>
+
 ### Cleaning Up
 
-Keep every handle you create and call `remove()` in `onUnload`. `ctx.voice` is available on the unload context for exactly this. Streams left behind stay visible to users until the channel's runtime closes.
+Keep every handle you create and call `remove()` on streams in `onUnload`. `ctx.voice` is available on the unload context for exactly this. Streams left behind stay visible to users until the channel's runtime closes.
+
+Consumers are the exception: they close themselves when the producer ends and when the plugin unloads. Closing one yourself is how you stop early.
