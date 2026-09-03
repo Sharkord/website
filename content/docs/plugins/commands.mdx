@@ -56,16 +56,52 @@ A `sensitive` argument never reaches the message content: the chip is written wi
 
 ### The Invoker
 
-The first handler argument describes who ran the command:
+The first handler argument describes who ran the command, and from where:
 
 ```ts
 {
   userId: number;
+  source: "chat" | "api";
+  channelId?: number;
+  parentMessageId?: number;
+  messageId?: number;
   currentVoiceChannelId?: number;
+  locale: string;
 }
 ```
 
-`currentVoiceChannelId` is what a music or soundboard plugin uses to know where to play. It is set by the server, so it is the one part of the call you can trust.
+| Field                   | What it is                                                                  |
+| ----------------------- | --------------------------------------------------------------------------- |
+| `userId`                | Who ran it                                                                   |
+| `source`                | `chat` when typed into a channel, `api` when a plugin's own UI called it     |
+| `channelId`             | Where it came from: the channel it was typed in, or the one the caller had open. Absent when they had none |
+| `parentMessageId`       | The thread it was typed in, when it was one. Chat invocations only           |
+| `messageId`             | The command's own message, for replying to it. Chat invocations only         |
+| `currentVoiceChannelId` | The voice channel they are connected to, if any                             |
+| `locale`                | The language their client is showing                                        |
+
+Every id here is one the server proved the caller can reach, so it is safe to write to: a `channelId` sent by a plugin's UI is checked against that user's channel permissions before your handler runs. `locale` is the exception. It is whatever the client said when the session started, so a user who switches language mid-session is still reported as the language they joined with, and it is worth nothing beyond picking the language of a reply. One of `en`, `cs`, `es`, `fr`, `it`, `ru`, `zh`, defaulting to `en`.
+
+`currentVoiceChannelId` is what a music or soundboard plugin uses to know where to play.
+
+`source` matters because the same command arrives both ways. A `chat` invocation renders as a public chip in the channel; an `api` one, including from the Commands tab in the server settings, answers the caller alone.
+
+Answering into the thread the command came from means passing `parentMessageId` back:
+
+```ts
+executes: async (invoker) => {
+  if (invoker.channelId) {
+    await ctx.messages.send(invoker.channelId, "<p>working on it</p>", {
+      parentMessageId: invoker.parentMessageId,
+      replyToMessageId: invoker.messageId,
+    });
+  }
+
+  return "Started.";
+};
+```
+
+Leave `parentMessageId` out and the reply lands in the channel instead of the thread.
 
 ### Who Can Run It
 

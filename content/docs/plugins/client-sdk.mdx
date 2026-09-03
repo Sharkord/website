@@ -73,6 +73,8 @@ const SumButton = () => {
 
 Call `createCallAction` once at module scope. The [contract](./contract) checks the action name, the payload, and the response. See [Actions](./actions).
 
+The channel the user has open is sent along with every call, so the server hands your action an [`invoker.channelId`](./commands#the-invoker) without you passing one. It is checked against that user's channel permissions before your handler runs.
+
 ### Receiving Pushes
 
 The server can send your clients anything at any time, without them asking:
