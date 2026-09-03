@@ -6,7 +6,7 @@ icon: HardDrive
 
 Uploaded files live on disk in the [data directory](/docs/data-dir), under `public/`. The Storage tab in the server settings controls who can upload, how much, and who can read the result. Changing these needs `MANAGE_STORAGE`.
 
-The tab also shows current disk usage per user, which is the quickest way to find out where the space went.
+The tab also shows current disk usage per user, and per plugin, which is the quickest way to find out where the space went.
 
 ## Uploads
 
@@ -35,6 +35,12 @@ The tab also shows current disk usage per user, which is the quickest way to fin
 Overflow has two modes. **Prevent new file uploads** rejects the upload and tells the user. **Delete old files** deletes the oldest files to make room, which keeps the server writable at the cost of losing old attachments permanently.
 
 A per-user quota can be overridden per role, which is how you give a trusted group more room. Enable the override on the role, set the amount, and remember that `0` on an override role means unlimited. When a user holds several override roles, the largest wins. See [Roles and Permissions](./roles-permissions).
+
+## Plugin Storage
+
+Plugins can attach files to the messages they send, and those files count against the server quota like any other upload. The Storage tab lists what each plugin has stored, with its file count and total size, largest first.
+
+A plugin that has been removed still appears in that list, marked **Uninstalled**. Removing a plugin deletes its own folder, its data folder and its database rows, but the files it attached belong to the messages they are in, so they stay until those messages are deleted.
 
 ## Signed URLs
 

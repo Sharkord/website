@@ -50,7 +50,9 @@ Every plugin route shares one rate limit. Assume any route a plugin left public 
 
 ### About the Marketplace
 
-Downloads from the [marketplace](./marketplace) are checked against the checksum published in the registry, so you get the file the author published. That is all it guarantees.
+Downloads from the [marketplace](./marketplace) are checked against the checksum published in the registry, so you get the file the author published. The archive is also refused if any entry would write outside the plugin's own folder, if its manifest names a different plugin than the one being installed, or if its `sdkVersion` does not match the server's.
+
+That is all any of it guarantees. Every one of those checks is about the file arriving intact and in the right place, not about what the code does once it runs.
 
 The marketplace is open to anyone. A listing is not a review, and the `verified` flag on an entry means the maintainers recognise the publisher, not that the code was audited. Do the same due diligence you would do for a plugin you found anywhere else.
 
