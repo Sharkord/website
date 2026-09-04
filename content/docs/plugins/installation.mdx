@@ -41,11 +41,37 @@ The result should look like this:
 
 The folder name has to match the `id` in `manifest.json`, and all three files must be present, even for a plugin with no interface.
 
+### The Plugin's Page
+
+Selecting a plugin in the server settings opens its own page, with its name, version, author, homepage, and the reason it failed to load if it did. Below that:
+
+| Tab             | What it is                                                              |
+| --------------- | ----------------------------------------------------------------------- |
+| **Settings**    | The options the plugin registered, if any. See [Settings](./settings).   |
+| **Commands**    | Its slash commands, runnable from here as well as from chat.             |
+| **Logs**        | What the plugin logged, including why it failed to load.                 |
+| **Permissions** | Which roles may use each command, action and UI slot. Needs `MANAGE_PLUGIN_PERMISSIONS`. |
+
+A plugin can also add [tabs of its own](./components#admin-tabs), which appear after those. A plugin with nothing but logs gets no tabs at all.
+
+### Where a Plugin Keeps Its Data
+
+Two directories, side by side in the data directory:
+
+| Directory                | Contents                                                        |
+| ------------------------ | --------------------------------------------------------------- |
+| `plugins/<plugin-id>/`   | The plugin itself. Deleted and rewritten on every update.        |
+| `plugin-data/<plugin-id>/` | Whatever the plugin wrote. Survives updates, deleted with the plugin. |
+
+Settings, per-user data, capability rules and the version on record live in the database, and are removed with the plugin. Files a plugin attached to messages are not: they belong to the message, and show up under **Uninstalled** in the [Storage tab](/docs/administration/storage#plugin-storage) until those messages go.
+
 ### Updating and Removing
 
-Marketplace plugins can be updated and removed from the same screen. Sharkord unloads the plugin, replaces the files, and loads it again.
+Marketplace plugins can be updated and removed from the same screen. Sharkord unloads the plugin, replaces the files, and loads it again. If the version changed and the plugin ships an `onUpgrade`, that runs first; a failed upgrade stops the load and is retried next time rather than leaving a half-migrated plugin running.
 
 For manual installs, replace the folder's contents and toggle the plugin off and on.
+
+Removing a plugin's folder from disk while the server is running is noticed within a couple of seconds: Sharkord unloads it and treats it as uninstalled.
 
 ### If It Does Not Load
 

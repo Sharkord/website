@@ -4,12 +4,29 @@ description: What plugin UI code can reach in the browser.
 icon: Monitor
 ---
 
-Client code has two jobs: read Sharkord's state, and call your own server [actions](./actions). The scaffold gives you a small hook for each, in `src/client/store/`. They are template code, not SDK exports, so you can change them.
+`@sharkord/plugin-sdk/client` is the browser half of the SDK. It gives your components four things: Sharkord's own state, your server [actions](./actions), messages your server pushed, and per-user storage.
+
+```ts
+import {
+  actions,
+  createCallAction,
+  useCanUseAction,
+  useCanUseCommand,
+  usePush,
+  useStoreSelector,
+  useUserData,
+} from "@sharkord/plugin-sdk/client";
+```
+
+The module reads `window.__SHARKORD_STORE__` when it loads, so it only works inside a plugin bundle Sharkord served.
 
 ### Reading State
 
+Read the store for what the whole app knows. For what a component's own position implies, use the [props its slot passes](./components#slot-props): `selectedChannelId` is the wrong answer inside a thread, and nothing here says which message or member a row belongs to.
+
+
 ```tsx
-import { useStoreSelector } from "../store";
+import { useStoreSelector } from "@sharkord/plugin-sdk/client";
 
 const SelectedChannel = () => {
   const channelId = useStoreSelector((state) => state.selectedChannelId);
@@ -33,60 +50,124 @@ The selector runs against this state:
 | `currentVoiceChannelId` | `number \| undefined`               |
 | `publicSettings`        | the server's public settings        |
 
-If you read the same value in several places, wrap it once:
-
-```ts
-import { useStoreSelector } from ".";
-
-export const useCurrentVoiceChannelId = () =>
-  useStoreSelector((state) => state.currentVoiceChannelId);
-```
-
-For derived state, `createSelector` and `createCachedSelector` are provided by the host through `window.__SHARKORD_EXPOSED_LIBS__`; the scaffold re-exports them from `src/client/libs.ts`.
+<Alert type="info" title="Return a stable reference">
+  The selector must return the same reference for unchanged state. Reading a
+  field (`(state) => state.users`) is fine; building a new array or object on
+  every call re-renders forever. Memoize those with `createSelector`, which the
+  host exposes on `window.__SHARKORD_EXPOSED_LIBS__`.
+</Alert>
 
 ### Calling the Server
 
 ```tsx
-import { Button } from "@sharkord/ui";
-import { memo } from "react";
-import { useCallAction } from "../store/hooks";
+import { createCallAction } from "@sharkord/plugin-sdk/client";
+import type { TPlugin } from "../types";
 
-const SumButton = memo(() => {
-  const callAction = useCallAction();
+const callAction = createCallAction<TPlugin>();
 
+const SumButton = () => {
   const onClick = async () => {
     const result = await callAction("sum", { a: 1, b: 2 });
-    console.log(result);
   };
 
-  return <Button onClick={onClick}>Calculate</Button>;
-});
+  return <button onClick={onClick}>Calculate</button>;
+};
 ```
 
-`useCallAction` wraps `createCallAction<Actions>(actions)` from the SDK, so the action name, payload, and response are all checked against your contract.
+Call `createCallAction` once at module scope. The [contract](./contract) checks the action name, the payload, and the response. See [Actions](./actions).
+
+The channel the user has open is sent along with every call, so the server hands your action an [`invoker.channelId`](./commands#the-invoker) without you passing one. It is checked against that user's channel permissions before your handler runs.
+
+### Receiving Pushes
+
+The server can send your clients anything at any time, without them asking:
+
+```ts
+// server
+ctx.push.toUser(userId, { kind: "rolled", value: 6 });
+ctx.push.toUsers([1, 2, 3], data);
+ctx.push.toAll(data);
+```
+
+```tsx
+// client
+usePush<TPlugin>((data) => setLast(data));
+```
+
+`toAll` reaches every user currently online. A push cannot exceed 64 KB of JSON, and there is no delivery guarantee: a user who is offline, or who connects a second later, does not get it. Use it for live updates, not for state that has to arrive.
+
+### Per-User Storage
+
+`useUserData` is the browser side of `ctx.userData`: one JSON object per user per plugin, stored on the server.
+
+```tsx
+import { useUserData } from "@sharkord/plugin-sdk/client";
+
+const Preferences = () => {
+  const { data, loading, save } = useUserData<TPlugin>();
+
+  if (loading) return null;
+
+  return (
+    <button onClick={() => save({ ...data, compact: !data.compact })}>
+      Toggle
+    </button>
+  );
+};
+```
+
+A user can only read and write their **own** data, and the object is capped at 64 KB of JSON. Saving is rate limited like a command or action, and only works while the plugin is enabled, so a client cannot write rows for a plugin the server has never heard of. The server half can read and write anyone's with `ctx.userData.get / set / delete`. All of it is deleted when the plugin is removed. Since a user can write whatever they like here, treat it as user input on the server. See [Data](./data).
+
+### Checking Access
+
+An admin can restrict any of your commands and actions to roles, so a button that calls one may be useless for the user looking at it. These two answer whether they may:
+
+```tsx
+import { useCanUseAction } from "@sharkord/plugin-sdk/client";
+import type { TPlugin } from "../types";
+
+const RollButton = () => {
+  const canRoll = useCanUseAction<TPlugin>("roll");
+
+  return (
+    <button disabled={!canRoll} onClick={onRoll}>
+      Roll
+    </button>
+  );
+};
+```
+
+`useCanUseCommand` is the same for a slash command, for UI that lists or offers them. Both fold in `USE_PLUGINS`, so a user without it gets `false` either way, and both take the [contract](./contract) to autocomplete the name.
+
+<Alert type="attention" title="This is UX, not enforcement">
+  It exists so you can disable a button instead of letting the call fail. The
+  server checks again on every call, and that answer is the one that counts.
+</Alert>
 
 ### Store Actions
 
-Besides `executePluginAction`, which is what `callAction` uses, the store exposes two things your UI can do directly:
+Besides `executePluginAction`, which is what `callAction` uses, `actions` exposes what your UI can do directly as the signed-in user:
 
 ```ts
-import { actions } from "../store";
+import { actions } from "@sharkord/plugin-sdk/client";
 
-await actions.sendMessage(channelId, "<p>hello</p>");
+await actions.sendMessage(channelId, "hello");
 actions.selectChannel(channelId);
+
+const response = await actions.fetchPluginRoute("my-plugin", "/preferences");
 ```
 
-These run as the current user, with that user's permissions.
+`fetchPluginRoute` attaches the user's token, so it is how you call your own [authenticated HTTP routes](./http) without handling tokens yourself. These run as the current user, with that user's permissions.
 
 ### Host Globals
 
 The store and the shared libraries reach your bundle through globals, which is why your plugin does not ship its own React:
 
-- `window.__SHARKORD_STORE__`: `getState`, `subscribe`, `actions`
+- `window.__SHARKORD_STORE__`: `getState`, `subscribe`, `actions`, `hooks`
 - `window.__SHARKORD_EXPOSED_LIBS__`: `createSelector`, `createCachedSelector`
 - `window.__SHARKORD_REACT__`, `__SHARKORD_REACT_JSX__`, `__SHARKORD_REACT_JSX_DEV__`, `__SHARKORD_REACT_DOM__`, `__SHARKORD_REACT_DOM_CLIENT__`
 
-The build tooling wires these up for you. Reach for them directly only when the scaffold's helpers are not enough.
+The build tooling wires these up for you. Reach for them directly only when the SDK's helpers are not enough.
 
 ### Reminder
 

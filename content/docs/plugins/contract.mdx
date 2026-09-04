@@ -1,0 +1,84 @@
+---
+title: Contract
+description: One type that makes both halves of a plugin type safe.
+icon: FileSignature
+---
+
+A plugin is two bundles that never import each other's code: `server/index.js` runs in the Sharkord process, `client/index.js` runs in the browser. The contract is the one thing they share, and it is types only, so nothing of it survives into either bundle.
+
+### Declare It
+
+```ts
+// src/types.ts
+type TRoll = { userId: number; sides: number; value: number; total: number };
+
+type TPlugin = {
+  actions: { roll: { payload: { sides: number }; response: TRoll } };
+  commands: { roll: { args: { sides: number }; response: string } };
+  push: TRoll;
+  userData: { lastRoll: number };
+};
+
+export type { TPlugin, TRoll };
+```
+
+| Key        | Types                                                                 |
+| ---------- | --------------------------------------------------------------------- |
+| `actions`  | `ctx.actions.register` and the client's `callAction`                  |
+| `commands` | `ctx.commands.register`                                               |
+| `push`     | `ctx.push.*` and the client's `usePush`                               |
+| `userData` | `ctx.userData.*` and the client's `useUserData`                       |
+
+Every key is optional. What you leave out behaves as it did before: names are unconstrained and payloads are `unknown`.
+
+### Use It on the Server
+
+```ts
+import type { PluginContext } from "@sharkord/plugin-sdk";
+import type { TPlugin } from "../types";
+
+const onLoad = async (ctx: PluginContext<TPlugin>) => {
+  ctx.actions.register({
+    name: "roll", // must be a key of the contract's `actions`
+    executes: (invoker, payload) => roll(invoker.userId, payload.sides),
+  });
+};
+```
+
+With the contract passed, `name` autocompletes, and the `payload` and return type of `executes` follow from it. Without it, `PluginContext` still works and everything is `unknown`.
+
+### Use It on the Client
+
+```tsx
+import {
+  createCallAction,
+  usePush,
+  useUserData,
+} from "@sharkord/plugin-sdk/client";
+import type { TPlugin } from "../types";
+
+const callAction = createCallAction<TPlugin>();
+
+const Component = () => {
+  usePush<TPlugin>((roll) => console.log(roll.value));
+
+  const { data, save } = useUserData<TPlugin>();
+
+  const onClick = async () => {
+    const result = await callAction("roll", { sides: 20 });
+
+    await save({ lastRoll: result.value });
+  };
+};
+```
+
+`createCallAction` is called once at module scope, not inside a component.
+
+<Alert type="info" title="Import it as a type">
+  Use `import type { TPlugin }` in client code. A value import would pull server
+  code into the browser bundle; a type import is erased at build time.
+</Alert>
+
+### It Is Not Validation
+
+The contract is a compile-time convenience. Nothing checks at runtime that a command's arguments or an action's payload match what you declared, and a caller can send anything the transport accepts. Validate untrusted input inside `executes` yourself. See [Security](./security).

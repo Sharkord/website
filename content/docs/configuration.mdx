@@ -126,6 +126,8 @@ Each limiter takes `maxRequests` and `windowMs`. Requests are counted per user o
 | `voiceStream`           | `200`        | `60000`  | Voice and video stream updates    |
 | `useSecretToken`        | `5`          | `60000`  | Owner token claims                |
 | `pluginExecute`         | `60`         | `60000`  | Plugin commands and actions       |
+| `pluginRoute`           | `300`        | `60000`  | Requests to plugin HTTP routes    |
+| `pluginInstall`         | `10`         | `60000`  | Installing and updating plugins   |
 | `oidc`                  | `30`         | `60000`  | Single sign-on requests           |
 
 Most servers never need to touch these. Raise a limit if legitimate users hit it; lower it if you are being abused.

@@ -1,44 +1,108 @@
 ---
 title: Data
-description: Read users and channels from the plugin runtime.
+description: Users, channels, categories, roles, permissions, and per-user storage.
 icon: Database
 ---
 
-`ctx.data` is a small read-only window into the server's data. It is deliberately minimal, and it will grow.
+Everything a plugin reads and writes about the server that is not a message lives here. These calls run the same code the app's own routes do, so hooks fire, clients are told in realtime, and the audit log records the change with no actor rather than a fabricated one.
 
-| Method                       | Returns                             |
-| ---------------------------- | ----------------------------------- |
-| `getUser(userId)`            | `TJoinedPublicUser \| undefined`    |
-| `getChannel(channelId)`      | `TChannel \| undefined`             |
-| `getPublicUsers()`           | `TJoinedPublicUser[]`               |
-
-All three are async. `getUser` and `getChannel` return `undefined` when the record does not exist, so check before using the result.
-
-A public user carries `id`, `name`, `bio`, `profileColor`, `banned`, `createdAt`, and the avatar and banner files. Passwords, tokens, and identities are not exposed.
-
-### Example
+### Users
 
 ```ts
-import type { PluginContext } from "@sharkord/plugin-sdk";
+const users = await ctx.users.list();
+const user = await ctx.users.get(userId);
 
-const onLoad = (ctx: PluginContext) => {
-  ctx.events.on("user:joined", async ({ userId }) => {
-    const user = await ctx.data.getUser(userId);
-
-    if (!user) {
-      ctx.logger.error("joined user not found", userId);
-      return;
-    }
-
-    const users = await ctx.data.getPublicUsers();
-
-    ctx.logger.debug(`${user.name} joined, ${users.length} users total`);
-  });
-};
+await ctx.users.ban(userId, "spam");
+await ctx.users.unban(userId);
+await ctx.users.kick(userId, "cool off");
 ```
 
-### Limits
+A public user carries `id`, `name`, `bio`, `profileColor`, `banned`, `createdAt`, and the avatar and banner files. Passwords, tokens, and identities are not exposed. `get` returns `undefined` when the user does not exist.
 
-- Read-only. To change something, use [messages](./messages) or do it yourself against your own storage.
-- No roles, permissions, or message history yet.
+Plugins may never ban or kick the server owner.
+
+### Roles and Permissions
+
+```ts
+const roles = await ctx.roles.list();
+const role = await ctx.roles.get(roleId);
+
+await ctx.roles.assign(userId, roleId);
+await ctx.roles.remove(userId, roleId);
+```
+
+```ts
+if (!(await ctx.permissions.userCan(userId, Permission.MANAGE_MESSAGES))) return;
+
+const canSpeak = await ctx.permissions.userCanInChannel(
+  userId,
+  channelId,
+  ChannelPermission.SPEAK,
+);
+```
+
+Ask `ctx.permissions` rather than reading roles and deciding yourself: it is the host's own answer, including role inheritance, channel overrides and the owner short circuit. A reimplementation drifts silently the moment the rules change, and starts granting wrongly.
+
+Plugins may never touch the owner role, or the roles of anyone who holds it.
+
+### Channels and Categories
+
+```ts
+import { ChannelType } from "@sharkord/plugin-sdk";
+
+const category = await ctx.categories.create("Tickets");
+
+const channel = await ctx.channels.create({
+  name: `ticket-${userId}`,
+  type: ChannelType.TEXT,
+  categoryId: category.id,
+  private: true,
+});
+
+await ctx.channels.update(channel.id, { topic: "Support" });
+await ctx.channels.delete(channel.id);
+```
+
+```ts
+const channels = await ctx.channels.list();
+const channel = await ctx.channels.get(channelId);
+
+const categories = await ctx.categories.list();
+await ctx.categories.update(categoryId, "Archived tickets");
+await ctx.categories.delete(categoryId);
+```
+
+A channel needs a category, which is why `categories.create` usually comes first. `private` is settable at creation rather than only afterwards: a support channel that is public for even one publish has already leaked.
+
+`channels.list()` leaves out direct messages. The write calls refuse them anyway, so listing them would only hand back ids a plugin cannot use.
+
+Creating a channel this way fires the [`onBeforeChannelCreate` hook](./hooks), including your own.
+
+### Per-User Storage
+
+One JSON object per user per plugin, stored on the server.
+
+```ts
+const data = await ctx.userData.get(userId);
+await ctx.userData.set(userId, { lastRoll: 6 });
+await ctx.userData.delete(userId);
+```
+
+The browser half is [`useUserData`](./client-sdk#per-user-storage), where a user can read and write their own object and nobody else's. Capped at 64 KB of JSON per user. Everything is deleted when the plugin is removed, and a user's row goes with the user when their account is deleted.
+
+Since users write into this themselves, treat what you read back as untrusted input.
+
+### Pushing to Clients
+
+```ts
+ctx.push.toUser(userId, data);
+ctx.push.toUsers([1, 2, 3], data);
+ctx.push.toAll(data);
+```
+
+Sends straight to your plugin's client code, where [`usePush`](./client-sdk#receiving-pushes) receives it. `toAll` means every user currently online. Capped at 64 KB of JSON, and there is no delivery guarantee.
+
+### Notes
+
 - Return types come from the server's internal types and are not stable across releases. Treat this API as experimental, like the rest of the SDK.
+- None of these calls check the permissions of whoever triggered your code. A plugin acts as the server. If a user asked for it, gate it yourself with `ctx.permissions`.

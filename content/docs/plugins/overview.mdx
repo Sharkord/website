@@ -1,13 +1,13 @@
 ---
 title: Overview
-description: What a plugin can do, what one is made of, and how the load and unload lifecycle works.
+description: What a plugin can do, what one is made of, and how the load, upgrade and unload lifecycle works.
 icon: Wrench
 ---
 
-A plugin is a folder of JavaScript that Sharkord loads into the server and, optionally, into every user's browser. Plugins add commands, buttons and whole screens, react to events, expose HTTP endpoints, and push audio and video into voice channels.
+A plugin is a folder of JavaScript that Sharkord loads into the server and, optionally, into every user's browser. Plugins add commands, buttons and whole screens, react to events, intercept writes before they happen, expose HTTP endpoints, moderate users, and push audio and video into voice channels.
 
 <Alert type="attention" title="Experimental">
-  The plugin SDK is version 1 and still moving. Expect breaking changes between
+  The plugin SDK is version 2 and still moving. Expect breaking changes between
   releases; a plugin's `sdkVersion` must match the server exactly or it will not
   load.
 </Alert>
@@ -31,9 +31,18 @@ my-plugin/
 
 All three are required, even when a plugin has no interface. The folder name must match the `id` in the manifest.
 
-`server/index.js` exports its lifecycle functions:
+### Lifecycle
+
+`server/index.js` exports up to three functions:
 
 ```ts
+import type {
+  PluginContext,
+  TUpgradeInfo,
+  UnloadPluginContext,
+  UpgradePluginContext,
+} from "@sharkord/plugin-sdk";
+
 const onLoad = async (ctx: PluginContext) => {
   // register everything here
 };
@@ -42,29 +51,46 @@ const onUnload = async (ctx: UnloadPluginContext) => {
   // stop timers, close connections, remove streams
 };
 
-export { onLoad, onUnload };
+const onUpgrade = async (ctx: UpgradePluginContext, info: TUpgradeInfo) => {
+  // migrate anything under ctx.dataPath
+};
+
+export { onLoad, onUnload, onUpgrade };
 ```
 
-`onLoad` is required and runs at server start and when the plugin is enabled. `onUnload` runs when the plugin is disabled, removed, or updated.
+| Function    | When it runs                                                           |
+| ----------- | ---------------------------------------------------------------------- |
+| `onLoad`    | At server start, and again after every enable or update. **Required.** |
+| `onUnload`  | On disable, update, removal, and server shutdown.                      |
+| `onUpgrade` | Before `onLoad`, only when the installed version changed.              |
 
-`onUnload` is optional for now: a plugin without one loads, and the server logs a warning saying it will be required in a future SDK version. Write it anyway. Commands, actions, events, settings, hooks, and HTTP routes are unregistered for you, but timers, sockets, and voice streams you started are not.
+Each of the three is given 30 seconds. Throwing in `onLoad` or `onUpgrade` stops the load and shows the reason to admins; a failed `onUpgrade` leaves the recorded version alone, so the migration is retried on the next load instead of running half-applied.
+
+`onUnload` is optional for now: a plugin without one loads, and the server logs a warning saying it will be required in a future SDK version. Write it anyway. Commands, actions, events, settings, hooks, and HTTP routes are unregistered for you, but timers, sockets, and voice streams you started are not. A leaked timer survives a reload and fires against the next load.
+
+### Two Folders on Disk
+
+| Path          | What it is                                                                     |
+| ------------- | ------------------------------------------------------------------------------ |
+| `ctx.path`    | The plugin's own folder. An update deletes and rewrites it, so treat it as read-only. |
+| `ctx.dataPath` | A folder that survives updates and is deleted with the plugin. Everything you write goes here. |
 
 ### What the Context Gives You
 
-| API           | Use it for                                            |
-| ------------- | ----------------------------------------------------- |
-| [Commands](./commands)   | Slash commands users can run                |
-| [Actions](./actions)     | Server functions your UI can call           |
-| [Components](./components) | React components in fixed slots of the app |
-| [Events](./events)       | Reacting to messages, joins, and voice      |
-| [Settings](./settings)   | Typed options an admin edits in the UI      |
-| [Messages](./messages)   | Sending, editing, and deleting messages     |
-| [Data](./data)           | Reading users and channels                  |
-| [Hooks](./hooks)         | Intercepting file saves                     |
-| [HTTP](./http)           | Your own HTTP endpoints                     |
-| [Voice](./voice)         | Publishing external audio and video streams |
+| API                        | Use it for                                                |
+| -------------------------- | --------------------------------------------------------- |
+| [Commands](./commands)     | Slash commands users can run                              |
+| [Actions](./actions)       | Server functions your UI can call                         |
+| [Components](./components) | React components in fixed slots, and your own admin tabs  |
+| [Events](./events)         | Reacting to 33 things that happened on the server         |
+| [Settings](./settings)     | Typed options an admin edits in the UI                    |
+| [Messages](./messages)     | Sending, editing, reading, pinning and reacting           |
+| [Data](./data)             | Users, channels, categories, roles, permissions, per-user storage |
+| [Hooks](./hooks)           | Rejecting or rewriting a write before it happens          |
+| [HTTP](./http)             | Your own HTTP endpoints, authenticated or public          |
+| [Voice](./voice)           | Publishing external streams, and consuming what users send |
 
-The [Client SDK](./client-sdk) covers the browser half, and [API Reference](./api-reference) lists the whole surface in one place.
+The [Contract](./contract) is what types all of it, the [Client SDK](./client-sdk) covers the browser half, and [API Reference](./api-reference) lists the whole surface in one place.
 
 ### Getting Started
 

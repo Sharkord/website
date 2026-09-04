@@ -58,6 +58,8 @@ Loopback and private ranges are trusted by default, so this normally only comes 
     - `server/index.js` or `client/index.js` is missing from the plugin folder. Both are required, even if the plugin has no UI.
     - The plugin does not export an `onLoad` function. A missing `onUnload` only logs a warning.
     - The manifest's `sdkVersion` does not match the server's plugin SDK version.
+    - `onLoad` threw, or took longer than 30 seconds.
+    - `onUpgrade` threw. The version on record is left alone, so the migration is retried on the next load rather than running half-applied.
 
     See [Installation](/docs/plugins/installation).
 
