@@ -45,7 +45,14 @@ A route is **public unless its options say otherwise**, because a webhook receiv
 
 The host resolves the caller before your handler runs and answers `401` or `403` itself, so there is nothing to forget. The handler's third argument then carries `{ userId }`, which is absent on a public route.
 
-Unlike `requires` on a command, this is a **hard gate**, not a default an admin can override. An HTTP route is not a capability an admin curates.
+Routes are capabilities like commands and actions, so an admin can restrict one to roles from the plugin's permissions tab. It is named there by method and path, `GET /hello`.
+
+That override is not symmetric, and the asymmetry is deliberate:
+
+- **Restricting a public route makes it authenticated**, whatever the plugin declared. There is no caller to match against roles otherwise.
+- **Opening a route up cannot remove `auth`.** A handler that was written expecting a `userId` keeps getting one, so an admin cannot break it by widening access.
+
+So `auth` is yours and stays yours, while `requires` is a default an admin can move in either direction.
 
 Tokens are accepted as `Authorization: Bearer <token>` or the `x-token` header. From your own plugin UI, call the route through the store instead of handling tokens yourself:
 

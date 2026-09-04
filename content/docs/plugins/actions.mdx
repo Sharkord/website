@@ -60,6 +60,7 @@ export { SumButton };
 - Handlers time out after 30 seconds.
 - Calls are rate limited (60 per minute per user by default) and written to the activity log with their payload.
 - The `invoker` argument is the same one [commands](./commands#the-invoker) get, with `source` always `api` and no `parentMessageId` or `messageId`, since nothing was typed into a channel. Its `channelId` is whichever channel the caller had open, and the server checks they can see it before your handler runs.
-- The invoker is built by the server, so it is the one thing in the call you can trust: **validate the payload yourself.** The contract is compile-time typing, not runtime validation.
+- **Nothing validates the payload.** An action declares no argument shape, so unlike [command arguments](./commands#arguments-are-validated) it arrives exactly as the caller sent it. The contract is compile-time typing only.
+- The invoker is built by the server, so it is the one thing in the call you can trust: **validate the payload yourself.**
 
 See [Client SDK](./client-sdk) for the rest of what your UI code can reach, and [Data](./data) for what an action can read and write once it is running.

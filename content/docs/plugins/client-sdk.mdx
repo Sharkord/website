@@ -116,7 +116,7 @@ const Preferences = () => {
 };
 ```
 
-A user can only read and write their **own** data, and the object is capped at 64 KB of JSON. The server half can read and write anyone's with `ctx.userData.get / set / delete`. All of it is deleted when the plugin is removed. Since a user can write whatever they like here, treat it as user input on the server. See [Data](./data).
+A user can only read and write their **own** data, and the object is capped at 64 KB of JSON. Saving is rate limited like a command or action, and only works while the plugin is enabled, so a client cannot write rows for a plugin the server has never heard of. The server half can read and write anyone's with `ctx.userData.get / set / delete`. All of it is deleted when the plugin is removed. Since a user can write whatever they like here, treat it as user input on the server. See [Data](./data).
 
 ### Checking Access
 

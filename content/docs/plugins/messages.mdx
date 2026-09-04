@@ -31,6 +31,7 @@ send(
     parentMessageId?: number;
     replyToMessageId?: number;
     files?: { name: string; data: Uint8Array }[];
+    previews?: boolean;
   }
 ): Promise<{ messageId: number }>
 ```
@@ -39,11 +40,29 @@ send(
 - `replyToMessageId` posts it as an inline reply.
 - Both must point at a message in the same channel.
 - `files` attaches uploads, capped by the server's per-message file limit. A message carrying files may have empty content.
+- `previews` controls whether the host looks up the links in the message. On by default.
+
+### Link Previews
+
+By default the server fetches the URLs in a message and renders link cards, plus an inline image or video for a link that points at one. `previews: false` turns that off, and the message renders exactly as written:
+
+```ts
+await ctx.messages.send(channelId, content, { previews: false });
+```
+
+Worth doing when the message is already formatted the way you want it, or when you would rather the server not fetch the URL at all: a link pulled off an RSS feed or a webhook is a URL you did not choose, and the preview is your server requesting it.
+
+An edit looks the links up again, so pass it there too or a message sent without cards gets them back:
+
+```ts
+await ctx.messages.edit(messageId, content, { previews: false });
+```
 
 ### Edit, Delete and Read
 
 ```ts
 await ctx.messages.edit(messageId, "<p>Updated</p>");
+await ctx.messages.edit(messageId, "<p>Updated</p>", { previews: false });
 await ctx.messages.delete(messageId);
 
 const message = await ctx.messages.get(messageId);

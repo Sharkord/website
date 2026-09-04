@@ -71,22 +71,32 @@ Match on the text and return HTML. A replacement is sanitized again, and one tha
 ### Files
 
 ```ts
-ctx.hooks.onBeforeFileSave(async ({ bytes, originalName, extension, size, userId, type }) => {});
+ctx.hooks.onBeforeFileSave(async ({ readBytes, originalName, extension, size, userId, type }) => {});
 ```
 
-`bytes` is the whole file in memory and can be replaced, so this is where scanning, stripping metadata and re-encoding belong. `type` is a `FileSaveType`: `MESSAGE`, `AVATAR`, `BANNER`, `EMOJI` or `SERVER_LOGO`. `extension` is lowercased, with the dot.
+`type` is a `FileSaveType`: `MESSAGE`, `AVATAR`, `BANNER`, `EMOJI` or `SERVER_LOGO`. `extension` is lowercased, with the dot.
+
+The file's contents come from `readBytes()`, not from a field, because reading loads the whole file into memory. A hook that decides on the name, the extension or the size never pays for it:
 
 ```ts
 import { FileSaveType, type PluginContext } from "@sharkord/plugin-sdk";
 
 const onLoad = (ctx: PluginContext) => {
-  ctx.hooks.onBeforeFileSave(async ({ bytes, type }) => {
+  // decides on metadata alone, so it never reads the file
+  ctx.hooks.onBeforeFileSave(async ({ extension, size }) => {
+    if (extension === ".exe") return { reject: "Executables are not allowed." };
+    if (size > 10_000_000) return { reject: "That file is too large." };
+  });
+
+  ctx.hooks.onBeforeFileSave(async ({ readBytes, type }) => {
     if (type !== FileSaveType.AVATAR) return;
 
-    return { update: { bytes: await convertToWebp(bytes) } };
+    return { update: { bytes: await convertToWebp(await readBytes()) } };
   });
 };
 ```
+
+Reading twice costs nothing, and once an earlier hook has replaced the file, `readBytes()` returns the replacement. It is only callable while your hook runs: it reads the temporary file, which is gone once the save finishes, so do not hold onto it.
 
 The hook runs before the size and quota checks, so a replacement is what gets measured, not the original. Sharkord still decides the final stored name: you control the file, not where it lands.
 

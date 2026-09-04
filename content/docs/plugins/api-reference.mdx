@@ -63,7 +63,7 @@ The unload context is a subset: `path`, `dataPath`, `logger`, `voice`, `messages
 | `commands.register(command)`                                  | [Commands](./commands)                            |
 | `actions.register(action)`                                    | [Actions](./actions)                              |
 | `settings.register(definitions)`                              | Async, returns `{ get, set }`. [Settings](./settings) |
-| `messages.send / edit / delete / get / list / pin / unpin / react / unreact` | Async. [Messages](./messages)      |
+| `messages.send / edit / delete / get / list / pin / unpin / react / unreact` | Async. [Messages](./messages). `send` and `edit` take `previews` |
 | `users.list / get / ban / unban / kick`                       | Async. [Data](./data)                             |
 | `roles.list / get / assign / remove`                          | Async. [Data](./data)                             |
 | `permissions.userCan / userCanInChannel`                      | Async. [Data](./data)                             |
@@ -84,7 +84,7 @@ The unload context is a subset: `path`, `dataPath`, `logger`, `voice`, `messages
 | Command and action execution timeout     | 30 seconds                               |
 | Hook execution timeout                   | 30 seconds                               |
 | Event handler timeout                    | 10 seconds                               |
-| Command and action rate limit            | 60 per minute per user (configurable)    |
+| Command, action and user-data rate limit | 60 per minute per user (configurable)    |
 | HTTP route rate limit                    | 300 per minute per IP, shared by all plugin routes (configurable) |
 | Commands per plugin                      | 100                                      |
 | Actions per plugin                       | 100                                      |
@@ -92,6 +92,7 @@ The unload context is a subset: `path`, `dataPath`, `logger`, `voice`, `messages
 | Push payload                             | 64 KB of JSON                            |
 | Per-user data                            | 64 KB of JSON                            |
 | Hook reject reason                       | 200 characters                           |
+| Capability types an admin can restrict   | commands, actions, components, HTTP routes |
 | Messages returned by `messages.list`     | 100                                      |
 | Voice consumers per plugin               | unlimited; closed on unload              |
 | Permission to run commands and actions   | `USE_PLUGINS`                            |

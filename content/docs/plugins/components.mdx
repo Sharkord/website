@@ -136,6 +136,13 @@ const buttonStyle: CSSProperties = {
 
 For data, read the store with `useStoreSelector`; for anything privileged, call a server [action](./actions). See [Client SDK](./client-sdk).
 
+### While You Are Building
+
+Two things the host does that are worth knowing when your component misbehaves:
+
+- **F4 toggles a slot overlay.** Every rendered plugin component is outlined and labelled with its plugin id and slot, which is the quickest way to see whether yours mounted at all, and where. The setting is remembered per browser.
+- **Each component is wrapped in an error boundary.** One that throws is replaced rather than taking the app down with it, so a broken render shows up as your component missing, not as a blank Sharkord.
+
 <Alert type="attention" title="Your client bundle is public">
   `client/index.js` is served unauthenticated to any browser that asks. Never
   put secrets in it, and never rely on client-side checks for authorization.

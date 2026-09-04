@@ -54,6 +54,26 @@ args: [
 
 A `sensitive` argument never reaches the message content: the chip is written with `****` in its place, so it is not in the channel for anyone to scroll back to. It is still sent to the server, still passed to your handler, and still recorded in the server activity log.
 
+### Arguments Are Validated
+
+What you declare in `args` is enforced before your handler runs. A command whose argument is declared `number` never receives `NaN`, one declared `required` never receives `undefined`, and keys you did not declare are stripped.
+
+| Declared  | Accepted                                                     |
+| --------- | ------------------------------------------------------------ |
+| `string`  | a string                                                     |
+| `number`  | a number, or a string that parses to one                     |
+| `boolean` | `true` / `false`, or the strings `"true"` / `"false"`        |
+
+Both invocation paths go through the same check, so `/roll abc` typed in chat and `{ sides: "abc" }` posted by your own UI fail identically, before the plugin is called. The user sees the reason (`/roll: sides expected number, received nan`) and nothing is written to your plugin's log, because a rejected argument is the caller's mistake, not yours.
+
+This is the one place a declaration is enforced for you. It does not extend to anything else:
+
+- **A command that declares no `args` is not checked at all**, and its raw object is passed through as-is.
+- **[Actions](./actions) are never checked.** They declare no argument shape, so the payload arrives exactly as sent.
+- **There is no range, length, pattern or set-of-choices.** A `number` can still be `-1` or `1e9`.
+
+So the [contract](./contract) is still compile-time typing, and everything past the declared type is yours to validate.
+
 ### The Invoker
 
 The first handler argument describes who ran the command, and from where:

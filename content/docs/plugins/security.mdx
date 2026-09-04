@@ -36,7 +36,9 @@ That makes `requires` a default, not a guarantee. A plugin author who needs a ha
 
 ### Plugin HTTP Routes
 
-Plugins can register [HTTP routes](./http) under `/plugins/<plugin-id>/`. A route is public unless the plugin passed `auth` or `requires`, because a webhook receiver has to be. When it did, the host resolves the caller and answers `401` or `403` before the handler runs, and that gate is hard: no admin setting overrides it.
+Plugins can register [HTTP routes](./http) under `/plugins/<plugin-id>/`. A route is public unless the plugin passed `auth` or `requires`, because a webhook receiver has to be. When it did, the host resolves the caller and answers `401` or `403` before the handler runs.
+
+Routes are capabilities too, so an admin can restrict one to roles, and restricting a public route forces authentication on it. The reverse does not hold: an admin widening access cannot strip `auth` off a route whose handler expects a caller.
 
 Every plugin route shares one rate limit. Assume any route a plugin left public is reachable by anyone on the internet who can find the URL.
 
@@ -58,7 +60,7 @@ The marketplace is open to anyone. A listing is not a review, and the `verified`
 
 ### For Plugin Authors
 
-- **Validate everything that comes from a user**, including command arguments, action payloads, HTTP bodies, and anything read back from `ctx.userData`. The [contract](./contract) is compile-time typing, not runtime validation.
+- **Validate everything that comes from a user**: action payloads, HTTP bodies, and anything read back from `ctx.userData`. [Command arguments](./commands#arguments-are-validated) are the one exception, checked against their declared types before your handler runs, and even there the check stops at the type. The [contract](./contract) is compile-time typing, not runtime validation.
 - **Assume your public HTTP routes are called by strangers.** Use `auth` or `requires` where the route is for your own UI, and verify a shared secret or signature where it is a webhook.
 - **Keep secrets in `secret` [settings](./settings) or in files under `ctx.dataPath`**, never in the client bundle. `client/index.js` is served unauthenticated to every browser, so anything in it is public. Command arguments that carry secrets should be marked `sensitive`, which keeps the value out of the message chip. Plugin logs never carry command arguments at all; the server activity log does.
 - **Do not rely on `requires` alone** for anything that must never run for the wrong caller. Check `ctx.permissions` in the handler.
