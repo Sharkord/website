@@ -21,6 +21,7 @@ It is a plain INI file with one section per group:
 
 ```ini
 [server]
+host=
 port=4991
 debug=false
 autoupdate=false
@@ -65,6 +66,7 @@ trustedProxies[]=127.0.0.1
 
 | Field                 | Default  | Description                                                                                          |
 | --------------------- | -------- | ---------------------------------------------------------------------------------------------------- |
+| `host`                | empty    | Address to listen on, such as `127.0.0.1` to only accept connections from the same machine. Empty listens on every interface. In Docker, leave it empty or the container cannot be reached through its published port. |
 | `port`                | `4991`   | Port for HTTP and WebSocket traffic.                                                                 |
 | `debug`               | `false`  | Verbose debug logging.                                                                               |
 | `autoupdate`          | `false`  | Check for new releases every hour and install them. Ignored in Docker. See [Updating](/docs/updating). |
@@ -138,6 +140,7 @@ Every option above can be set with an environment variable, which is usually eas
 
 | Variable                            | Overrides                   |
 | ----------------------------------- | --------------------------- |
+| `SHARKORD_HOST`                     | `server.host`               |
 | `SHARKORD_PORT`                     | `server.port`               |
 | `SHARKORD_DEBUG`                    | `server.debug`              |
 | `SHARKORD_AUTOUPDATE`               | `server.autoupdate`         |
