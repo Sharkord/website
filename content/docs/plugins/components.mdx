@@ -21,6 +21,7 @@ Plugins can render React components into fixed slots of the interface, and add t
 | `TOPBAR_RIGHT`     | none                         | The right side of the top bar                                          |
 | `FULL_SCREEN`      | none                         | A full-screen view, with a button added to the left sidebar to open it |
 | `USER_SETTINGS`    | none                         | The plugin's own entry in **user** settings, next to Profile and Notifications |
+| `VOICE_CONTROLS`   | `{ channelId }`              | The voice connection panel, beside the camera and screen buttons. Only while connected |
 
 A plugin can fill several slots, and each slot takes a list of components. Several plugins can fill the same slot, and you cannot control the order.
 
@@ -64,6 +65,22 @@ This is the only way a component can know. The store's `selectedChannelId` is a 
 Props are **ids only**. Anything else about a message or a user is a lookup you can do yourself, and the right place for it is a server [action](./actions), where your plugin has the whole row rather than the slice the client happens to hold.
 
 `TPluginSlotProps` is exported from `@sharkord/plugin-sdk` if you want to name a slot's props type instead of writing it out.
+
+`VOICE_CONTROLS` renders in the voice connection panel, beside the camera and screen share buttons, and only while the user is connected to voice. It gets the `channelId` of that voice channel, which is not necessarily the channel the user is reading:
+
+```tsx
+const SoundboardButton = ({ channelId }: { channelId: number }) => {
+  const onClick = () => callAction("play", { channelId, soundId: 1 });
+
+  return <button onClick={onClick}>Play</button>;
+};
+
+const components: TPluginComponentsMapBySlotId = {
+  [PluginSlot.VOICE_CONTROLS]: [SoundboardButton],
+};
+```
+
+The panel is small, so render an icon button and open anything larger in a popover. Because the slot stays mounted for the whole voice session, it is also the place for a listener that has to outlive the channel the user is reading, such as one [playing sounds for the call](./client-sdk#playing-audio-for-the-call).
 
 <Alert type="info" title="MEMBER_LIST_ITEM renders once per member">
   It is the one slot that scales with the size of your server. Keep it cheap:
