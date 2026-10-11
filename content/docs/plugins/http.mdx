@@ -62,6 +62,41 @@ import { actions } from "@sharkord/plugin-sdk/client";
 const response = await actions.fetchPluginRoute("my-plugin", "/preferences");
 ```
 
+### Uploads
+
+The body is yours to read, so a file arrives as a stream you can write straight to disk:
+
+```ts
+ctx.http.post("/sounds", async (req, res, { userId }) => {
+  const filePath = path.join(ctx.dataPath, `${userId}-${Date.now()}.audio`);
+
+  await pipeline(req, fs.createWriteStream(filePath));
+
+  res.writeHead(201);
+  res.end();
+}, { auth: true });
+```
+
+The host sets no size limit on a plugin route's body, so count the bytes as they arrive and stop a body that is larger than you accept.
+
+From your plugin UI, send the file with `fetchPluginRoute`, which adds the user's token so the handler gets their `userId`:
+
+```ts
+import { actions } from "@sharkord/plugin-sdk/client";
+
+const upload = async (file: File) => {
+  const response = await actions.fetchPluginRoute("my-plugin", "/sounds", {
+    method: "POST",
+    headers: { "Content-Type": file.type },
+    body: file,
+  });
+
+  if (!response.ok) throw new Error(await response.text());
+};
+```
+
+Pass `headers` as a plain object: the token is merged in by spreading it, so a `Headers` instance loses its entries. Send the raw file as the body rather than `FormData`, unless you want to parse multipart yourself, and pass anything else you need, such as the file name, in a header or the query string.
+
 ### URLs
 
 A route registered as `/status` is served at:

@@ -25,13 +25,14 @@ my-plugin/
 
 ### 2. Link the SDK
 
-The SDK is not published to npm yet, so link it from the Sharkord repository:
+The SDK and the UI components are not published to npm yet, so link them from the Sharkord repository:
 
 ```bash
 git clone https://github.com/Sharkord/sharkord.git
 cd sharkord
 bun install
 cd packages/plugin-sdk && bun link
+cd ../ui && bun link
 ```
 
 The build tooling is a separate repository:
@@ -49,6 +50,7 @@ Then, in your plugin:
 cd my-plugin
 bun install
 bun link @sharkord/plugin-sdk
+bun link @sharkord/ui
 bun link @sharkord/plugin-builder
 ```
 

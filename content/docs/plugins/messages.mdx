@@ -74,6 +74,29 @@ const recent = await ctx.messages.list({ channelId: 1, limit: 50 });
 
 `get` and `list` read any message. `list` returns newest first, at most 100 at a time, and takes `channelId`, `limit`, `before` and `parentMessageId`. Pass `parentMessageId` to read a thread, and `before` to page backwards through history.
 
+### Reading Attachments
+
+A message's attachments are in its `files`, and `ctx.files.getPath` turns a file id into the path of the stored file on disk:
+
+```ts
+import fs from "node:fs/promises";
+
+const message = await ctx.messages.get(messageId);
+
+for (const file of message?.files ?? []) {
+  const filePath = await ctx.files.getPath(file.id);
+
+  if (!filePath) continue;
+
+  // read it, stream it, or hand the path to ffmpeg
+  const bytes = await fs.readFile(filePath);
+}
+```
+
+`getPath` returns `undefined` for an id that does not exist. The file belongs to the host: never write to it, and copy it into `dataPath` if you need it after the message is gone, since deleting a message deletes its files. `file.originalName`, `mimeType` and `size` are on the file row already, so check them before reading anything.
+
+It works for any stored file, not only attachments: emojis and avatars have file ids too.
+
 ### Pin and React
 
 ```ts

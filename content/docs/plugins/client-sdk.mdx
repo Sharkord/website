@@ -12,6 +12,7 @@ import {
   createCallAction,
   useCanUseAction,
   useCanUseCommand,
+  usePlaybackDeviceId,
   usePush,
   useStoreSelector,
   useUserData,
@@ -48,6 +49,7 @@ The selector runs against this state:
 | `ownUserId`             | `number \| undefined`               |
 | `selectedChannelId`     | `number \| undefined`               |
 | `currentVoiceChannelId` | `number \| undefined`               |
+| `ownVoiceState`         | `{ micMuted, soundMuted, webcamEnabled, sharingScreen }`, meaningful while `currentVoiceChannelId` is set |
 | `publicSettings`        | the server's public settings        |
 
 <Alert type="info" title="Return a stable reference">
@@ -87,6 +89,7 @@ The server can send your clients anything at any time, without them asking:
 ctx.push.toUser(userId, { kind: "rolled", value: 6 });
 ctx.push.toUsers([1, 2, 3], data);
 ctx.push.toAll(data);
+ctx.push.toVoiceChannel(channelId, data);
 ```
 
 ```tsx
@@ -94,7 +97,56 @@ ctx.push.toAll(data);
 usePush<TPlugin>((data) => setLast(data));
 ```
 
-`toAll` reaches every user currently online. A push cannot exceed 64 KB of JSON, and there is no delivery guarantee: a user who is offline, or who connects a second later, does not get it. Use it for live updates, not for state that has to arrive.
+Pushes are addressed on the server, so a user who is not a recipient never receives one. `toVoiceChannel` reaches everyone connected to that voice channel at that moment, and nobody when it is empty. `toAll` reaches every user currently online. A push cannot exceed 64 KB of JSON, and there is no delivery guarantee: a user who is offline, or who connects a second later, does not get it. Use it for live updates, not for state that has to arrive.
+
+### Playing Audio for the Call
+
+Short sounds every listener should hear, such as a soundboard, are simpler to play in each browser than to stream through [voice](./voice). The server pushes what to play to the channel, and each client plays it:
+
+```ts
+// server: an action the button calls
+ctx.actions.register({
+  name: "play",
+  async executes(invoker, { channelId, soundId }) {
+    const { users } = ctx.voice.getState(channelId);
+
+    if (!users.some((user) => user.userId === invoker.userId)) {
+      throw new Error("Join the voice channel first.");
+    }
+
+    ctx.push.toVoiceChannel(channelId, { soundId });
+  },
+});
+```
+
+```tsx
+// client: rendered in the voice panel for the whole voice session
+const Soundboard = ({ channelId }: { channelId: number }) => {
+  const deafened = useStoreSelector((state) => state.ownVoiceState.soundMuted);
+  const sinkId = usePlaybackDeviceId();
+
+  usePush<TPlugin>(async ({ soundId }) => {
+    if (deafened) return;
+
+    const response = await actions.fetchPluginRoute("soundboard", `/sounds/${soundId}`);
+    const audio = new Audio(URL.createObjectURL(await response.blob()));
+
+    if (sinkId) await audio.setSinkId(sinkId).catch(() => {});
+
+    await audio.play();
+  });
+
+  return <SoundboardButton channelId={channelId} />;
+};
+
+const components: TPluginComponentsMapBySlotId = {
+  [PluginSlot.VOICE_CONTROLS]: [Soundboard],
+};
+```
+
+`VOICE_CONTROLS` is what keeps the listener alive: it is mounted from the moment the user joins voice until they leave, whatever channel they are reading. Leave it unrestricted, or a role you restricted stops hearing as well as playing; use `useCanUseAction` to disable the button instead. Like every slot, it only renders for users holding `USE_PLUGINS`.
+
+`soundMuted` is deafen. Respect it, since nothing else silences audio your plugin plays itself. `usePlaybackDeviceId` is the output the user picked in their device settings, or `undefined` for the system default; the device can have been unplugged since, so catch a failing `setSinkId`. A volume slider for your sounds is yours to add, with `audio.volume` and `useUserData` to remember it.
 
 ### Per-User Storage
 
@@ -158,6 +210,15 @@ const response = await actions.fetchPluginRoute("my-plugin", "/preferences");
 ```
 
 `fetchPluginRoute` attaches the user's token, so it is how you call your own [authenticated HTTP routes](./http) without handling tokens yourself. These run as the current user, with that user's permissions.
+
+Its third argument is a normal `fetch` init, so `method`, `headers` and `body` work as they do with `fetch`. That makes it the way to [upload a file](./http#uploads) to your plugin:
+
+```ts
+await actions.fetchPluginRoute("my-plugin", "/sounds", {
+  method: "POST",
+  body: file,
+});
+```
 
 ### Host Globals
 
