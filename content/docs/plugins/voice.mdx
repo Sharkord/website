@@ -18,6 +18,7 @@ This assumes you know mediasoup. If you do not, read its documentation first; no
 | `ctx.voice.getProducers(channelId)` | Every live producer in the channel                   |
 | `ctx.voice.createStream(options)`   | A handle to the stream you created                   |
 | `ctx.voice.consume(options)`        | A handle to a user's media, as RTP packets           |
+| `ctx.voice.react(channelId, userId, emoji)` | Floats an emoji on a user's card             |
 
 Everything but `getListenInfo` **throws** if the channel has no voice runtime. A runtime exists only while someone is in the channel, so wait for the [`voice:runtime_initialized` event](./events) rather than assuming one is there.
 
@@ -176,6 +177,16 @@ The handle carries `producerId`, the `rtpParameters` describing what the packets
   when a consumer starts and stops, which is what an admin can find later. If
   you ship this, say so.
 </Alert>
+
+### Reactions
+
+`ctx.voice.react` floats an emoji on a user's card, the same animation as a reaction they sent themselves:
+
+```ts
+await ctx.voice.react(channelId, userId, "🔊");
+```
+
+It takes a unicode emoji, a shortcode or the name of a custom emoji, and throws when the user is not in the channel or the emoji is unknown. Nothing marks it as coming from a plugin: to everyone watching, that user reacted. For anything with text, such as the name of the sound playing, use the [`VOICE_USER_CARD` slot](./components#slot-props) instead.
 
 ### Cleaning Up
 

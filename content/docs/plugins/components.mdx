@@ -22,6 +22,8 @@ Plugins can render React components into fixed slots of the interface, and add t
 | `FULL_SCREEN`      | none                         | A full-screen view, with a button added to the left sidebar to open it |
 | `USER_SETTINGS`    | none                         | The plugin's own entry in **user** settings, next to Profile and Notifications |
 | `VOICE_CONTROLS`   | `{ channelId }`              | The voice connection panel, beside the camera and screen buttons. Only while connected |
+| `VOICE_USER_CARD`  | `{ channelId, userId }`      | The top left corner of each user's card in the voice grid              |
+| `VOICE_USER_ROW`   | `{ channelId, userId }`      | Each user row under a voice channel in the sidebar, after the name     |
 
 A plugin can fill several slots, and each slot takes a list of components. Several plugins can fill the same slot, and you cannot control the order.
 
@@ -81,6 +83,26 @@ const components: TPluginComponentsMapBySlotId = {
 ```
 
 The panel is small, so render an icon button and open anything larger in a popover. Because the slot stays mounted for the whole voice session, it is also the place for a listener that has to outlive the channel the user is reading, such as one [playing sounds for the call](./client-sdk#playing-audio-for-the-call).
+
+`VOICE_USER_CARD` and `VOICE_USER_ROW` are for status about one person in a call: what they are playing, that they are being recorded, that they are streaming somewhere. Render a small badge, or nothing when there is nothing to say:
+
+```tsx
+const PlayingBadge = ({ userId }: { channelId: number; userId: number }) => {
+  const [playing, setPlaying] = useState<string>();
+
+  usePush<TPlugin>((data) => {
+    if (data.userId !== userId) return;
+
+    setPlaying(data.name);
+  });
+
+  if (!playing) return null;
+
+  return <span className="rounded bg-black/60 px-1.5 text-xs text-white">🔊 {playing}</span>;
+};
+```
+
+The card keeps its top right corner for the host's controls and its bottom left for the name, so stay small. The row renders for every user in every voice channel in the sidebar: like `MEMBER_LIST_ITEM`, keep it cheap.
 
 <Alert type="info" title="MEMBER_LIST_ITEM renders once per member">
   It is the one slot that scales with the size of your server. Keep it cheap:
