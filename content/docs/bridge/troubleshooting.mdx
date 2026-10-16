@@ -1,0 +1,67 @@
+---
+title: Troubleshooting
+description: When the status will not connect, a key does nothing, or the microphone does the wrong thing.
+icon: Bug
+---
+
+<Accordion>
+  <AccordionItem title="The status says 'Not running' or 'Not found, stopped trying'">
+    Sharkord tries to reach the Bridge up to 10 times and then stops, which is when the status changes to **Not found, stopped trying**. Once the Bridge is running, press **Try to connect** in User Settings → Hotkeys to ask again.
+
+    If it still does not connect, check, in this order:
+
+    - The Bridge is running. Look for its icon in the system tray, or run it from a terminal.
+    - **Enable hotkeys** is on and saved. While it is off, Sharkord never tries to connect.
+    - The pairing token is pasted exactly as the Bridge shows it, then saved. Open the Bridge window and use **Copy** to avoid typos.
+    - Nothing else is using port `47821` on your machine. A second Bridge refuses to start and says so.
+    - Your browser lets an `https` page open a connection to your own machine. Chromium and Firefox do. Safari may block it, and some Chromium versions ask for permission to access devices on your local network once.
+
+    The reason Sharkord could not connect is logged to the browser console with a **[BRIDGE]** prefix, and also appears in the voice diagnostics dialog, opened with **F9**.
+
+  </AccordionItem>
+  <AccordionItem title="It says Connected, but my key does nothing">
+    Run the Bridge with more logging, press the key, and see how far it got:
+
+    ```bash
+    SHARKORD_BRIDGE_LOG=debug ./sharkord-bridge
+    ```
+
+    - **No line when you press the key.** The key never reached the Bridge. On Wayland, look for a line like "the desktop bound ... to ...". If it says no key is assigned, set one in your desktop's shortcut settings. Otherwise try another key, since your desktop or another app may already use this one.
+    - **A "down" line in the Bridge, but nothing in the browser.** The key reached the Bridge but not the page. Check that the browser console shows `[BRIDGE]` lines, and that the server in the Bridge window is the one you expect.
+    - **A "hotkey" line in the browser, but nothing happens.** The action received the key and chose to ignore it. The next line says why, for example that push to talk is on and a toggle would fight it.
+
+  </AccordionItem>
+  <AccordionItem title="Hotkeys work in the browser but not in my game">
+    On Windows and X11 the Bridge needs permission to see input system wide, and some games run as administrator, which hides input from normal programs. Run the Bridge with the same privileges as the game.
+
+    On Wayland, games that run natively rather than through XWayland are covered by the desktop portal. See [Platforms](./platforms#wayland).
+
+  </AccordionItem>
+  <AccordionItem title="My key also does something in the app in front">
+    On Windows and X11 the Bridge only listens, so the key is still delivered to the focused app. Bind a combination nothing else uses, such as `Ctrl+Alt+M`, an F-key, or a numpad key.
+  </AccordionItem>
+  <AccordionItem title="A key is refused when I bind it">
+    The browser or the operating system keeps that combination, and a web page cannot reliably take it, so Sharkord refuses it. See the list under [Setup](./setup#keys-that-are-refused).
+  </AccordionItem>
+  <AccordionItem title="Push to talk is greyed out">
+    It needs hotkeys enabled, and a Bridge that reports key releases. Enable hotkeys and wait for **Connected**. If the status is connected and the option is still disabled, the connected Bridge cannot report releases and the message under the option says so.
+  </AccordionItem>
+  <AccordionItem title="The microphone stays muted">
+    You are probably in push to talk mode with the Bridge disconnected. Switch **Microphone mode** back to **Open microphone** under **User Settings → Devices**. If the Bridge drops while you hold the key, Sharkord releases the microphone on its own.
+  </AccordionItem>
+  <AccordionItem title="The tray icon does not appear">
+    Your desktop may not show tray icons. GNOME needs an extension for them. The Bridge still works without one, and you can read the token from its token file. See [Setup](./setup#1-run-the-bridge).
+  </AccordionItem>
+  <AccordionItem title="Where is the Bridge log?">
+    In the same folder as the token, as `bridge.log`, replaced every time the Bridge starts. It also prints to the terminal when run from one.
+
+    Set `SHARKORD_BRIDGE_LOG` to `error`, `warn`, `info` (default), `debug`, or `trace`.
+
+    - `info` shows connections, the binds each server sent, and every hotkey delivered.
+    - `debug` adds what the Bridge asked the Wayland portal for, and each press the portal reported.
+    - `trace` logs every key the listener sees, so only use it to debug and delete the file after.
+
+    The pairing token is never written to the log, so the file is safe to share.
+
+  </AccordionItem>
+</Accordion>

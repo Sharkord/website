@@ -1,0 +1,110 @@
+---
+title: Setup
+description: Run the Bridge, pair it with Sharkord, and bind keys for muting, deafening, and push to talk.
+icon: Settings
+---
+
+Setting up hotkeys takes three steps: run the Bridge, pair it, then choose your keys.
+
+## 1. Run the Bridge
+
+Download the latest Bridge for Windows or Linux from [GitHub Releases](https://github.com/Sharkord/bridge/releases/latest). It is a single executable that you can keep anywhere. If you would rather compile it yourself, see [Build From Source](./build-from-source).
+
+Start it. It appears as an icon in your system tray and nothing else. On first run it creates a **pairing token** and stores it in your config directory:
+
+| System | Token file |
+| --- | --- |
+| Linux | `~/.config/sharkord-bridge/token` |
+| Windows | `%APPDATA%\sharkord-bridge\token` |
+
+Left click the tray icon to open the Bridge window. It shows your token with a **Copy** button, and the Sharkord servers currently connected. The tray menu also has **Open**, **Copy pairing token**, and **Quit**.
+
+<Alert type="info" title="No tray icon?">
+  Some desktops, GNOME without an extension for example, do not show tray icons.
+  The Bridge still runs. Read the token from the file above, or start it from a
+  terminal where it prints the token.
+</Alert>
+
+### Start With Your Computer
+
+Tick **Run on system startup** at the bottom of the Bridge window and it starts, as a tray icon, every time you log in. Untick it to stop. It needs no administrator rights.
+
+| System | What it changes |
+| --- | --- |
+| Linux | Adds `~/.config/autostart/dev.sharkord.Bridge.desktop`. |
+| Windows | Adds a `SharkordBridge` value under `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run`. |
+
+Both entries point at the executable you ran, so if you move or replace it, open the window and tick the box again. The box shows as unticked when the entry points somewhere else.
+
+## 2. Pair It With Sharkord
+
+1. In Sharkord, open **User Settings → Hotkeys**.
+2. Turn on **Enable hotkeys**.
+3. Paste the pairing token into **Pairing token**.
+4. Click **Save Changes**.
+
+The status next to the token changes from **Not running** to **Connected** within a few seconds. Hotkeys are off by default, and while they are off Sharkord never tries to reach the Bridge.
+
+If the Bridge is not running, Sharkord tries up to 10 times over about a minute and then stops, so a Bridge you never installed is not asked for forever. The status then reads **Not found, stopped trying**. Start the Bridge and press **Try to connect** to ask again. Saving the page tries again too, which is what you want after pasting a new token.
+
+The token is stored in your browser. You paste it once per browser, and it works for every Sharkord server you use from that browser.
+
+## 3. Bind Your Keys
+
+With hotkeys enabled, the Hotkeys page lists the actions you can bind. Click an action, press the keys you want, then **Save Changes**.
+
+| Action | What it does |
+| --- | --- |
+| Toggle microphone | Mutes and unmutes your microphone. |
+| Toggle deafen | Silences incoming audio, and mutes your microphone with it. |
+| Push to talk | Holds your microphone open while the key is down. Only listed when [mic mode](#push-to-talk) is set to push to talk. |
+
+Plugins can add their own actions, listed in a group named after the plugin, for example a soundboard with one key per sound.
+
+You can bind any keyboard key, with or without modifiers (`Ctrl+Alt+M`). Press **Escape** to cancel while recording, and use the **×** button to clear a bind.
+
+<Alert type="tip" title="Pick keys nothing else uses">
+  On Windows and X11, a bound key still reaches the window in front, so pressing
+  `Ctrl+L` would also focus your browser's address bar. Combinations like
+  `Ctrl+Alt+M`, the F-keys, or the numpad avoid that. On
+  Wayland the desktop keeps the key for itself. See [Platforms](./platforms).
+</Alert>
+
+### Keys That Are Refused
+
+Some combinations belong to the browser or the operating system, and a web page cannot reliably take them. Sharkord refuses these and tells you why:
+
+- Anything with the **Meta** key (Windows or Super).
+- Browser window and tab keys such as `Ctrl+W`, `Ctrl+T`, `Ctrl+N`, `Ctrl+Tab`, and `Alt+F4`.
+- `Alt+Tab`, `Ctrl+Alt+Delete`, and similar system combinations.
+
+A key can only be bound to one action. If another action already uses it, Sharkord names that action and keeps your bind unchanged.
+
+## Push to Talk
+
+Push to talk keeps your microphone muted until you hold a key.
+
+1. Make sure hotkeys are enabled and the Bridge is connected.
+2. Open **User Settings → Devices**.
+3. Set **Microphone mode** to **Push to talk**.
+4. Bind a key under it, and save.
+
+In push to talk mode your microphone is muted whenever you are in a call, and unmutes only while the key is held. **Toggle microphone** does nothing while it is on, so the two cannot fight over the mic. If the Bridge disconnects while you are holding the key, Sharkord releases it so the microphone cannot stay open.
+
+Push to talk needs the Bridge to report when a key is **released**. The Bridge on Windows and X11 does. If the connected Bridge cannot, the option is disabled and says why.
+
+Turning hotkeys off sets the microphone mode back to **Open microphone**, so you are never left muted with no way to unmute.
+
+## Binding From the Devices Page
+
+**User Settings → Devices** also shows the key for your current microphone mode, and one for toggling deafen next to your output device. They are the same binds as on the Hotkeys page. Unlike the Hotkeys page, changes made there apply immediately and are not held until **Save Changes**.
+
+## Several Servers and Several Tabs
+
+- A key bound to the same action on two servers fires on **both**, so one press mutes you everywhere.
+- If you open the same server in two browser tabs, the newest tab takes over the Bridge and the older one stops receiving keys, rather than both reacting.
+- Keys are saved per browser, not per server and not on the server. A new browser or profile starts with no binds.
+
+## Turning It Off
+
+Switch off **Enable hotkeys** and save. Sharkord stops contacting the Bridge. You can leave the Bridge running, or quit it from the tray.

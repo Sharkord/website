@@ -36,8 +36,12 @@ Plugin SDK version **2**. Everything here is experimental and can change between
 | `usePush`                                  | Receives what `ctx.push` sent                     |
 | `usePlaybackDeviceId`                      | The user's chosen audio output, for `setSinkId`   |
 | `useUserData`                              | Per-user storage for the signed-in user           |
+| `useHotkey`                                | Registers an action the user can bind a [hotkey](./client-sdk#hotkeys) to |
+| `useHotkeyBinding`                         | The key bound to one of your actions, and the props for `HotkeyInput` from `@sharkord/ui` |
 | `actions`                                  | Sharkord's own client actions                     |
 | `TPluginComponentsMapBySlotId`, `TPluginTabs`, `TPluginStoreState` | The types your client entry exports and reads |
+| `TPluginHotkeyAction`, `TPluginHotkeyBinding`, `TPluginHotkeyPhase` | The [hotkey](./client-sdk#hotkeys) types |
+| `TPluginMessageComponentsMap`, `TPluginMessageComponentProps` | The type of a `messageComponents` export, and what each [message component](./components#message-components) receives |
 
 ### Plugin Lifecycle
 
@@ -49,7 +53,7 @@ export const onUpgrade = async (ctx: UpgradePluginContext, info: TUpgradeInfo) =
 
 `onLoad` is required. `onUnload` is optional today and warns when missing, and will be required in a future SDK version. `onUpgrade` runs before `onLoad`, only when the installed version differs from the last one that ran.
 
-The unload context is a subset: `path`, `dataPath`, `logger`, `voice`, `messages`, `ui`, and the deprecated log aliases. Registration namespaces are absent, because unregistering is automatic. The upgrade context is smaller still: `pluginId`, `path`, `dataPath` and `logger`.
+The unload context is a subset: `path`, `dataPath`, `logger`, `voice`, `messages`, `storage`, `ui`, and the deprecated log aliases. Registration namespaces are absent, because unregistering is automatic. The upgrade context is smaller still: `pluginId`, `path`, `dataPath` and `logger`.
 
 ### `PluginContext`
 
@@ -61,21 +65,24 @@ The unload context is a subset: `path`, `dataPath`, `logger`, `voice`, `messages
 | `logger.log / debug / error`                                  | Writes to the plugin log shown in the interface   |
 | `log / debug / error`                                         | Deprecated aliases of the above                   |
 | `events.on / off`                                             | `on` returns an unsubscribe. [Events](./events)   |
-| `commands.register(command)`                                  | [Commands](./commands)                            |
+| `commands.register(command)`                                  | `ephemeral` answers the invoker alone. [Commands](./commands) |
 | `actions.register(action)`                                    | [Actions](./actions)                              |
 | `settings.register(definitions)`                              | Async, returns `{ get, set }`. [Settings](./settings) |
-| `messages.send / edit / delete / get / list / pin / unpin / react / unreact` | Async. [Messages](./messages). `send` and `edit` take `previews` |
+| `messages.send / edit / setComponents / delete / get / list / pin / unpin / react / unreact` | Async. [Messages](./messages). `send` takes `components`, `send` and `edit` take `previews` |
 | `users.list / get / ban / unban / kick`                       | Async. [Data](./data)                             |
-| `roles.list / get / assign / remove`                          | Async. [Data](./data)                             |
+| `roles.list / get / create / update / assign / remove`        | Async. [Data](./data)                             |
 | `permissions.userCan / userCanInChannel`                      | Async. [Data](./data)                             |
-| `channels.list / get / create / update / delete`              | Async. [Data](./data)                             |
+| `channels.list / get / create / update / delete / reorder`    | Async. [Data](./data)                             |
+| `invites.create`                                              | Async. [Data](./data#invites)                     |
+| `emojis.create / delete`                                      | Async. [Data](./data#emojis)                      |
 | `categories.list / get / create / update / delete`            | Async. [Data](./data)                             |
 | `files.getPath(fileId)`                                       | Async. Where a stored file is on disk. [Messages](./messages#reading-attachments) |
+| `storage.get / set / delete / list`                           | Async, server-wide key value. [Data](./data#storage) |
 | `userData.get / set / delete`                                 | Async, per user. [Data](./data)                   |
 | `push.toUser / toUsers / toAll / toVoiceChannel`              | Server to client. [Client SDK](./client-sdk)      |
-| `hooks.onBeforeMessageSave / onBeforeFileSave / onBeforeChannelCreate / onBeforeVoiceJoin / onBeforeLogin` | [Hooks](./hooks) |
+| `hooks.onBeforeMessageSave / onBeforeFileSave / onBeforeChannelCreate / onBeforeChannelDelete / onBeforeReaction / onBeforeProfileUpdate / onBeforeVoiceJoin / onBeforeLogin` | [Hooks](./hooks) |
 | `http.register / get / post / patch / delete / options`       | [HTTP routes](./http)                             |
-| `voice.getRouter / getListenInfo / getState / getProducers / createStream / consume / react` | [Voice](./voice)            |
+| `voice.getRouter / getListenInfo / getState / getProducers / createStream / consume / react / move / disconnect / setServerMute` | [Voice](./voice) |
 | `ui.enable(requirements?) / disable()`                        | Whether your [components](./components) are rendered |
 
 ### Limits and Defaults
@@ -93,6 +100,12 @@ The unload context is a subset: `path`, `dataPath`, `logger`, `voice`, `messages
 | HTTP routes per plugin                   | 100                                      |
 | Push payload                             | 64 KB of JSON                            |
 | Per-user data                            | 64 KB of JSON                            |
+| Storage value                            | 64 KB of JSON                            |
+| Message components                       | 5 per message, 16 KB of props in all     |
+| Channels per `channels.reorder`          | 500                                      |
+| Storage key                              | 256 characters                           |
+| Entries returned by `storage.list`       | 100 by default, 1000 at most             |
+| Roles on a server                        | 100                                      |
 | Hook reject reason                       | 200 characters                           |
 | Capability types an admin can restrict   | commands, actions, components, HTTP routes |
 | Messages returned by `messages.list`     | 100                                      |

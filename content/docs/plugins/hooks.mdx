@@ -6,13 +6,16 @@ icon: Save
 
 Events tell you what already happened. Hooks run **before** the server writes, and can change or refuse it. This is where moderation, filtering, scanning, naming conventions, allowlists and gates belong.
 
-There are five:
+There are eight:
 
 | Hook                    | Runs before                                                    | Can change      |
 | ----------------------- | -------------------------------------------------------------- | --------------- |
 | `onBeforeMessageSave`   | A message is stored, on both sends and edits                    | `content`       |
 | `onBeforeFileSave`      | Any file is stored: attachments, avatars, banners, emojis, logo | `bytes`, `originalName` |
 | `onBeforeChannelCreate` | A channel is created, by a person or a plugin                   | `name`          |
+| `onBeforeChannelDelete` | A channel is deleted, by a person or a plugin                   | nothing: a gate |
+| `onBeforeReaction`      | A user adds a reaction to a message                             | nothing: a gate |
+| `onBeforeProfileUpdate` | A user saves their name or bio                                  | `name`, `bio`   |
 | `onBeforeVoiceJoin`     | Someone joins a voice channel                                   | nothing: a gate |
 | `onBeforeLogin`         | A login is accepted, after the password is checked              | nothing: a gate |
 
@@ -109,6 +112,44 @@ ctx.hooks.onBeforeChannelCreate(async ({ name, type, categoryId, userId }) => {
 ```
 
 `userId` is absent when a plugin is creating the channel, including your own. A replacement name that is blank is refused.
+
+Deleting is a gate, for channels that must never go away:
+
+```ts
+ctx.hooks.onBeforeChannelDelete(async ({ channelId, name, type, userId }) => {
+  if (channelId === settings.get("logChannel")) {
+    return { reject: "The log channel cannot be deleted." };
+  }
+});
+```
+
+It runs after the channel is known to exist and before anything is removed, so a refusal leaves the channel, its messages and its voice runtime untouched. `userId` is absent when a plugin is deleting it, and a plugin's own `ctx.channels.delete` is gated too.
+
+### Reactions
+
+```ts
+ctx.hooks.onBeforeReaction(async ({ messageId, channelId, userId, emoji }) => {
+  if (channelId === ANNOUNCEMENTS_ID) {
+    return { reject: "Reactions are off in announcements." };
+  }
+});
+```
+
+A gate on **adding** a reaction. `emoji` is a unicode emoji or a custom emoji name, as the user sent it, so an allowlist has to account for both. Removing a reaction is never gated, so a user can always take back one they already placed, and reactions a plugin adds with [`ctx.messages.react`](./messages) do not run this hook.
+
+### Profiles
+
+```ts
+ctx.hooks.onBeforeProfileUpdate(async ({ userId, name, bio }) => {
+  if (/admin|moderator/i.test(name)) {
+    return { reject: "That name is reserved." };
+  }
+
+  return { update: { name: name.replace(/\s+/g, " ") } };
+});
+```
+
+Runs when a user saves their profile. `bio` is `undefined` when they left it empty. A replacement is validated like the user's own input: trimmed, at most 24 characters for a name and 160 for a bio, so a name that ends up blank or too long is refused with an error naming your plugin. Avatars and banners are files, and go through `onBeforeFileSave` with `FileSaveType.AVATAR` or `BANNER`.
 
 ### Voice and Login
 

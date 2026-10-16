@@ -59,10 +59,39 @@ const onLoad = async (ctx: PluginContext) => {
 | `boolean` | Toggle            |                                                           |
 | `secret`  | Password field    | Write-only: never sent back to the client                 |
 | `enum`    | Select            | Requires `options: [{ value, label }]`                    |
+| `channel` | Channel picker    | Stores the channel id. `0` means none picked              |
+| `role`    | Role picker       | Stores the role id. `0` means none picked                 |
 
 A definition takes `key`, `name`, `type`, `defaultValue`, an optional `description`, and `options` for an enum. `key` is how you read the value back and how it is stored, so keep it stable across versions.
 
 `secret` is the type for API keys and tokens. An admin can replace one but not read it back, and the value never leaves the server. Your plugin reads it normally with `get`.
+
+### Channels and Roles
+
+A log channel, a welcome channel, a moderator role: most plugins need to point at something on the server, and an id typed into a `number` field is an id nobody can find. `channel` and `role` render a dropdown of the server's channels or roles instead, and store the id of the one picked.
+
+```ts
+const settings = await ctx.settings.register([
+  { key: "logChannel", name: "Log channel", type: "channel", defaultValue: 0 },
+  { key: "modRole", name: "Moderator role", type: "role", defaultValue: 0 },
+] as const);
+
+ctx.events.on("user:banned", async ({ userId, reason }) => {
+  const channelId = settings.get("logChannel"); // number
+
+  if (channelId === 0) return;
+
+  const channel = await ctx.channels.get(channelId);
+
+  if (!channel) return;
+
+  await ctx.messages.send(channelId, `<p>User ${userId} was banned: ${reason}</p>`);
+});
+```
+
+Use `0` as the default: it means nothing has been picked yet, and is always accepted. When an admin saves, the server checks the channel or role exists and refuses one that does not, and a direct message channel is never offered or accepted.
+
+That check only happens on save. A channel or role deleted afterwards leaves its old id in the setting, so look it up with `ctx.channels.get` or `ctx.roles.get` before using it, as above, or watch `channel:deleted` and `role:deleted`.
 
 ### Reading and Writing
 
@@ -91,6 +120,6 @@ The event is scoped to your own plugin, so you never see another plugin's settin
 
 ### Notes
 
-- Values written from the interface are validated against your definition: a `number` setting cannot be set to a string, and an `enum` cannot be set to a value outside its `options`.
+- Values written from the interface are validated against your definition: a `number` setting cannot be set to a string, an `enum` cannot be set to a value outside its `options`, and a `channel` or `role` setting cannot be set to an id that does not exist.
 - Settings are cleared from memory when the plugin unloads and reloaded from the database on the next `register`. The stored values are not deleted when a plugin is disabled, only when it is removed.
 - Anything an admin can read in the interface is not a secret from admins. `secret` settings are hidden from the form, but a plugin running in the server process can do whatever it likes with them. See [Security](./security).

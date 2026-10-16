@@ -4,7 +4,7 @@ description: Find plugins, and publish your own.
 icon: Store
 ---
 
-The marketplace is a registry of plugins, browsable from inside Sharkord. It is a single JSON file in a public repository: [github.com/Sharkord/plugins](https://github.com/Sharkord/plugins).
+The marketplace is a registry of plugins, browsable from inside Sharkord. It is a public repository: [github.com/Sharkord/plugins](https://github.com/Sharkord/plugins).
 
 ### For Users
 
@@ -17,58 +17,22 @@ Open the server settings, browse the marketplace, and install with one click. Sh
 
 ### For Developers
 
-Publishing is a pull request against the registry repository, adding an entry that points at a GitHub release of your plugin.
+Publishing is a pull request against the registry repository. The plugin scaffold has a GitHub Actions workflow that does it all: it builds the plugin, creates a GitHub release, and opens the PR with the version file (checksum and download URL included).
 
-Each entry carries the plugin's metadata (id, name, description, author, logo, optional homepage, tags, categories, screenshots) and a list of versions. Each version has a `version`, an HTTPS `downloadUrl`, a `checksum`, the `sdkVersion` it targets, its `size`, and a `timestamp`.
+The registry holds a `plugin.json` per plugin (id, name, description, author, logo, optional homepage, tags, categories, screenshots) and a `versions/<version>.json` per release (`version`, HTTPS `downloadUrl`, `checksum`, `sdkVersion`, `size`, `timestamp`). On a first publish the workflow generates `plugin.json` from your `manifest.json`, so fill in `screenshots`, `tags` and `categories` there first.
 
-#### Step 1: Create a GitHub Token
+#### One-Time Setup
 
-The publish script needs a Personal Access Token with the `repo` scope, so it can create a release in your plugin's repository.
+Create a [personal access token](https://github.com/settings/tokens) (classic, `public_repo` scope) on the account that should author the PR, and add it to your plugin's repository as an Actions secret named `MARKETPLACE_TOKEN`. The built-in token cannot open pull requests on other repositories.
 
-1. GitHub → **Settings** → **Developer settings**.
-2. **Personal access tokens** → **Generate new token**.
-3. Select the `repo` scope and generate it.
+#### Publish
 
-Copy `.env.example` to `.env` in your plugin and add it:
+1. Bump `version` in `package.json` and push.
+2. In your repository, open **Actions → publish → Run workflow**.
 
-```
-GITHUB_TOKEN=your_token_here
-```
+That is all. Once the PR is merged, your plugin shows up in every server's marketplace.
 
-#### Step 2: Point It at Your Repository
-
-`publish.ts` in the scaffold names the repository the release goes to:
-
-```ts
-import { publish } from "@sharkord/plugin-builder";
-import { PLUGIN_SDK_VERSION } from "@sharkord/plugin-sdk";
-
-const result = await publish({
-  githubToken: process.env.GITHUB_TOKEN,
-  repo: "owner/repo",
-  sdkVersion: PLUGIN_SDK_VERSION,
-});
-
-console.log("Plugin published successfully", result.releaseUrl);
-```
-
-Leave `repo` out and it is read from your git remote.
-
-#### Step 3: Publish
-
-```bash
-bun run publish
-```
-
-The script builds the plugin, syncs `manifest.json` with your `package.json` version and the SDK version, creates a GitHub release tagged `v<version>`, and uploads two assets: the plugin archive, and a `<version>.json` file holding the metadata the registry needs, checksum and download URL included.
-
-This assumes a public GitHub repository. Hosting the release elsewhere means assembling that metadata by hand.
-
-#### Step 4: Open a PR
-
-Add your generated version file to [github.com/Sharkord/plugins](https://github.com/Sharkord/plugins), following the layout of the existing entries. Once it is merged, your plugin shows up in every server's marketplace.
-
-Publishing a new version is the same flow again: bump the version in `package.json`, run the script, open a PR with the new version file.
+This assumes a public GitHub repository. Hosting the release elsewhere means assembling the version file by hand.
 
 <Alert type="info" title="sdkVersion pins compatibility">
   Servers only offer a version whose `sdkVersion` matches their own, so publish

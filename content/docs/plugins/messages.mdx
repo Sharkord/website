@@ -32,6 +32,7 @@ send(
     replyToMessageId?: number;
     files?: { name: string; data: Uint8Array }[];
     previews?: boolean;
+    components?: { name: string; props?: Record<string, unknown> }[];
   }
 ): Promise<{ messageId: number }>
 ```
@@ -41,6 +42,7 @@ send(
 - Both must point at a message in the same channel.
 - `files` attaches uploads, capped by the server's per-message file limit. A message carrying files may have empty content.
 - `previews` controls whether the host looks up the links in the message. On by default.
+- `components` renders components from your client bundle after the text. See [Message Components](#message-components).
 
 ### Link Previews
 
@@ -57,6 +59,35 @@ An edit looks the links up again, so pass it there too or a message sent without
 ```ts
 await ctx.messages.edit(messageId, content, { previews: false });
 ```
+
+### Message Components
+
+A poll, a button row, a scoreboard: some messages are more than text. Attach components from your client bundle and they render after the message's text, for everyone reading it:
+
+```ts
+const { messageId } = await ctx.messages.send(channelId, "<p>Pizza tonight?</p>", {
+  components: [{ name: "poll", props: { options: ["Yes", "No"], votes: { Yes: 0, No: 0 } } }],
+});
+```
+
+Each entry is a `name` from your bundle's `messageComponents` export and the `props` it receives. See [Components](./components#message-components) for the browser half.
+
+Update them with `setComponents`, which replaces the whole list and, unlike `edit`, does not mark the message as edited. That makes it the call for a poll's counts:
+
+```ts
+await ctx.messages.setComponents(messageId, [
+  { name: "poll", props: { options: ["Yes", "No"], votes: { Yes: 3, No: 1 } } },
+]);
+
+await ctx.messages.setComponents(messageId, null); // removes them
+```
+
+Every client showing the message re-renders it straight away. `edit` changes the text and leaves the components alone.
+
+- At most 5 components per message and 16 KB of props in all. They travel with every message in every page a client loads, so keep the props to what the component needs and put the rest in [storage](./data#storage).
+- Every client that can read the message receives the props. They are not a place for secrets, such as who voted for what in an anonymous poll.
+- Only your own messages can carry them, and only your own bundle renders them.
+- Always write meaningful text. It is what search, notifications and replies show, and all a reader sees when your plugin is disabled or they lack `USE_PLUGINS`.
 
 ### Edit, Delete and Read
 

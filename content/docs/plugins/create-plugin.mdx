@@ -17,42 +17,15 @@ my-plugin/
   manifest.json       the plugin's identity, and the SDK version it targets
   build.ts            builds the bundle, and installs it if you point it at a server
   publish.ts          cuts a GitHub release for the marketplace
+  .github/workflows/  one-click publish to the marketplace
+  scripts/setup.ts    clones and links the Sharkord repos into .repos/
   src/types.ts        the contract both halves share
   src/server/index.ts runs in the Sharkord server process
   src/client/index.ts declares which components render where
   src/client/home.tsx a component
 ```
 
-### 2. Link the SDK
-
-The SDK and the UI components are not published to npm yet, so link them from the Sharkord repository:
-
-```bash
-git clone https://github.com/Sharkord/sharkord.git
-cd sharkord
-bun install
-cd packages/plugin-sdk && bun link
-cd ../ui && bun link
-```
-
-The build tooling is a separate repository:
-
-```bash
-git clone https://github.com/Sharkord/plugin-builder.git
-cd plugin-builder
-bun install
-bun link
-```
-
-Then, in your plugin:
-
-```bash
-cd my-plugin
-bun install
-bun link @sharkord/plugin-sdk
-bun link @sharkord/ui
-bun link @sharkord/plugin-builder
-```
+The SDK, UI components and builder are not on npm yet. Run `bun run setup` once: it clones Sharkord and the plugin builder into `.repos/`, installs them, and links them into your plugin. Run it again any time to pull their latest versions.
 
 ### 3. Fill In the Manifest
 
@@ -64,6 +37,9 @@ bun link @sharkord/plugin-builder
   "description": "Does something useful.",
   "homepage": "https://example.com",
   "logo": "https://placehold.co/100x100/white/black",
+  "screenshots": [],
+  "tags": [],
+  "categories": [],
   "sdkVersion": 2,
   "version": "0.0.1"
 }
@@ -73,6 +49,7 @@ bun link @sharkord/plugin-builder
 - `sdkVersion`: the SDK version the plugin targets. It must equal the server's, or the plugin refuses to load. `bun run build` writes the right one in for you.
 - `version`: semver, `1.2.3` or `1.2.3-beta.1`. The build takes it from `package.json`.
 - `homepage` and `logo` are optional; both must be `http` or `https` URLs when present.
+- `screenshots`, `tags` and `categories` are only used for the marketplace listing.
 
 ### 4. Declare the Contract
 

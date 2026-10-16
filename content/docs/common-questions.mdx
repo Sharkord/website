@@ -40,6 +40,12 @@ icon: Info
   </AccordionItem>
   <AccordionItem title="Is there a desktop or mobile app?">
     Not yet. Sharkord runs in the browser, including mobile browsers. Native clients are a possibility for the future.
+
+    The one thing a browser cannot do is react to keys while it is not in front, so there is an optional small app for that, the [Bridge](/docs/bridge/overview).
+
+  </AccordionItem>
+  <AccordionItem title="Can I mute my microphone with a hotkey while I'm in a game?">
+    Yes, with the optional [Bridge](/docs/bridge/overview). A web page only receives key presses while its tab is in front, so Sharkord cannot hear your keyboard on its own once a game has focus. The Bridge runs on your computer, watches for the keys you chose, and tells Sharkord. It also enables push to talk. It is experimental and off by default. See [Setup](/docs/bridge/setup).
   </AccordionItem>
   <AccordionItem title="Does Sharkord phone home?">
     There is no telemetry or analytics, and nothing about your server or its users is reported anywhere. The server does make outbound requests in four cases:

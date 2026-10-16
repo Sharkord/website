@@ -1,0 +1,60 @@
+---
+title: Overview
+description: What the Bridge is, why hotkeys need it, and how it keeps your keystrokes private.
+icon: Keyboard
+---
+
+The Bridge is a small service that runs on your computer and lets Sharkord react to hotkeys while you are in a game or another window. It is how you mute your microphone, deafen, or push to talk without leaving what you are doing.
+
+<Alert type="attention" title="Experimental">
+  Hotkeys and the Bridge are new. Expect rough edges and changes between
+  releases. They are off by default, and Sharkord works fully without them.
+</Alert>
+
+## Why It Exists
+
+Sharkord runs in a browser, and a web page only receives key presses while its tab is in front. The moment Sharkord loses focus, the page stops hearing the keyboard, so a mute key cannot work. No browser setting changes that, and it is a deliberate security boundary.
+
+The Bridge solves it from outside the browser. It runs as a normal program on your machine, watches for the keys **you chose**, and tells the Sharkord page when you press or release one.
+
+```
+your keyboard  →  Bridge (on your computer)  →  Sharkord tab in your browser
+```
+
+## What It Does
+
+- Sits in your system tray, with a small window you can open to see your pairing token and which servers are connected.
+- Reports presses and releases of the keys you bound in Sharkord, so it can drive a hold-style action like [push to talk](./setup#push-to-talk).
+- Works with several Sharkord servers at once. A key you bound on more than one server fires on all of them.
+- Talks only to your own computer. It listens on `127.0.0.1` and refuses anything that does not present your pairing token.
+
+## What It Does Not Do
+
+- It is not a Sharkord client. It cannot read messages, join voice, or reach your server.
+- It does not send keystrokes anywhere except to the Sharkord tab you paired it with, on the same machine.
+- It never forwards a key you did not bind. Sharkord sends it the list of keys to watch, and everything else is ignored.
+- It does not store your keys on a server. Your binds live in your browser.
+
+## How Safe Is It?
+
+The Bridge needs to see keyboard input system wide in order to notice your hotkeys, and that deserves the same caution as any program with that ability.
+
+| Concern                      | How it is handled                                                                                                                                                           |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Other websites talking to it | It only accepts connections that start with your pairing token, a random value created on your machine. A page that does not have the token is disconnected.                |
+| Network exposure             | It binds to `127.0.0.1`, so nothing outside your computer can reach it.                                                                                                     |
+| Logging                      | The log records which of your bound hotkeys fired. It never contains the pairing token. Logging every key is a separate `trace` level that you must switch on yourself.     |
+| What it can see              | On Windows and X11 it sees all keys in order to match yours, and discards the rest. On Wayland it only receives the shortcuts you registered. See [Platforms](./platforms). |
+
+The source is open at [Sharkord/bridge](https://github.com/Sharkord/bridge), and you can [build it yourself](./build-from-source) rather than trust a download.
+
+## Small Footprint
+
+The Bridge is designed to be lightweight and unobtrusive. The binary is close to 6 MB in size, when running it consumes ~2 MB of RAM and virtually zero CPU.
+
+## Where To Go Next
+
+- [Setup](./setup): install, pair, and bind your first key.
+- [Platforms](./platforms): what works on Windows, Linux, and Wayland.
+- [Troubleshooting](./troubleshooting): when a key does nothing.
+- Plugin authors can offer their own bindable actions, see [Hotkeys in the Client SDK](/docs/plugins/client-sdk#hotkeys).

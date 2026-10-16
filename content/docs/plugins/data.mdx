@@ -1,6 +1,6 @@
 ---
 title: Data
-description: Users, channels, categories, roles, permissions, and per-user storage.
+description: Users, channels, categories, roles, permissions, invites, emojis, and storage.
 icon: Database
 ---
 
@@ -31,6 +31,24 @@ await ctx.roles.assign(userId, roleId);
 await ctx.roles.remove(userId, roleId);
 ```
 
+Plugins can also make and edit roles, which is what level rewards, colour roles and reaction roles need:
+
+```ts
+import { Permission } from "@sharkord/plugin-sdk";
+
+const role = await ctx.roles.create({
+  name: "Level 10",
+  color: "#f59e0b",
+  permissions: [Permission.SEND_MESSAGES],
+});
+
+await ctx.roles.update(role.id, { name: "Level 10+" });
+```
+
+`create` makes a role that is white unless `color` says otherwise, and has no permissions unless `permissions` grants some. A server holds at most 100 roles. `update` changes only the fields you pass, but `permissions` replaces the role's whole list rather than adding to it, so read the role first if you mean to add one. Both return the role as it is stored, permissions included.
+
+`color` must be a hex colour such as `#ff0000`, and `name` 1 to 26 characters. Unlike a person editing roles, a plugin is not limited to granting permissions it holds: it acts as the server, so be deliberate about what you grant.
+
 ```ts
 if (!(await ctx.permissions.userCan(userId, Permission.MANAGE_MESSAGES))) return;
 
@@ -43,7 +61,7 @@ const canSpeak = await ctx.permissions.userCanInChannel(
 
 Ask `ctx.permissions` rather than reading roles and deciding yourself: it is the host's own answer, including role inheritance, channel overrides and the owner short circuit. A reimplementation drifts silently the moment the rules change, and starts granting wrongly.
 
-Plugins may never touch the owner role, or the roles of anyone who holds it.
+Plugins may never touch the owner role, or the roles of anyone who holds it. That covers `update` too.
 
 ### Channels and Categories
 
@@ -72,11 +90,92 @@ await ctx.categories.update(categoryId, "Archived tickets");
 await ctx.categories.delete(categoryId);
 ```
 
+```ts
+await ctx.channels.reorder(categoryId, [archiveId, generalId]);
+```
+
+`reorder` puts the channels you list, in that order, at the top of the category, and the ones you leave out keep their order after them. A listed channel that is in another category is moved into this one. At most 500 channels at once, and ids that do not exist are ignored.
+
 A channel needs a category, which is why `categories.create` usually comes first. `private` is settable at creation rather than only afterwards: a support channel that is public for even one publish has already leaked.
 
 `channels.list()` leaves out direct messages. The write calls refuse them anyway, so listing them would only hand back ids a plugin cannot use.
 
-Creating a channel this way fires the [`onBeforeChannelCreate` hook](./hooks), including your own.
+Creating a channel this way fires the [`onBeforeChannelCreate` hook](./hooks), and deleting one fires `onBeforeChannelDelete`, including your own.
+
+### Invites
+
+```ts
+const invite = await ctx.invites.create({
+  creatorId: invoker.userId,
+  maxUses: 1,
+  expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+});
+
+// share invite.code
+```
+
+Every invite belongs to someone, so `creatorId` says who: usually the user who asked your plugin for it. It shows as theirs in the server settings, while the audit log records it with no actor, as with every plugin write.
+
+`maxUses` 0 or absent means unlimited, `expiresAt` must be in the future, and `code` is random unless you pick one: 4 to 64 URL safe characters, refused if taken. `roleId` is given to whoever registers with the invite, and cannot be the owner role. Creating one fires [`invite:created`](./events), and each registration with it `invite:used`.
+
+### Emojis
+
+```ts
+const emoji = await ctx.emojis.create({
+  name: "shark",
+  fileName: "shark.png",
+  data: bytes,
+  userId: invoker.userId,
+});
+
+await ctx.emojis.delete(emoji.id);
+```
+
+Like invites, an emoji belongs to someone, `userId`. `fileName` is what the image is called, and its extension has to be an image's. The file goes through the same [`onBeforeFileSave` hook](./hooks) as an upload, as `FileSaveType.EMOJI`. Names are 1 to 32 characters, and a taken name gets a number added, so read `emoji.name` from what comes back rather than assuming yours.
+
+### Storage
+
+Server-wide key value storage that belongs to your plugin. The place for polls, reminders, counters, leaderboards, and anything else that is not about one user.
+
+```ts
+await ctx.storage.set("poll:42", { question: "Pizza?", votes: {} });
+
+const poll = await ctx.storage.get<TPoll>("poll:42"); // undefined when missing
+
+await ctx.storage.delete("poll:42");
+```
+
+Values are JSON, so anything `JSON.stringify` keeps survives, and a `Date` comes back as a string. `set` replaces the whole value: there is no merge, so read, change and write back.
+
+Keep keys structured so `list` can read one kind back by its prefix:
+
+```ts
+const due = await ctx.storage.list({ prefix: "reminder:" });
+
+for (const { key, value } of due) {
+  // ...
+}
+```
+
+`list` is ordered by key and returns 100 entries by default, up to `limit: 1000`. Page through more with `after`, the last key of the previous page:
+
+```ts
+let after: string | undefined;
+
+do {
+  const page = await ctx.storage.list({ prefix: "poll:", after });
+
+  // ...
+
+  after = page.at(-1)?.key;
+} while (after);
+```
+
+Because keys sort as text, put timestamps in them zero padded or as fixed width numbers (`reminder:1700000000:7`) and a prefix read comes back in time order. The prefix is matched literally, so `%` and `_` in it mean themselves.
+
+Keys are 1 to 256 characters and a value is capped at 64 KB of JSON. Each plugin sees only its own keys. Everything is deleted when the plugin is removed, not when it is disabled or updated. `storage` is also available in `onUnload`, for saving state on the way out.
+
+Use storage for structured data and [`dataPath`](./overview) for files: storage is one row per key in the server's database, so a single large blob belongs on disk.
 
 ### Per-User Storage
 

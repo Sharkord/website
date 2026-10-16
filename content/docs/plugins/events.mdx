@@ -39,7 +39,7 @@ Events are notifications about things that **already happened**. A handler canno
 
 | Event             | Payload                                                                     |
 | ----------------- | --------------------------------------------------------------------------- |
-| `message:created` | `{ messageId, channelId, userId, pluginId, content, textContent }`           |
+| `message:created` | `{ messageId, channelId, userId, pluginId, content, textContent, parentMessageId, replyToMessageId, fileIds }` |
 | `message:updated` | `{ messageId, channelId, userId, editedBy, pluginId, content, textContent }` |
 | `message:deleted` | `{ messageId, channelId }`                                                  |
 | `message:pinned`  | `{ messageId, channelId, userId? }`                                         |
@@ -48,6 +48,8 @@ Events are notifications about things that **already happened**. A handler canno
 | `reaction:removed`| `{ messageId, channelId, userId?, pluginId?, emoji }`                       |
 
 `content` is the sanitized HTML body; `textContent` is the plain text of it. `userId` and `pluginId` are `null` when the message came from the other kind of author, so a message sent by a plugin has a `pluginId` and no `userId`. On `message:updated`, `editedBy` is the user who made the edit, which is not always the author.
+
+On `message:created`, `parentMessageId` is set for a reply in a thread and `replyToMessageId` for an inline reply; both are `null` otherwise. `fileIds` are the attachments, which [`ctx.files.getPath`](./messages#reading-attachments) turns into paths on disk, so a thread-aware bot or a file scanner never needs a `messages.get` per message.
 
 Messages and reactions your own plugin creates also raise these events. Check `pluginId` before reacting, or you can build yourself a loop.
 
@@ -67,6 +69,16 @@ Messages and reactions your own plugin creates also raise these events. Check `p
 | `role:assigned`    | `{ userId, roleId }`                           |
 | `role:removed`     | `{ userId, roleId }`                           |
 
+### Invites and Emojis
+
+| Event            | Payload                                  | When                                        |
+| ---------------- | ---------------------------------------- | ------------------------------------------- |
+| `invite:created` | `{ inviteId, code, creatorId, roleId }`  | `roleId` is `null` for an invite with no role |
+| `invite:used`    | `{ code, userId }`                       | Someone registered with it and is now `userId` |
+| `emoji:created`  | `{ emojiId, name, userId }`              | Once per emoji, so an upload of five fires five times |
+
+`invite:used` is what an invite tracker needs: it fires right after `user:created`, only for an account that was created with an invite.
+
 ### Voice
 
 | Event                       | Payload                                     |
@@ -75,10 +87,13 @@ Messages and reactions your own plugin creates also raise these events. Check `p
 | `voice:runtime_closed`      | `{ channelId }`                             |
 | `voice:producer_added`      | `{ channelId, userId, kind, producerId }`   |
 | `voice:producer_removed`    | `{ channelId, userId, kind, producerId }`   |
+| `voice:state_updated`       | `{ channelId, userId, state }`              |
 
 A voice channel's runtime is created when the first user joins and closed when the last one leaves. These are the events to wait for before touching the [Voice](./voice) API: there is no router to get before the runtime exists.
 
 A producer is added when a user starts sending audio, video or a screen, and removed however that ends: stopped, disconnected, or the channel closing. `kind` is a `StreamKind`. These are what a recorder listens to, but they only fire from the moment you subscribe, so read [`ctx.voice.getProducers`](./voice#reading-the-channel) as well or you miss everyone who was already talking.
+
+`voice:state_updated` fires when someone in the channel mutes, deafens, or turns their camera or screen share on or off. `state` is their whole state after the change, `{ micMuted, soundMuted, webcamEnabled, sharingScreen, serverMuted }`, so compare it with what you saw last to tell which part changed. `serverMuted` is a [moderator's mute](./voice#moderation), which also fires this event. It is the event for AFK detection and speaking statistics. Joining is not a state change: read the initial state from [`ctx.voice.getState`](./voice#reading-the-channel) after `user:joined_voice`.
 
 ### Settings
 

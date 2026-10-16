@@ -19,8 +19,11 @@ This assumes you know mediasoup. If you do not, read its documentation first; no
 | `ctx.voice.createStream(options)`   | A handle to the stream you created                   |
 | `ctx.voice.consume(options)`        | A handle to a user's media, as RTP packets           |
 | `ctx.voice.react(channelId, userId, emoji)` | Floats an emoji on a user's card             |
+| `ctx.voice.move(userId, channelId)` | Sends a user to another voice channel                 |
+| `ctx.voice.disconnect(userId)`      | Takes a user out of voice                            |
+| `ctx.voice.setServerMute(channelId, userId, muted)` | Mutes a user for everyone, or lifts it |
 
-Everything but `getListenInfo` **throws** if the channel has no voice runtime. A runtime exists only while someone is in the channel, so wait for the [`voice:runtime_initialized` event](./events) rather than assuming one is there.
+Everything but `getListenInfo`, `move` and `disconnect` **throws** if the channel has no voice runtime. A runtime exists only while someone is in the channel, so wait for the [`voice:runtime_initialized` event](./events) rather than assuming one is there.
 
 `getListenInfo` is synchronous and returns the address Sharkord is listening on and the address it advertises to clients (`webRtc.announcedAddress`, when set). Use it when building your own transports.
 
@@ -107,7 +110,7 @@ It returns:
 const { users, externalStreams } = ctx.voice.getState(channelId);
 
 for (const { userId, state } of users) {
-  // state: { micMuted, soundMuted, webcamEnabled, sharingScreen }
+  // state: { micMuted, soundMuted, webcamEnabled, sharingScreen, serverMuted }
 }
 ```
 
@@ -187,6 +190,33 @@ await ctx.voice.react(channelId, userId, "🔊");
 ```
 
 It takes a unicode emoji, a shortcode or the name of a custom emoji, and throws when the user is not in the channel or the emoji is unknown. Nothing marks it as coming from a plugin: to everyone watching, that user reacted. For anything with text, such as the name of the sound playing, use the [`VOICE_USER_CARD` slot](./components#slot-props) instead.
+
+### Moderation
+
+Three calls do what a moderator does by hand, for join-to-create channels, AFK movers and music bots.
+
+```ts
+await ctx.voice.move(userId, channelId);
+await ctx.voice.disconnect(userId);
+await ctx.voice.setServerMute(channelId, userId, true);
+```
+
+**`move`** sends a user to another voice channel. Their client makes the switch, so it lands a moment later, and you see it as `user:left_voice` then `user:joined_voice`. The user needs neither the channel's `JOIN` permission nor sight of it: a move can pull someone into a private channel, which is then revealed to them. They do still need the server-wide permission to use voice. It throws when the destination is not a voice channel, or when the user is not in voice or already in that channel.
+
+**`disconnect`** takes a user out of whatever voice channel they are in, and throws when they are not in one.
+
+Neither reaches into a direct message call. A user in one is treated as not being in voice at all, so a plugin cannot tell that the call exists.
+
+**`setServerMute`** mutes a user for everyone, or lifts it with `false`:
+
+- Their audio is stopped on the server, not left to their client, so a modified client cannot get around it.
+- They cannot unmute themselves while it lasts; trying shows them that a moderator muted them.
+- It lasts while the channel's runtime does, so leaving and rejoining does not shake it off, but a server restart does.
+- Lifting it leaves them muted. They unmute themselves when they are ready.
+
+`state.serverMuted` in `getState` and in the `voice:state_updated` event says whether a user is muted this way, as opposed to having muted themselves.
+
+None of these check who asked. A plugin acts as the server, so gate the command or action that calls them yourself, for example with `ctx.permissions.userCan(invoker.userId, Permission.MOVE_MEMBERS)`.
 
 ### Cleaning Up
 

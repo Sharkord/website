@@ -29,6 +29,8 @@ A plugin can fill several slots, and each slot takes a list of components. Sever
 
 `CHAT_ACTIONS` renders in the main channel composer only, not in the thread sidebar's.
 
+Every slot renders only for users holding `USE_PLUGINS`, except `CONNECT_SCREEN`, which renders for everyone. It shows before anyone signs in, so there is no user to hold a permission, and no session to call an [action](./actions) or a signed-in [HTTP route](./http) with: keep it to static content, or a public route.
+
 ### Export a Slot Map
 
 ```tsx
@@ -65,6 +67,50 @@ const PinButton = ({ messageId, channelId }: { messageId: number; channelId: num
 This is the only way a component can know. The store's `selectedChannelId` is a guess, and it is the wrong answer inside a thread; nothing in the store says which message a row belongs to at all.
 
 Props are **ids only**. Anything else about a message or a user is a lookup you can do yourself, and the right place for it is a server [action](./actions), where your plugin has the whole row rather than the slice the client happens to hold.
+
+### Message Components
+
+Slots render under every message. To render something **as part of your own messages**, such as a poll with buttons, export `messageComponents` from your client bundle and attach them when you [send the message](./messages#message-components):
+
+```tsx
+// src/client/index.ts
+import type { TPluginMessageComponentsMap } from "@sharkord/plugin-sdk/client";
+import { Poll } from "./poll";
+
+const messageComponents: TPluginMessageComponentsMap = {
+  poll: Poll,
+};
+
+export { messageComponents };
+```
+
+```tsx
+import type { TPluginMessageComponentProps } from "@sharkord/plugin-sdk/client";
+
+const Poll = ({ messageId, props }: TPluginMessageComponentProps) => {
+  const options = props.options as string[];
+  const votes = props.votes as Record<string, number>;
+
+  return (
+    <div>
+      {options.map((option) => (
+        <button key={option} onClick={() => callAction("vote", { messageId, option })}>
+          {option} ({votes[option]})
+        </button>
+      ))}
+    </div>
+  );
+};
+```
+
+The key, `poll`, is the `name` your server code sends. A component receives the message's `messageId` and `channelId`, and the `props` it was sent with.
+
+A message only renders components from the plugin that sent it, so there is nothing to check: no other plugin's message ever reaches yours, and no other plugin can render into yours. A `name` your bundle does not export renders nothing.
+
+- They render in channels, threads and anywhere else a message is shown, but not in search results.
+- They need `USE_PLUGINS` to see, like the slots, and your plugin's UI enabled with `ctx.ui.enable()`. Without either, readers see the message text alone.
+- [Restricting a slot](#restricting-a-slot) to some roles does not cover them: a reader with `USE_PLUGINS` sees your message components whatever the slot rules say.
+- A vote goes to a server [action](./actions), which updates the props with [`messages.setComponents`](./messages#message-components). That reaches every client, so everyone sees the new count without any push of your own.
 
 `TPluginSlotProps` is exported from `@sharkord/plugin-sdk` if you want to name a slot's props type instead of writing it out.
 

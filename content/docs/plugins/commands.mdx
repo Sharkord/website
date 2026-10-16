@@ -104,7 +104,7 @@ Every id here is one the server proved the caller can reach, so it is safe to wr
 
 `currentVoiceChannelId` is what a music or soundboard plugin uses to know where to play.
 
-`source` matters because the same command arrives both ways. A `chat` invocation renders as a public chip in the channel; an `api` one, including from the Commands tab in the server settings, answers the caller alone.
+`source` matters because the same command arrives both ways. A `chat` invocation renders as a public chip in the channel, unless the command is [ephemeral](#private-answers); an `api` one, including from the Commands tab in the server settings, answers the caller alone.
 
 Answering into the thread the command came from means passing `parentMessageId` back:
 
@@ -145,6 +145,29 @@ Nothing is written to the database when a plugin loads: a stored rule exists onl
 ### The Response
 
 Whatever you return goes back to the caller and is rendered as a chip in the channel, so the answer is public. Return a string unless you have a reason not to.
+
+### Private Answers
+
+Mark a command `ephemeral` and running it from chat stores nothing in the channel. Only the user who ran it sees the answer, as a notification in their own client:
+
+```ts
+ctx.commands.register({
+  name: "remindme",
+  args: [{ name: "when", type: "string", required: true }],
+  ephemeral: true,
+  executes: async (invoker, args) => {
+    await scheduleReminder(invoker.userId, args.when);
+
+    return `Got it, I will remind you ${args.when}.`;
+  },
+});
+```
+
+The place for help output, errors and confirmations that would be noise to everyone else. A failure is private too: the user sees your error message and nobody else sees anything. There is no message to reply to, so `invoker.messageId` is absent, while `channelId` and `parentMessageId` are still set.
+
+`ephemeral` only changes chat invocations. An `api` invocation already answers the caller alone.
+
+The answer is a short notification, not a message, so keep it to a sentence or two. For anything longer, or anything the user should be able to scroll back to, answer publicly or send it through your own [component](./components).
 
 <Alert type="info" title="Commands time out after 30 seconds">
   A handler that runs longer is aborted and the user gets an error. For slow
