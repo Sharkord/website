@@ -7,25 +7,88 @@ import Image from "next/image";
 
 const screenshots = [
   {
-    src: "/screenshots/ss4.png",
-    alt: "A film playing on a shared screen while the people in the voice room watch",
+    src: "/screenshots/watch-party.png",
+    alt: "A football match playing on a shared screen while the people in the voice room watch",
     title: "Watch something together",
     description:
       "Share your screen with the sound, put your cameras on, and hang out like you are in the same room.",
   },
   {
-    src: "/screenshots/ss1.png",
+    src: "/screenshots/screen-share.png",
+    alt: "Two webcams and a game being shared in a voice room",
+    title: "Play together",
+    description:
+      "Cameras on, game on screen, everyone in the same room. Crystal clear quality.",
+  },
+  {
+    src: "/screenshots/music-bot.png",
+    alt: "A music bot playing a song in the voice room, with its queue open",
+    title: "Extend with plugins",
+    description:
+      "Extend the core experience with plugins like music bots, soundboards and more.",
+  },
+  {
+    src: "/screenshots/chat.png",
     alt: "The chat view, with rooms down the side, a conversation in the middle and people online on the right",
     title: "Rooms for whatever you are into",
     description:
       "Replies, reactions, your own emojis and a list of who is around. It works the way you already expect.",
   },
   {
-    src: "/screenshots/ss3.png",
+    src: "/screenshots/settings-general.png",
     alt: "The settings screen, showing the server name, description and a few switches",
-    title: "Settings that fit on one screen",
+    title: "Under your control",
     description:
-      "Name it, decide who can join, hand out roles. Everything you need and nothing you have to learn.",
+      "Name it, decide who can join, hand out roles. The server is yours, you are in control.",
+  },
+  {
+    src: "/screenshots/settings-emojis.png",
+    alt: "A grid of custom emojis uploaded to the server",
+    title: "Your own emojis",
+    description:
+      "Upload the ones your group actually uses, GIFs included, and react with them anywhere. No limits, no restrictions.",
+  },
+  {
+    src: "/screenshots/plugin-marketplace.png",
+    alt: "The plugin marketplace inside server settings, with a soundboard, live TV and more to install",
+    title: "Plugins in a couple of clicks",
+    description:
+      "Browse what the community made and install it straight from your settings. No files to copy around.",
+  },
+  {
+    src: "/screenshots/settings-roles.png",
+    alt: "A role being edited, with a switch for every permission",
+    title: "Roles that do what they say",
+    description:
+      "Who can talk, post, share a screen or change things. One switch each, nothing hidden.",
+  },
+  {
+    src: "/screenshots/settings-users.png",
+    alt: "The list of people on the server, with their roles and when they last joined",
+    title: "Know who is around",
+    description:
+      "Everyone on your server in one list, with their roles, when they joined and whether they are online.",
+  },
+  {
+    src: "/screenshots/settings-storage.png",
+    alt: "Storage settings allowing 2 GB uploads and unlimited space per user",
+    title: "Share freely",
+    description:
+      "Set your own upload limits and quotas. If your disk can hold it, your friends can send it.",
+  },
+  {
+    src: "/screenshots/devices.png",
+    alt: "Screen sharing settings set to 1440p, 60 fps and 30 Mbit/s",
+    title: "Sharp picture, no subscription",
+    description:
+      "Share your screen at up to 4k 60fps, no subscription required. Everything stays sharp for everyone.",
+  },
+  {
+    src: "/screenshots/profile.png",
+    alt: "A profile with an avatar, a banner, a profile colour and a bio",
+    title: "Make your profile yours",
+    description:
+      "Pick an avatar, a banner, a colour and a bio, so people know it is you.",
   },
 ];
 
@@ -119,11 +182,11 @@ export function ShowcaseSection() {
                       <Image
                         src={shot.src}
                         alt={shot.alt}
-                        width={1920}
-                        height={1000}
+                        width={2560}
+                        height={1281}
                         className="h-auto w-full object-contain"
                         sizes="(max-width: 768px) 100vw, 80vw"
-                        priority={shot.src === "/screenshots/ss1.png"}
+                        priority={index === 0}
                       />
                     </button>
 
@@ -203,8 +266,8 @@ export function ShowcaseSection() {
             <Image
               src={screenshots[zoomedIndex].src}
               alt={screenshots[zoomedIndex].alt}
-              width={1920}
-              height={1000}
+              width={2560}
+              height={1281}
               className="max-h-[92vh] w-auto rounded-xl border border-white/20 object-contain"
               sizes="96vw"
             />

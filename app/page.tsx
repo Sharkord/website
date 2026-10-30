@@ -1,13 +1,16 @@
 import { ComparisonSection } from "@/components/comparison-section";
 import { CTASection } from "@/components/cta-section";
+import { DownloadSection } from "@/components/download-section";
 import { FeaturesSection } from "@/components/features-section";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { HeroSection } from "@/components/hero-section";
 import { InstallSection } from "@/components/install-section";
 import { PluginsSection } from "@/components/plugins-section";
+import { ProofStrip } from "@/components/proof-strip";
 import { ScopeSection } from "@/components/scope-section";
 import { ShowcaseSection } from "@/components/showcase-section";
+import { getDesktopRelease, getRepoStats } from "@/lib/github";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -25,10 +28,7 @@ const structuredData = {
       name: "Sharkord",
       url: "https://sharkord.com",
       logo: "https://sharkord.com/logo.webp",
-      sameAs: [
-        "https://github.com/Sharkord",
-        "https://x.com/sharkordapp",
-      ],
+      sameAs: ["https://github.com/Sharkord", "https://x.com/sharkordapp"],
     },
     {
       "@type": "WebSite",
@@ -64,22 +64,29 @@ const structuredData = {
   ],
 };
 
-export default function Page() {
+export default async function Page() {
+  const [stats, desktop] = await Promise.all([
+    getRepoStats(),
+    getDesktopRelease(),
+  ]);
+
   return (
     <div className="min-h-screen">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-      <Header />
+      <Header stats={stats} />
       <main>
         <HeroSection />
+        <ProofStrip stats={stats} />
         <FeaturesSection />
         <ShowcaseSection />
-        <InstallSection />
         <PluginsSection />
         <ComparisonSection />
         <ScopeSection />
+        <InstallSection />
+        <DownloadSection stats={stats} desktop={desktop} />
         <CTASection />
       </main>
       <Footer />

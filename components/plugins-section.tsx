@@ -68,7 +68,7 @@ export function PluginsSection() {
 
             <div className="mt-8 flex flex-wrap gap-3">
               <Button variant="outline" asChild>
-                <Link href="https://github.com/Sharkord/plugins" target="_blank">
+                <Link href="/plugins">
                   See what people made
                   <ArrowRight className="h-4 w-4" />
                 </Link>

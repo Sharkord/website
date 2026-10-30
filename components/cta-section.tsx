@@ -20,13 +20,12 @@ export function CTASection() {
 
       <div className="container relative mx-auto px-4">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-            Ready to take control?
+          <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-5xl">
+            Give your group a place of its own
           </h2>
           <p className="mt-4 text-lg leading-relaxed text-muted-foreground text-pretty">
-            The demo is a real server you can wander around in, no sign-up. It
-            is a small one, so bring a friend rather than a football team, and
-            see if it feels right.
+            The demo is a real server you can wander around in, no sign-up. Just
+            pick an identity and join.
           </p>
 
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">

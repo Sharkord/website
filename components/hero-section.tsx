@@ -1,13 +1,14 @@
+import { Screenshot } from "@/components/screenshot";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Github, Play } from "lucide-react";
+import { ArrowRight, Play } from "lucide-react";
 import Link from "next/link";
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden border-b border-border/40">
+    <section className="relative overflow-hidden">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-40 [mask-image:radial-gradient(70%_50%_at_50%_0%,black,transparent)]"
+        className="pointer-events-none absolute inset-0 opacity-40 [mask-image:radial-gradient(70%_40%_at_50%_0%,black,transparent)]"
         style={{
           backgroundImage:
             "linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px)",
@@ -15,9 +16,9 @@ export function HeroSection() {
         }}
       />
 
-      <div className="container relative mx-auto px-4 py-24 md:py-32">
+      <div className="container relative mx-auto px-4 pt-20 md:pt-28">
         <div className="mx-auto max-w-3xl text-center">
-          <h1 className="mt-6 text-4xl font-semibold tracking-tight text-balance sm:text-5xl md:text-6xl">
+          <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl md:text-6xl">
             Your conversations. Your data. Your control.
           </h1>
 
@@ -44,26 +45,25 @@ export function HeroSection() {
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button
-              size="lg"
-              variant="ghost"
-              className="w-full sm:w-auto"
-              asChild
-            >
-              <Link
-                href="https://github.com/Sharkord/sharkord"
-                target="_blank"
-                aria-label="Sharkord on GitHub"
-              >
-                <Github className="h-4 w-4" />
-                GitHub
-              </Link>
-            </Button>
           </div>
 
           <p className="mt-6 text-sm text-muted-foreground">
             No account with us. No subscription. No upsells, ever.
           </p>
+        </div>
+
+        <div className="relative mx-auto mt-16 max-w-6xl md:mt-20">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -inset-x-10 -top-10 bottom-1/3 rounded-full bg-foreground/10 blur-3xl"
+          />
+          <Screenshot
+            src="/screenshots/chat.png"
+            alt="A text channel full of friends chatting, with rooms down the side and who is online on the right"
+            sizes="(max-width: 1200px) 100vw, 1152px"
+            priority
+            className="relative"
+          />
         </div>
       </div>
     </section>

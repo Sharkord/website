@@ -28,10 +28,7 @@ const columns = [
     title: "Build",
     links: [
       { label: "Plugin docs", href: "/docs/plugins/overview" },
-      {
-        label: "Plugin marketplace",
-        href: "https://github.com/Sharkord/plugins",
-      },
+      { label: "Plugin marketplace", href: "/plugins" },
       { label: "Contributing", href: "/docs/contributing" },
       { label: "License", href: "/docs/license" },
     ],

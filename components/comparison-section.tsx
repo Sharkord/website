@@ -42,9 +42,14 @@ const rows: { feature: string; note: string; values: [Cell, Cell, Cell] }[] = [
     values: [true, false, false],
   },
   {
-    feature: "Phone and desktop apps",
+    feature: "Desktop app",
+    note: "Windows, macOS and Linux, or just use the browser",
+    values: [true, true, true],
+  },
+  {
+    feature: "Mobile app",
     note: "Where we are still behind",
-    values: ["Browser only", true, true],
+    values: ["Planned", true, true],
   },
 ];
 
@@ -85,7 +90,7 @@ export function ComparisonSection() {
   return (
     <section
       id="comparison"
-      className="border-b border-border/40 py-24 md:py-28"
+      className="py-24 md:py-32"
     >
       <div className="container mx-auto px-4">
         <div className="mb-14 max-w-2xl">
@@ -111,7 +116,7 @@ export function ComparisonSection() {
                     key={column}
                     className={
                       index === 0
-                        ? "px-6 py-4 text-center text-sm font-semibold text-foreground"
+                        ? "border-x border-t border-foreground/20 bg-card px-6 py-4 text-center text-sm font-semibold text-foreground"
                         : "px-6 py-4 text-center text-sm font-medium text-muted-foreground"
                     }
                   >
@@ -137,7 +142,7 @@ export function ComparisonSection() {
                       key={columns[index]}
                       className={
                         index === 0
-                          ? "bg-card/60 px-6 py-4 text-center"
+                          ? "border-x border-foreground/20 bg-card px-6 py-4 text-center"
                           : "px-6 py-4 text-center"
                       }
                     >
