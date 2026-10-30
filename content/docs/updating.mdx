@@ -1,67 +1,39 @@
 ---
 title: Updating
-description: Updating by hand, with Docker, or automatically, and what to back up before you do.
+description: Update the server and what to back up first.
 icon: CloudDownload
 ---
 
 <Alert type="warning" title="Back up first">
-  Copy your [data directory](/docs/data-dir) somewhere safe before every
-  update, so you can roll back by restoring it alongside the old binary.
-  Sharkord also snapshots the database by itself before applying schema
-  changes, unless you turned that off, and it covers the database only. See
-  [Database Migrations](/docs/migrations).
+  Copy the [data directory](/docs/data-dir) before every update. Migrations
+  only go forward.
 </Alert>
 
-### Manual Update (Recommended)
+**Binary:** stop the server, replace the binary with the [latest release](https://github.com/Sharkord/sharkord/releases/latest), start it. Pending [migrations](/docs/migrations) run on start.
 
-1. Stop the server.
-2. Download the [latest release](https://github.com/Sharkord/sharkord/releases/latest) for your platform.
-3. Replace the old binary with the new one and start it again.
-
-Your configuration and data are untouched; they live in the data directory, not next to the binary. On the first start, the new version applies any [database migrations](/docs/migrations) it ships, taking a snapshot first.
-
-### Which Version Is Running?
-
-The settings show it, and every HTTP response carries it:
-
-```bash
-curl -sI https://your-server/healthz | grep -i x-sharkord-version
-```
-
-### Docker
-
-```bash
-docker pull sharkord/sharkord:latest
-docker rm -f sharkord
-# start the container again with the same command
-```
-
-Or with Compose:
+**Docker Compose:**
 
 ```bash
 docker compose pull
 docker compose up -d
 ```
 
-### From the Admin Panel
+**Docker:** `docker pull`, remove the container, run it again with the same command.
 
-If you have the `MANAGE_UPDATES` permission, the server settings show the current version, the latest release, and a button to update. The server downloads the new binary and restarts itself.
+Check the running version:
 
-This is unavailable in Docker, where the image is the unit of update, and in development builds.
-
-### Automatic Updates
-
-Set `autoupdate` in [`config.ini`](/docs/configuration):
-
-```ini
-[server]
-autoupdate=true
+```bash
+curl -sI https://your-server/healthz | grep -i x-sharkord-version
 ```
 
-The server then checks GitHub for a new release at startup and once an hour, and restarts itself when it installs one. It is off by default, and unavailable in Docker.
+## Self Update
 
-<Alert type="attention" title="Both automatic paths are unreliable for now">
-  Self-updating does not work in every environment, and a failed update can
-  leave the server down until you replace the binary by hand. Until this is
-  more solid, prefer the manual update or a fresh Docker image.
+Not available in Docker or dev builds.
+
+- **Update button** in the server settings, needs **Manage updates**.
+- **`autoupdate=true`** in [`config.ini`](/docs/configuration) checks GitHub at startup and every hour.
+
+<Alert type="attention" title="Unreliable for now">
+  A failed self update can leave the server down until you replace the binary
+  by hand. Prefer updating manually.
 </Alert>

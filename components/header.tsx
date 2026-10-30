@@ -7,7 +7,7 @@ import Link from "next/link";
 const links = [
   { label: "Features", href: "/#features" },
   { label: "Plugins", href: "/plugins" },
-  { label: "Install", href: "/#install" },
+  { label: "Self-host", href: "/#install" },
   { label: "Download", href: "/#download" },
   { label: "Docs", href: "/docs" },
 ];

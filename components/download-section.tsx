@@ -43,6 +43,7 @@ const serverPlatforms: Platform[] = [
 const desktopTargets = [
   { name: "Windows", detail: "64-bit installer", pattern: /win-x64\.exe$/ },
   { name: "macOS", detail: "Apple silicon", pattern: /mac-arm64\.dmg$/ },
+  { name: "macOS", detail: "Intel", pattern: /mac-x64\.dmg$/ },
   {
     name: "Linux",
     detail: "AppImage, x64",
@@ -55,7 +56,7 @@ function PlatformList({ platforms }: { platforms: Platform[] }) {
     <ul className="divide-y divide-border/60">
       {platforms.map((platform) => (
         <li
-          key={platform.href}
+          key={`${platform.name}-${platform.detail}`}
           className="flex items-center justify-between gap-4 py-4"
         >
           <div>
@@ -128,7 +129,7 @@ export function DownloadSection({
               <PlatformList platforms={desktopPlatforms} />
             </div>
             <p className="mt-4 text-sm text-muted-foreground">
-              A Mobile app is planned.
+              A mobile app is planned.
             </p>
           </div>
 

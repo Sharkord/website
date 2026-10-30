@@ -1,0 +1,40 @@
+---
+title: Bridge
+description: Global hotkeys and push to talk for Sharkord in the browser.
+icon: Keyboard
+---
+
+A web page only gets key presses while its tab is focused. The [Bridge](https://github.com/Sharkord/bridge) is a small tray app (Windows, Linux) that watches for the keys you bound and tells the Sharkord tab. It enables mute, deafen and push to talk while you are in a game. The [desktop app](/docs/desktop-app) does not need it.
+
+<Alert type="attention" title="Experimental">
+  Off by default. Sharkord works fully without it.
+</Alert>
+
+## Setup
+
+1. Run the Bridge from [GitHub Releases](https://github.com/Sharkord/bridge/releases/latest). It creates a pairing token.
+2. In Sharkord, **User Settings → Hotkeys**: enable hotkeys, paste the token, save. Status turns **Connected**.
+3. Bind keys there. For push to talk, set **Microphone mode** to **Push to talk** under **User Settings → Devices**.
+
+Token file: `~/.config/sharkord-bridge/token` or `%APPDATA%\sharkord-bridge\token`. The log, `bridge.log`, is next to it.
+
+## Security
+
+- Listens on `127.0.0.1:47821` only, and drops any connection without the pairing token.
+- Only forwards keys Sharkord asked it to watch. It never blocks keys from reaching other apps.
+- Logs never contain the token. Logging every key needs `SHARKORD_BRIDGE_LOG=trace`.
+- It cannot read messages or reach your server.
+
+## Platforms
+
+- **Windows and X11:** sees all keys. Games running as administrator need the Bridge run as administrator too.
+- **Wayland:** only sees keys while an XWayland window (most games, Steam and Proton) has focus. `SHARKORD_BRIDGE_PORTAL=1` uses the desktop's global shortcuts portal instead, which sees everything but takes the bound keys away from other apps.
+
+## Troubleshooting
+
+- **Not found, stopped trying.** Sharkord gives up after 10 attempts. Start the Bridge and press **Try to connect**. Check that port `47821` is free and the token is exact. Safari may block connections to localhost.
+- **Connected but a key does nothing.** Run with `SHARKORD_BRIDGE_LOG=debug`. No line on press means the key never reached the Bridge (see Platforms). Browser side errors are logged with a `[BRIDGE]` prefix and show in the voice diagnostics (**F9**).
+- **Key also triggers something in the focused app.** Expected. Bind combinations nothing else uses, like `Ctrl+Alt+M` or F-keys.
+- **Mic stuck muted.** Push to talk is on and the Bridge disconnected. Switch back to **Open microphone**.
+
+Plugins can add their own bindable actions, see [Client SDK](/docs/plugins/client-sdk#hotkeys).

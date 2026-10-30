@@ -1,50 +1,22 @@
 ---
 title: Quick Start
-description: Download and run Sharkord in a couple of minutes.
+description: Get a server running in a couple of minutes.
 icon: Rocket
 ---
 
-<Alert type="warning" title="Alpha software">
-  Sharkord is in alpha. Expect bugs, incomplete features, and breaking changes.
-</Alert>
+1. Install it with [Docker Compose](/docs/introduction/installation/docker-compose) (recommended, includes HTTPS), [Docker](/docs/introduction/installation/docker), [Podman](/docs/introduction/installation/podman) or the [binary](/docs/introduction/installation/binary).
+2. Save the **access token** printed on first start. It is shown once and cannot be recovered.
+3. Open the server, create your account, and [claim ownership](/docs/introduction/owner-permissions) with the token.
 
-Sharkord ships as a single binary that contains both the server and the web client. There is nothing else to install.
+Prefer video? [How To Deploy Sharkord In 1 Minute](https://www.youtube.com/watch?v=Baa7uEKUkgQ).
 
-<Alert type="tip" title="Rather watch than read?">
-  [How To Deploy Sharkord In 1
-  Minute](https://www.youtube.com/watch?v=Baa7uEKUkgQ) sets up the recommended
-  deployment, Docker with Caddy for HTTPS, start to finish.
-</Alert>
+## What You Need
 
-1. Download the latest release for your platform from [GitHub Releases](https://github.com/Sharkord/sharkord/releases/latest), or use the [Docker image](/docs/introduction/installation/docker).
-2. Run it: [Linux](/docs/introduction/installation/linux), [Windows](/docs/introduction/installation/windows), [macOS](/docs/introduction/installation/macos).
-3. Open `http://localhost:4991` in your browser and create your account.
-
-If the server runs on another machine, replace `localhost` with its IP address or domain.
-
-### First Launch
-
-The first run creates the [data directory](/docs/data-dir), writes a default [`config.ini`](/docs/configuration), and prints an access token to the console:
-
-```
-🚨🚨 I M P O R T A N T 🚨🚨
-────────────────────────────────────────────────────
-This server has been started for the first time.
-Please save this access token somewhere safe, as it will not be shown again and there is no way to recover it.
-The access token below is used to gain admin privileges. Anyone with this token can take over the server.
-```
-
-Copy it somewhere safe. It is shown once, it cannot be recovered, and anyone who has it can claim ownership of your server. See [Gain Owner Permissions](/docs/introduction/owner-permissions) for how to use it.
-
-### Next Steps
+- **HTTPS.** Browsers block the microphone, webcam and screen sharing on plain HTTP, except on `localhost`. See [HTTPS](/docs/https/why). No domain? Get a [free subdomain](/docs/domains).
+- **Port `40000` open on TCP and UDP.** Voice and video go there directly, never through your reverse proxy.
+- **`SHARKORD_WEBRTC_ANNOUNCED_ADDRESS`** set to your public IP or domain if the server is behind NAT or Docker. See [Configuration](/docs/configuration).
 
 <NetcupBanner title="No server yet?">
   Sharkord is happy on a small VPS. We host on netcup, whose root servers start
   at a few euros a month and include enough bandwidth for voice.
 </NetcupBanner>
-
-- Put Sharkord behind [HTTPS](/docs/https/why). Screen sharing, webcam, and microphone access do not work without it.
-- Tune ports and limits in [Configuration](/docs/configuration).
-- No domain? Claim a [free subdomain](/docs/domains).
-- Set up your [roles and permissions](/docs/administration/roles-permissions) before inviting anyone.
-- Point users at [Voice and Devices](/docs/voice) if their microphone needs tuning.

@@ -3,10 +3,5 @@
   "icon": "BookOpen",
   "collapsible": false,
   "defaultOpen": true,
-  "pages": [
-    "what-is-sharkord",
-    "quick-start",
-    "installation",
-    "owner-permissions"
-  ]
+  "pages": ["quick-start", "installation", "owner-permissions"]
 }

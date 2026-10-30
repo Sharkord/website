@@ -44,7 +44,7 @@ function DownloadPanel() {
       <Button size="lg" asChild>
         <Link href="#download">
           <Download className="h-4 w-4" />
-          Download Sharkord
+          Download Sharkord Server
         </Link>
       </Button>
       <p className="mt-4 text-sm leading-relaxed text-muted-foreground">

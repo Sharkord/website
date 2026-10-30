@@ -1,40 +1,48 @@
 ---
 title: Marketplace
-description: Find plugins, and publish your own.
+description: How the registry works and how to publish to it.
 icon: Store
 ---
 
-The marketplace is a registry of plugins, browsable from inside Sharkord. It is a public repository: [github.com/Sharkord/plugins](https://github.com/Sharkord/plugins).
-
-### For Users
-
-Open the server settings, browse the marketplace, and install with one click. Sharkord downloads the release from the URL in the registry and checks it against the published checksum before unpacking it.
+The marketplace is the [Sharkord/plugins](https://github.com/Sharkord/plugins) repository, browsable from the server settings and on [sharkord.com/plugins](/plugins). Installs are checked against the published checksum.
 
 <Alert type="attention" title="A listing is not a review">
-  Anyone can publish. The `verified` badge means the maintainers recognise the
+  Anyone can publish. The `verified` badge means the maintainers know the
   publisher, not that the code was audited. See [Security](./security).
 </Alert>
 
-### For Developers
+## Registry Layout
 
-Publishing is a pull request against the registry repository. The plugin scaffold has a GitHub Actions workflow that does it all: it builds the plugin, creates a GitHub release, and opens the PR with the version file (checksum and download URL included).
+```
+plugins/<plugin-id>/
+  plugin.json             id, name, description, author, logo, homepage,
+                          screenshots, tags, categories, verified
+  versions/<version>.json version, downloadUrl, checksum, sdkVersion, size, timestamp
+```
 
-The registry holds a `plugin.json` per plugin (id, name, description, author, logo, optional homepage, tags, categories, screenshots) and a `versions/<version>.json` per release (`version`, HTTPS `downloadUrl`, `checksum`, `sdkVersion`, `size`, `timestamp`). On a first publish the workflow generates `plugin.json` from your `manifest.json`, so fill in `screenshots`, `tags` and `categories` there first.
+## Publish
 
-#### One-Time Setup
+The plugin needs a public GitHub repository. Set `GITHUB_TOKEN` in `.env`, a [personal access token](https://github.com/settings/tokens) with `repo` scope, then:
 
-Create a [personal access token](https://github.com/settings/tokens) (classic, `public_repo` scope) on the account that should author the PR, and add it to your plugin's repository as an Actions secret named `MARKETPLACE_TOKEN`. The built-in token cannot open pull requests on other repositories.
+```bash
+bun run publish
+```
 
-#### Publish
+The scaffold's `publish.ts` passes `repo: "owner/repo"`. Change it to your repository, or remove it to use the `origin` remote.
 
-1. Bump `version` in `package.json` and push.
-2. In your repository, open **Actions → publish → Run workflow**.
+It then:
 
-That is all. Once the PR is merged, your plugin shows up in every server's marketplace.
+1. Builds the plugin.
+2. Creates a GitHub release tagged `v<version>` and uploads the `.tar.gz` and the version file.
+3. Forks the registry under the token's account and opens a PR adding `versions/<version>.json`, and creating or updating `plugin.json` from your manifest.
 
-This assumes a public GitHub repository. Hosting the release elsewhere means assembling the version file by hand.
+Once the PR is merged, every server sees the new version.
+
+- **Bump `version` in `package.json` first.** Publishing fails if the tag or the registry version already exists.
+- **Screenshots, tags, categories and `verified` live only in the registry.** Publishing never changes them. Add screenshots and tags by editing `plugin.json` in the PR or in a later one.
+- **`pr: false`** in `publish.ts` only creates the release, without the PR.
 
 <Alert type="info" title="sdkVersion pins compatibility">
-  Servers only offer a version whose `sdkVersion` matches their own, so publish
-  a new release after every SDK bump or existing installs cannot update.
+  Servers only offer versions whose `sdkVersion` matches theirs. Publish a new
+  release after every SDK bump, or existing installs cannot update.
 </Alert>

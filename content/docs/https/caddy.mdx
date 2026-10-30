@@ -1,118 +1,31 @@
 ---
 title: Caddy
-description: Use Caddy as a reverse proxy for Sharkord.
+description: Caddy as the reverse proxy, with automatic certificates.
 icon: Network
 ---
 
-Caddy is the least work: it obtains and renews Let's Encrypt certificates on its own, and proxies WebSockets without extra configuration.
-
-### Assumptions
-
-1. Sharkord is running on this server with the default ports.
-2. You are on Ubuntu Server.
-3. A domain (for example `sharkord.yourdomain.com`) already points at this server's public IP.
-
-Adjust the steps if any of that differs.
-
-### Step 1: Install Dependencies
-
-```bash
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y wget ufw curl nano
-```
-
-### Step 2: Install Caddy
-
-```bash
-wget "https://github.com/caddyserver/caddy/releases/download/v2.11.2/caddy_2.11.2_linux_amd64.tar.gz" -O /tmp/caddy.tar.gz
-
-tar -xzf /tmp/caddy.tar.gz
-
-sudo mv caddy /usr/local/bin/
-sudo chmod +x /usr/local/bin/caddy
-
-caddy version
-```
-
-On arm64, download the `linux_arm64` archive instead. Caddy is also in the Debian and Ubuntu repositories if you prefer `apt install caddy`, in which case skip step 4.
-
-### Step 3: Configure Caddy
-
-```bash
-sudo mkdir -p /etc/caddy
-sudo nano /etc/caddy/Caddyfile
-```
-
-Paste this, replacing `sharkord.yourdomain.com` with your domain:
+Install Caddy (`apt install caddy` on Debian and Ubuntu, or see [caddyserver.com](https://caddyserver.com/docs/install)). Then `/etc/caddy/Caddyfile`:
 
 ```
-sharkord.yourdomain.com {
+sharkord.example.com {
     reverse_proxy 127.0.0.1:4991
     encode gzip
 }
 ```
 
-### Step 4: Create the Service
+```bash
+sudo systemctl reload caddy
+```
+
+Caddy handles certificates, WebSockets and `X-Forwarded-For` on its own. Nothing to configure in Sharkord.
+
+## Firewall
 
 ```bash
-sudo nano /etc/systemd/system/caddy.service
-```
-
-```
-[Unit]
-Description=Caddy Web Server
-After=network.target
-
-[Service]
-ExecStart=/usr/local/bin/caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
-ExecReload=/usr/local/bin/caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
-Restart=on-failure
-User=root
-Group=root
-AmbientCapabilities=CAP_NET_BIND_SERVICE
-
-[Install]
-WantedBy=multi-user.target
-```
-
-### Step 5: Start Caddy
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable caddy
-sudo systemctl start caddy
-sudo systemctl status caddy
-```
-
-### Step 6: Tell Sharkord About the Proxy
-
-No configuration needed. Sharkord trusts forwarded headers from loopback and from private networks by default, so a proxy on this machine is believed and the real client address is read from `X-Forwarded-For`.
-
-Two exceptions are worth knowing: a CDN such as Cloudflare in front of this proxy has to be added by hand, and a network you do not fully control should be narrowed rather than trusted wholesale. Both are covered in [Behind a Proxy](./behind-a-proxy).
-
-### Step 7: Configure the Firewall
-
-```bash
-sudo ufw status
-```
-
-If it is active, open what Sharkord needs:
-
-```bash
-sudo ufw allow 22/tcp
-
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
-
 sudo ufw allow 40000/tcp
 sudo ufw allow 40000/udp
-
-sudo ufw enable
-sudo ufw reload
 ```
 
-Port `4991` does not need to be open to the internet: Caddy reaches it over localhost. Port `40000` does, because voice and video bypass the proxy.
-
-### Step 8: Open It
-
-Go to `https://sharkord.yourdomain.com`. Caddy issues the certificate on the first request and renews it on its own from then on.
+Keep `4991` closed. Caddy reaches it on localhost.

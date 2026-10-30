@@ -10,7 +10,7 @@ export function ScopeSection() {
           </h2>
           <p className="mt-8 text-2xl leading-snug text-foreground/90 text-pretty sm:text-3xl">
             Not for thousands of strangers. For your friends, your family and
-            the people you game with, in a room that is always there.
+            the people you game with, in a room that is always there with no one watching.
           </p>
           <p className="mt-6 text-sm text-muted-foreground">
             <Link

@@ -1,0 +1,55 @@
+---
+title: Binary
+description: Run the standalone server on Linux, Windows or macOS.
+icon: MonitorCog
+---
+
+One file holds the server, the web client and the media worker. Get it from [GitHub Releases](https://github.com/Sharkord/sharkord/releases/latest).
+
+## Linux
+
+```bash
+curl -L https://github.com/Sharkord/sharkord/releases/latest/download/sharkord-linux-x64 -o sharkord
+chmod +x sharkord
+./sharkord
+```
+
+Use `sharkord-linux-arm64` on ARM. As a service, `/etc/systemd/system/sharkord.service`:
+
+```ini
+[Unit]
+Description=Sharkord
+After=network.target
+
+[Service]
+User=sharkord
+ExecStart=/opt/sharkord/sharkord
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl enable --now sharkord
+journalctl -u sharkord   # to read the access token on first run
+```
+
+Data goes to the service user's `~/.config/sharkord`.
+
+## Windows
+
+Install the [Visual C++ 2015-2022 Redistributable (x64)](https://aka.ms/vs/17/release/vc_redist.x64.exe) first, or the server will not start. Then run `sharkord-windows-x64.exe` and allow it through the firewall.
+
+## macOS
+
+Apple Silicon only, and the least tested build. On Intel, use Docker.
+
+```bash
+curl -L https://github.com/Sharkord/sharkord/releases/latest/download/sharkord-macos-arm64 -o sharkord
+chmod +x sharkord
+xattr -d com.apple.quarantine ./sharkord
+./sharkord
+```
+
+The binary is not notarized, hence the `xattr`.

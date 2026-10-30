@@ -1,33 +1,20 @@
 ---
-title: Gain Owner Permissions
+title: Owner Permissions
 description: Use the access token to claim the owner role.
 icon: KeyRound
 ---
 
-The access token printed on first launch is what turns a normal account into the server owner.
+The access token printed on first start turns an account into the server owner.
 
-### Claim Ownership
+1. Log in with the account that should own the server.
+2. Open the browser console (`Ctrl+Shift+I`, **Console** tab).
+3. Run `useToken("your_token_here")`.
 
-1. Log in to your Sharkord server with the account you want to make owner.
-2. Open the browser dev tools (`Ctrl + Shift + I`, or right-click and choose Inspect).
-3. Go to the **Console** tab.
-4. Run `useToken("your_token_here")` with your token.
+The role applies immediately. Attempts are limited to 5 per minute.
 
-The account gets the owner role immediately, no reload needed. Running it again on an account that already owns the server fails with "You already have the owner role."
-
-<Alert type="attention" title="Treat the token as a master key">
-  Anyone who has the token can claim ownership of your server, from any
-  account, at any time. It is not single use and it currently cannot be rotated
-  or revoked, so store it like a root password and never paste it into a shared
-  channel or a screenshot.
+<Alert type="attention" title="The token is a master key">
+  It works from any account, any number of times, and cannot be rotated or
+  revoked. Store it like a root password.
 </Alert>
 
-### If It Fails
-
-- **"Invalid access token"**: the token does not match. It is the value printed on the very first launch of the server, not the server password and not your login token.
-- **Nothing happens / `useToken is not defined`**: you are not connected to a server yet. Log in first, then run the command.
-- **Rate limited**: the endpoint allows 5 attempts per minute per user. Wait a minute and try again.
-
-### Lost the Token?
-
-There is no recovery path. If you still have owner access, hand out the roles you need from the server settings. If you do not, the only way back is a fresh [data directory](/docs/data-dir), which means starting the server from scratch.
+Lost it? There is no recovery. If you still have owner access, nothing is lost. If you do not, the only way back is a fresh [data directory](/docs/data-dir).

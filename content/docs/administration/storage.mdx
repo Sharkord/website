@@ -1,67 +1,42 @@
 ---
 title: Storage & Uploads
-description: Quotas, upload limits, signed URLs, and image optimization.
+description: Signed URLs, quotas, image optimization and where files go.
 icon: HardDrive
 ---
 
-Uploaded files live on disk in the [data directory](/docs/data-dir), under `public/`. The Storage tab in the server settings controls who can upload, how much, and who can read the result. Changing these needs `MANAGE_STORAGE`.
-
-The tab also shows current disk usage per user, and per plugin, which is the quickest way to find out where the space went.
-
-## Uploads
-
-| Setting | Default | Range | What it does |
-| --- | --- | --- | --- |
-| Allow uploads | on | | Turns uploading off entirely. Existing files stay reachable. |
-| Allow file sharing in direct messages | on | | Only applies while uploads are on. Does not affect files already sent. |
-| Max file size | 2 GB | 1 MB to 2 GB | Largest single file. Checked before the upload is accepted, and again after image optimization. |
-| Max files per message | 10 | 0 to 20 | Extra attachments beyond the limit are ignored. |
-| Max avatar size | 3 MB | up to 50 MB | Applies to profile avatars. |
-| Max banner size | 3 MB | up to 100 MB | Applies to profile banners. |
-
-<Alert type="warning" title="Your reverse proxy has an opinion too">
-  Nginx rejects request bodies over 1 MB by default, which fails every upload
-  long before Sharkord sees it. See the [Nginx guide](/docs/https/nginx).
-</Alert>
-
-## Quotas
-
-| Setting | Default | Range | What it does |
-| --- | --- | --- | --- |
-| Quota | 100 GB | 1 GB to 1 TB | Total storage the server will use. |
-| Quota per user | unlimited | 0 to 100 GB | Per-user cap. `0` means unlimited. |
-| Overflow action | Prevent new file uploads | | What happens when the server quota is reached. |
-
-Overflow has two modes. **Prevent new file uploads** rejects the upload and tells the user. **Delete old files** deletes the oldest files to make room, which keeps the server writable at the cost of losing old attachments permanently.
-
-A per-user quota can be overridden per role, which is how you give a trusted group more room. Enable the override on the role, set the amount, and remember that `0` on an override role means unlimited. When a user holds several override roles, the largest wins. See [Roles and Permissions](./roles-permissions).
-
-## Plugin Storage
-
-Plugins can attach files to the messages they send, and those files count against the server quota like any other upload. The Storage tab lists what each plugin has stored, with its file count and total size, largest first.
-
-A plugin that has been removed still appears in that list, marked **Uninstalled**. Removing a plugin deletes its own folder, its data folder and its database rows, but the files it attached belong to the messages they are in, so they stay until those messages are deleted.
+Uploads are stored on disk in `public/` inside the [data directory](/docs/data-dir). No S3. Settings are in the Storage tab and need **Manage storage**.
 
 ## Signed URLs
 
-Off by default. This is the single most important setting on this page for a private server.
+**Off by default. Turn it on for a private server.**
 
-**Off**: files are served from `/public/<filename>` to anyone who has the URL, with no login. Anyone who obtains a link, or guesses a filename, can read the file.
+- **Off:** anyone with a file URL can download it, no login.
+- **On:** URLs carry an expiring token (30 min to 7 days, default 1 hour). Clients refresh them on their own. The server logo stays public.
 
-**On**: every file URL carries a signed token with an expiry, and the server refuses requests without a valid one. The clients get fresh tokens as they load content, so users notice nothing. The server logo is the only exception, since it has to render before anyone logs in.
+## Quotas
 
-The expiry is configurable from 30 minutes to 7 days, with a default of 1 hour. Shorter is safer; longer is friendlier to a link somebody pasted into another tab.
+| Setting | Default |
+| --- | --- |
+| Server quota | 100 GB |
+| Per-user quota | unlimited (`0`) |
+| Max file size | 2 GB |
+| Max files per message | 10 |
+
+When the server quota is full, it either rejects new uploads (default) or **deletes the oldest files**. The second one is permanent.
+
+Per-user quotas can be raised per [role](./roles-permissions#storage-quotas-per-role).
+
+<Alert type="warning" title="Nginx">
+  Nginx caps request bodies at 1 MB by default, which breaks uploads. Set
+  `client_max_body_size 0`. See [Nginx](/docs/https/nginx).
+</Alert>
 
 ## Image Optimization
 
-Off by default. When on, uploaded JPEG, PNG, WebP, HEIC, and HEIF images are converted to WebP at the quality you choose, from 1 to 100, defaulting to 80.
+Off by default. When on, JPEG, PNG, WebP, HEIC and HEIF uploads are converted to WebP (quality 1 to 100, default 80) and the original is replaced. If WebP comes out bigger, the original is kept. GIFs and videos are untouched.
 
-The converted file replaces the original, and its extension changes to `.webp`. If conversion would make the file bigger, the original is kept instead. A failed conversion is logged and the original goes through unchanged. Non-image files and other formats, such as GIF and video, are untouched.
+## Deleting
 
-Quality is a size and detail trade-off. 80 is a reasonable default; below about 60 the artefacts start to show on screenshots and text.
-
-## Deleting Files
-
-Deleting a message deletes the files attached to it, including files a plugin attached.
-
-Deleting a user has two modes. The normal one keeps their messages and files, reassigning them to a placeholder account, so nothing is freed. The wipe mode removes their data along with the account. Storage freed either way shows up in the disk usage view immediately.
+- Deleting a message deletes its files.
+- Deleting a user normally keeps their messages and files under a placeholder account. Wipe mode deletes them.
+- Files a plugin attached to messages stay after the plugin is removed, listed as **Uninstalled** in the Storage tab, until those messages are deleted.

@@ -14,20 +14,19 @@ That gives you a working plugin: a slash command, a server action called from a 
 
 ```
 my-plugin/
-  manifest.json       the plugin's identity, and the SDK version it targets
-  build.ts            builds the bundle, and installs it if you point it at a server
-  publish.ts          cuts a GitHub release for the marketplace
-  .github/workflows/  one-click publish to the marketplace
-  scripts/setup.ts    clones and links the Sharkord repos into .repos/
-  src/types.ts        the contract both halves share
-  src/server/index.ts runs in the Sharkord server process
-  src/client/index.ts declares which components render where
-  src/client/home.tsx a component
+  manifest.json        identity and target SDK version
+  build.ts             builds, and copies into your server if configured
+  publish.ts           releases on GitHub and opens the marketplace PR
+  scripts/setup.ts     clones and links the SDK and builder into .repos/
+  src/types.ts         the contract both halves share
+  src/server/index.ts  runs in the Sharkord server process
+  src/client/index.ts  declares which components render where
+  src/client/home.tsx  a component
 ```
 
-The SDK, UI components and builder are not on npm yet. Run `bun run setup` once: it clones Sharkord and the plugin builder into `.repos/`, installs them, and links them into your plugin. Run it again any time to pull their latest versions.
+The SDK, UI package and builder are not on npm yet. `bun create` runs `bun run setup`, which clones Sharkord and [plugin-builder](https://github.com/Sharkord/plugin-builder) into `.repos/` and `bun link`s them. Run it again to update them.
 
-### 3. Fill In the Manifest
+### 2. Fill In the Manifest
 
 ```json
 {
@@ -36,22 +35,17 @@ The SDK, UI components and builder are not on npm yet. Run `bun run setup` once:
   "author": "Me",
   "description": "Does something useful.",
   "homepage": "https://example.com",
-  "logo": "https://placehold.co/100x100/white/black",
-  "screenshots": [],
-  "tags": [],
-  "categories": [],
+  "logo": "https://example.com/logo.png",
   "sdkVersion": 2,
   "version": "0.0.1"
 }
 ```
 
-- `id`: lowercase letters, numbers, and dashes, up to 64 characters. It **must** match the folder the plugin is installed into.
-- `sdkVersion`: the SDK version the plugin targets. It must equal the server's, or the plugin refuses to load. `bun run build` writes the right one in for you.
-- `version`: semver, `1.2.3` or `1.2.3-beta.1`. The build takes it from `package.json`.
-- `homepage` and `logo` are optional; both must be `http` or `https` URLs when present.
-- `screenshots`, `tags` and `categories` are only used for the marketplace listing.
+- `id`: lowercase letters, numbers and dashes, up to 64 characters. Must match the folder the plugin is installed into.
+- `sdkVersion` and `version` are overwritten on every build: the SDK version from the linked SDK, the version from `package.json`. Bump `package.json`, not the manifest.
+- `homepage` and `logo` are optional URLs.
 
-### 4. Declare the Contract
+### 3. Declare the Contract
 
 One type describes what your plugin exposes, and both halves import it. See [Contract](./contract).
 
@@ -65,7 +59,7 @@ type TPlugin = {
 export type { TPlugin };
 ```
 
-### 5. Write the Server Half
+### 4. Write the Server Half
 
 ```ts
 // src/server/index.ts
@@ -111,9 +105,9 @@ Anything you need to keep on disk goes in `ctx.dataPath`, not `ctx.path`: instal
 
 Start with one command or one action. Once it loads cleanly, add settings, UI, hooks, or voice.
 
-### 6. Build
+### 5. Build
 
-Point `SHARKORD_PLUGINS_PATH` in `.env` at your server's plugins folder:
+Set `SHARKORD_PLUGINS_PATH` in `.env`:
 
 ```
 # development server
@@ -122,21 +116,28 @@ SHARKORD_PLUGINS_PATH=<sharkord repo>/apps/server/data/plugins
 SHARKORD_PLUGINS_PATH=~/.config/sharkord/plugins
 ```
 
-Then:
-
 ```bash
 bun run build
 ```
 
-The bundle lands in `dist/<plugin-id>/`, with `manifest.json`, `server/index.js`, and `client/index.js` inside, and `build.ts` copies it into the folder you configured. That copy is most of the edit-build-reload loop; toggle the plugin off and on to pick up a rebuild.
+`dist/` is wiped and gets:
 
-### 7. Install It
+| Path | What it is |
+| --- | --- |
+| `dist/<plugin-id>/` | The plugin, copied into `SHARKORD_PLUGINS_PATH` when set |
+| `dist/<plugin-id>-<version>.tar.gz` | The release archive |
+| `dist/<version>.json` | The registry version file, with checksum and size |
 
-See [Installation](./installation). In short: put the built folder in `plugins/`, enable plugins in the server settings, then enable your plugin.
+A new plugin folder shows up in the server settings without a restart. Enable plugins there, then enable yours. **Restart the server to pick up a rebuild**, since the server caches the loaded module.
+
+### 6. Publish
+
+See [Marketplace](./marketplace).
 
 ### Things That Will Bite You
 
 - **`ctx.path` is deleted on every update.** Use `ctx.dataPath`.
+- **Toggling a plugin does not reload rebuilt code.** Restart the server.
 - **Tailwind classes mostly do not work.** Sharkord compiles Tailwind from its own sources, so a class no Sharkord file uses is not in the stylesheet. Use inline styles with the host's CSS variables (`var(--foreground)`, `var(--primary)`, `var(--radius)`) so your UI follows the user's theme.
 - **Keep `as const` on your settings definitions**, or `settings.get` loses the type of what it returns.
 - **`bun tsc --noEmit` reports errors from the linked SDK packages**, not from your code. Yours are the ones under `src/`.

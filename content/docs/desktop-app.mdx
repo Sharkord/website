@@ -1,0 +1,34 @@
+---
+title: Desktop App
+description: What server owners need to know about the Sharkord desktop app.
+icon: AppWindow
+---
+
+The [desktop app](https://github.com/Sharkord/sharkord-desktop/releases/latest) (Windows, macOS, Linux) is an optional client. It loads each server's own web client from that server, each in an isolated session, and adds native notifications, a tray, global hotkeys and a better screen share picker. Users on the browser and on the app share the same server.
+
+## Version Compatibility
+
+The app and the server's client must speak the same desktop bridge version. If they do not, the server still loads as a plain website and desktop features are off. The app tells the user which side is outdated, so keep your server updated after app releases.
+
+## Add to Desktop App Button
+
+When opened in a browser, the connect screen shows **Add to desktop app**. It opens `sharkord://add-server?url=<your server>`. You can use that link yourself, for example in an invite message.
+
+## Hotkeys
+
+The desktop app registers hotkeys with the OS directly, without the [Bridge](/docs/bridge).
+
+| System | Mute and deafen | Push to talk |
+| --- | --- | --- |
+| Linux on Wayland | Yes | Yes |
+| Windows, macOS, Linux on X11 | Yes | No |
+
+Push to talk needs key release events, which only the Wayland shortcuts portal provides. Elsewhere, use the Bridge in a browser.
+
+## Things to Tell Your Users
+
+- **The app is not signed yet.** Windows: **More info → Run anyway**. macOS: **System Settings → Privacy & Security → Open Anyway**, or `xattr -dr com.apple.quarantine /Applications/Sharkord.app`.
+- **Linux auto updates only work with the AppImage.**
+- **macOS does not update itself yet.** Unsigned Mac apps cannot install updates, so the app announces each new version and links to its download. Pick the Apple silicon or Intel build to match the Mac.
+- **System audio in screen shares** works on Linux with PipeWire, without echoing the call back, on Windows, and on macOS 14.2 or later.
+- **App data:** `%APPDATA%\sharkord-app`, `~/Library/Application Support/sharkord-app` or `~/.config/sharkord-app`. **Advanced → Reset App…** wipes it.

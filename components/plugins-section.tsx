@@ -3,19 +3,21 @@ import { CodeBlock } from "@/components/ui/code-block";
 import { ArrowRight, Music, Radio } from "lucide-react";
 import Link from "next/link";
 
-const PLUGIN_SAMPLE = `import { createRegisterCommand } from "@sharkord/plugin-sdk";
+const PLUGIN_SAMPLE = `import type { PluginContext } from "@sharkord/plugin-sdk";
 
-export const onLoad = async (ctx) => {
-  const registerCommand = createRegisterCommand(ctx);
-
-  registerCommand("hello", { description: "Says hello" }, async (invoker) =>
-    \`Hello, user \${invoker.userId}\`,
-  );
-
-  ctx.events.on("user:joined", ({ username }) => {
-    ctx.messages.send(1, \`<p>\${username} just joined</p>\`);
+const onLoad = async (ctx: PluginContext) => {
+  ctx.commands.register({
+    name: "hello",
+    description: "Says hello.",
+    executes: async (invoker) => \`Hello, user \${invoker.userId}\`,
   });
-};`;
+
+  ctx.events.on("user:joined", async ({ username }) => {
+    await ctx.messages.send(1, \`<p>\${username} just joined</p>\`);
+  });
+};
+
+export { onLoad };`;
 
 const examples = [
   {
@@ -37,7 +39,7 @@ export function PluginsSection() {
         <div className="grid gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
           <div>
             <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-              Bare by default, yours by the evening
+              Small by default, yours with plugins
             </h2>
             <p className="mt-4 text-lg leading-relaxed text-muted-foreground text-pretty">
               We keep the app small so it stays fast and easy to understand.

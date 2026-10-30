@@ -1,11 +1,11 @@
 ---
 title: Docker
-description: Run Sharkord with Docker, covering ports, the data volume, file ownership, and updates.
+description: Run the Sharkord image on its own.
 icon: Container
 ---
 
 ```bash
-docker run \
+docker run -d \
   -p 4991:4991/tcp \
   -p 40000:40000/tcp \
   -p 40000:40000/udp \
@@ -13,71 +13,19 @@ docker run \
   --restart unless-stopped \
   --name sharkord \
   sharkord/sharkord:latest
+
+docker logs sharkord   # to read the access token on first run
 ```
 
-Then open `http://localhost:4991` in your browser.
+Images exist for `linux/amd64` and `linux/arm64`.
 
-Images are published for `linux/amd64` and `linux/arm64`.
+| Port | Carries |
+| --- | --- |
+| `4991/tcp` | HTTP and WebSocket. Put your reverse proxy in front of this one. |
+| `40000/tcp+udp` | Voice, webcam and screen sharing. Publish both protocols. |
 
-### Ports
-
-- `4991/tcp` carries HTTP and WebSocket traffic between the client and the server.
-- `40000/tcp` and `40000/udp` carry WebRTC media: voice, webcam, and screen sharing. Both protocols listen on this port, so publish both.
-
-### Data
-
-The container stores everything under `/home/bun/.config/sharkord`. Mount it somewhere on the host, as above, or your server is gone with the container. See [Data Directory](/docs/data-dir).
-
-### First Launch
-
-The access token is printed once, on the first start. If you missed it:
-
-```bash
-docker logs sharkord
-```
-
-### Health Check
-
-`/healthz` answers with `{"status":"ok"}` and needs no authentication, which makes it a usable container health check:
-
-```yaml
-healthcheck:
-  test: ["CMD", "curl", "-f", "http://localhost:4991/healthz"]
-  interval: 30s
-  timeout: 5s
-  retries: 3
-```
-
-### File Ownership
-
-The container drops to the `bun` user. If the mounted directory belongs to another UID on the host, set `PUID` and `PGID` and the entrypoint remaps the user before starting:
-
-```bash
-docker run -e PUID=1000 -e PGID=1000 ...
-```
-
-Running the container as a non-root user directly (`--user`, Kubernetes `securityContext`, rootless Podman) also works; in that case `PUID`/`PGID` are ignored and the mounted directory has to be writable already.
-
-### Configuration
-
-Every option in [`config.ini`](/docs/configuration) can be set with an environment variable, which is usually easier in Docker:
-
-```bash
-docker run -e SHARKORD_WEBRTC_ANNOUNCED_ADDRESS=203.0.113.10 ...
-```
-
-<Alert type="info" title="Behind a NAT or a reverse proxy?">
-  Set `SHARKORD_WEBRTC_ANNOUNCED_ADDRESS` to the public IP or domain clients
-  should send media to. Forwarded client addresses need no setup unless a CDN
-  is involved: see [Behind a Proxy](/docs/https/behind-a-proxy).
-</Alert>
-
-### Updating
-
-```bash
-docker pull sharkord/sharkord:latest
-docker rm -f sharkord
-# run the same command again
-```
-
-The in-app updater is disabled inside Docker. See [Updating](/docs/updating).
+- **Data.** Everything is in `/home/bun/.config/sharkord`. Mount it or lose it with the container.
+- **Config.** Every [`config.ini`](/docs/configuration) option has an env variable. Behind NAT, set `SHARKORD_WEBRTC_ANNOUNCED_ADDRESS`.
+- **File ownership.** The container runs as `bun`. Set `PUID` and `PGID` to match the owner of the mounted folder. With `--user` or rootless Podman they are ignored and the folder must already be writable.
+- **Health check.** `GET /healthz` returns `{"status":"ok"}`, no auth.
+- **Updating.** `docker pull`, remove the container, run it again. The in-app updater is off in Docker.

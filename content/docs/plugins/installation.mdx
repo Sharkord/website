@@ -1,6 +1,6 @@
 ---
 title: Installation
-description: Install a plugin on your Sharkord server.
+description: Install, update and remove plugins on your server.
 icon: Download
 ---
 
@@ -9,27 +9,15 @@ icon: Download
   [Security](./security) first.
 </Alert>
 
-### Enable Plugins First
+Plugins are off by default. Turn them on in the server settings first. Installing needs `MANAGE_PLUGINS`, using them needs `USE_PLUGINS`.
 
-Plugins are off by default. Turn the plugin system on in the [server settings](/docs/administration/server-settings). Until you do, nothing is loaded and the marketplace is unavailable.
+## From the Marketplace
 
-You need the `MANAGE_PLUGINS` permission to install and toggle plugins, and users need `USE_PLUGINS` to run their commands and actions.
+Server settings → Plugins → Marketplace → install. The download is checked against the registry checksum. Updates and removal happen in the same place. See [Marketplace](./marketplace).
 
-### From the Marketplace
+## Manually
 
-The marketplace is built into the interface. Browse it in the server settings, pick a plugin, and install. Sharkord downloads the release, verifies it against the checksum in the registry, and unpacks it into your data directory.
-
-See [Marketplace](./marketplace) for what the listings mean and how to publish your own.
-
-### Manually
-
-1. Open your [data directory](/docs/data-dir).
-2. Create a `plugins` folder if it does not exist.
-3. Copy the built plugin folder (`dist/<plugin-id>` from the build) into it.
-4. Open **Plugins** in the server settings. The folder is scanned live, so it shows up without a restart.
-5. Enable it.
-
-The result should look like this:
+Copy the built folder (`dist/<plugin-id>`) into `plugins/` in the [data directory](/docs/data-dir). It is picked up live, no restart. Enable it in the server settings.
 
 ```
 ~/.config/sharkord/plugins/
@@ -39,40 +27,18 @@ The result should look like this:
     client/index.js
 ```
 
-The folder name has to match the `id` in `manifest.json`, and all three files must be present, even for a plugin with no interface.
+The folder name must match the manifest `id`, and all three files must exist. To update, replace the contents and restart the server. Deleting the folder unloads it within seconds.
 
-### The Plugin's Page
+## Where Data Lives
 
-Selecting a plugin in the server settings opens its own page, with its name, version, author, homepage, and the reason it failed to load if it did. Below that:
+| Location | Contents |
+| --- | --- |
+| `plugins/<plugin-id>/` | The plugin. Replaced on every update. |
+| `plugin-data/<plugin-id>/` | Files the plugin wrote. Survives updates. |
+| Database | Settings, per-user data, permission rules, installed version. |
 
-| Tab             | What it is                                                              |
-| --------------- | ----------------------------------------------------------------------- |
-| **Settings**    | The options the plugin registered, if any. See [Settings](./settings).   |
-| **Commands**    | Its slash commands, runnable from here as well as from chat.             |
-| **Logs**        | What the plugin logged, including why it failed to load.                 |
-| **Permissions** | Which roles may use each command, action and UI slot. Needs `MANAGE_PLUGIN_PERMISSIONS`. |
+Removing a plugin deletes all three. Files it attached to messages stay until those messages are deleted.
 
-A plugin can also add [tabs of its own](./components#admin-tabs), which appear after those. A plugin with nothing but logs gets no tabs at all.
+## Failed Loads
 
-### Where a Plugin Keeps Its Data
-
-Two directories, side by side in the data directory:
-
-| Directory                | Contents                                                        |
-| ------------------------ | --------------------------------------------------------------- |
-| `plugins/<plugin-id>/`   | The plugin itself. Deleted and rewritten on every update.        |
-| `plugin-data/<plugin-id>/` | Whatever the plugin wrote. Survives updates, deleted with the plugin. |
-
-Settings, per-user data, capability rules and the version on record live in the database, and are removed with the plugin. Files a plugin attached to messages are not: they belong to the message, and show up under **Uninstalled** in the [Storage tab](/docs/administration/storage#plugin-storage) until those messages go.
-
-### Updating and Removing
-
-Marketplace plugins can be updated and removed from the same screen. Sharkord unloads the plugin, replaces the files, and loads it again. If the version changed and the plugin ships an `onUpgrade`, that runs first; a failed upgrade stops the load and is retried next time rather than leaving a half-migrated plugin running.
-
-For manual installs, replace the folder's contents and toggle the plugin off and on.
-
-Removing a plugin's folder from disk while the server is running is noticed within a couple of seconds: Sharkord unloads it and treats it as uninstalled.
-
-### If It Does Not Load
-
-Each plugin has a log view in the server settings, and load failures are recorded there with the reason. See [Troubleshooting](/docs/troubleshooting) for the common causes.
+The plugin's **Logs** tab has the reason. Common causes are in [Troubleshooting](/docs/troubleshooting).

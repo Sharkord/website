@@ -1,148 +1,58 @@
 ---
 title: Apache
-description: Use Apache as a reverse proxy for Sharkord.
+description: Apache as the reverse proxy, with certbot.
 icon: Network
 ---
 
-This guide sets up Apache in front of Sharkord, with a Let's Encrypt certificate from certbot.
-
-### Assumptions
-
-1. Sharkord is running on this server with the default ports.
-2. You are on Ubuntu Server.
-3. A domain (for example `sharkord.yourdomain.com`) already points at this server's public IP.
-
-### Step 1: Install Dependencies
-
 ```bash
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y wget ufw curl nano
-```
-
-### Step 2: Install Apache and Certbot
-
-```bash
-sudo apt install apache2 certbot python3-certbot-apache
-
-apache2 -v
-certbot --version
-```
-
-### Step 3: Enable the Required Modules
-
-```bash
+sudo apt install -y apache2 certbot python3-certbot-apache
 sudo a2enmod rewrite proxy proxy_http proxy_wstunnel headers ssl
 ```
 
-`headers` and `ssl` are needed by the configuration below; leaving them out makes Apache fail to start with an "Invalid command" error.
-
-### Step 4: Create the Virtual Host
-
-```bash
-sudo nano /etc/apache2/sites-available/001-sharkord.conf
-```
-
-Paste this, replacing `sharkord.yourdomain.com` with your domain:
+`/etc/apache2/sites-available/001-sharkord.conf`:
 
 ```apache
 <VirtualHost *:80>
-    ServerName sharkord.yourdomain.com
-    Redirect permanent / https://sharkord.yourdomain.com
+    ServerName sharkord.example.com
+    Redirect permanent / https://sharkord.example.com
 </VirtualHost>
 
 <VirtualHost *:443>
-    # site name and http2, for speed and stability
-    ServerName sharkord.yourdomain.com
-    ServerSignature off
+    ServerName sharkord.example.com
     Protocols h2 http/1.1
-
-    # keepalive, for frontend stability
-    KeepAlive On
-    KeepAliveTimeout 5
-    MaxKeepAliveRequests 150
 
     # websocket, required for sharkord to connect at all
     RewriteEngine On
     RewriteCond %{HTTP:Upgrade} =websocket [NC]
     RewriteRule /(.*) ws://localhost:4991/$1 [P,L]
 
-    # headers
     RequestHeader set X-Forwarded-Proto "https"
-    Header always unset "X-Powered-By"
-    Header always unset "Server"
 
-    # logging
-    ErrorLog ${APACHE_LOG_DIR}/sharkord_error.log
-    CustomLog ${APACHE_LOG_DIR}/sharkord_access.log combined
-
-    # proxy from localhost
     ProxyPreserveHost On
     ProxyPass / http://localhost:4991/
     ProxyPassReverse / http://localhost:4991/
-    ProxyPass /ws ws://localhost:4991/ws
-    ProxyPassReverse /ws ws://localhost:4991/ws
     ProxyTimeout 86400
     SetEnv proxy-nokeepalive 1
     SetEnv proxy-initial-not-pooled 1
 
-    # ssl
     SSLEngine on
     SSLProtocol all -SSLv3 -TLSv1 -TLSv1.1
-    SSLCompression off
-    SSLSessionTickets off
 </VirtualHost>
 ```
 
-Enable the site:
-
 ```bash
 sudo a2ensite 001-sharkord.conf
-```
-
-### Step 5: Get the Certificate
-
-```bash
-sudo certbot --apache -d sharkord.yourdomain.com
-```
-
-Certbot fetches a certificate from Let's Encrypt, writes the certificate paths into the virtual host, and installs a renewal timer.
-
-### Step 6: Restart Apache
-
-```bash
-sudo systemctl daemon-reload
+sudo certbot --apache -d sharkord.example.com
 sudo systemctl restart apache2
 ```
 
-### Step 7: Tell Sharkord About the Proxy
-
-No configuration needed. Sharkord trusts forwarded headers from loopback and from private networks by default, so a proxy on this machine is believed and the real client address is read from `X-Forwarded-For`.
-
-Two exceptions are worth knowing: a CDN such as Cloudflare in front of this proxy has to be added by hand, and a network you do not fully control should be narrowed rather than trusted wholesale. Both are covered in [Behind a Proxy](./behind-a-proxy).
-
-### Step 8: Configure the Firewall
+## Firewall
 
 ```bash
-sudo ufw status
-```
-
-If it is active:
-
-```bash
-sudo ufw allow 22/tcp
-
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
-
 sudo ufw allow 40000/tcp
 sudo ufw allow 40000/udp
-
-sudo ufw enable
-sudo ufw reload
 ```
 
-Port `4991` stays closed to the internet; Apache reaches it over localhost. Port `40000` must be open, because voice and video bypass the proxy.
-
-### Step 9: Open It
-
-Go to `https://sharkord.yourdomain.com`.
+Keep `4991` closed. Apache reaches it on localhost.

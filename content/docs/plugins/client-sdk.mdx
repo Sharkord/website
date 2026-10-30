@@ -174,7 +174,7 @@ A user can only read and write their **own** data, and the object is capped at 6
 
 ### Hotkeys
 
-Let a user bind a key to something your plugin does, such as playing a sound or toggling a mode. The key works while a game or another window has focus when the user runs the [Bridge](/docs/bridge/overview), and plugins never see raw key presses: the user picks the key, and your handler runs when it is pressed.
+Let a user bind a key to something your plugin does, such as playing a sound or toggling a mode. The key works while a game or another window has focus in the [desktop app](/docs/desktop-app), or with the [Bridge](/docs/bridge) in a browser, and plugins never see raw key presses: the user picks the key, and your handler runs when it is pressed.
 
 ```tsx
 import { useHotkey, useHotkeyBinding } from "@sharkord/plugin-sdk/client";
@@ -215,7 +215,7 @@ The user can bind your actions in two places, and both edit the same bind:
 
 Things to keep in mind:
 
-- Hotkeys are experimental and off by default. They only fire when the user enabled them and runs the Bridge, so keep an on-screen button too, and never make a feature depend on them.
+- Hotkeys are experimental and off by default. They only fire when the user enabled them, so keep an on-screen button too, and never make a feature depend on them.
 - A bind belongs to the user's browser. It survives your component unmounting: when the action returns, so does its key.
 - The handler runs in the user's browser. For anything that needs permission, call a server [action](./actions), exactly as a button would.
 - A key bound on several servers fires on all of them.

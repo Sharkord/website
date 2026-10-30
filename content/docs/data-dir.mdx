@@ -4,7 +4,7 @@ description: Where Sharkord keeps the database, uploads, config and plugins, and
 icon: Folder
 ---
 
-Everything Sharkord owns lives in one directory: the database, uploaded files, logs, config, and plugins. Back up that directory and you have backed up your server.
+Everything lives in one directory. Back it up and you have backed up the server.
 
 ### Location
 
@@ -15,13 +15,7 @@ Everything Sharkord owns lives in one directory: the database, uploaded files, l
 | Windows  | `%APPDATA%\sharkord`                     |
 | Docker   | `/home/bun/.config/sharkord`             |
 
-On Linux, `XDG_CONFIG_HOME` is respected if you set it. In Docker, mount that path to a directory on the host, otherwise your server disappears with the container.
-
-To put the data somewhere else entirely, set `SHARKORD_DATA_PATH`:
-
-```bash
-SHARKORD_DATA_PATH=/srv/sharkord ./sharkord
-```
+`XDG_CONFIG_HOME` is respected on Linux. `SHARKORD_DATA_PATH=/srv/sharkord` moves it anywhere.
 
 ### What's Inside
 
@@ -40,24 +34,13 @@ SHARKORD_DATA_PATH=/srv/sharkord ./sharkord
 | `mediasoup/`       | The media worker binary                                      |
 | `drizzle/`         | Database migration state                                     |
 
-Only `config.ini` is meant to be edited by hand. Do not edit `db.sqlite` while the server is running.
+Only edit `config.ini` by hand.
 
 ### Backups
 
-Stop the server, copy the directory, start it again. Copying `db.sqlite` while the server is writing to it can produce a backup that will not open.
+Stop the server, copy the directory, start it. Copying `db.sqlite` while it is being written can give a backup that will not open. If you cannot stop it, use `sqlite3 db.sqlite "VACUUM INTO 'backup.sqlite'"`.
 
-Back up before every update. Sharkord is in alpha and migrations only move forward.
+### Moving or Resetting
 
-Sharkord also snapshots the database into `backups/` on its own whenever an update has schema changes to apply, unless you turn `server.backupDatabase` off. That covers the database only, never your uploaded files, and the snapshots are never pruned. See [Database Migrations](/docs/migrations).
-
-### Migrating to Another Machine
-
-1. Stop the server.
-2. Copy the whole data directory to the new machine, into the location for that platform.
-3. Start the same Sharkord version there.
-
-Settings, users, messages, files, and plugins all come along. If the server's public address changed, update `webRtc.announcedAddress` in `config.ini`.
-
-### Resetting the Server
-
-Deleting the data directory wipes everything, including your account, the owner access token, and every uploaded file. The next start creates a fresh server and prints a new token.
+- **Move:** stop, copy the directory to the new machine, start the **same version** there. Update `webRtc.announcedAddress` if the IP changed.
+- **Reset:** delete the directory. Next start is a fresh server with a new owner token.

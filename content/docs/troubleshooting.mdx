@@ -1,75 +1,44 @@
 ---
 title: Troubleshooting
-description: Voice not working, rate limits, failed uploads, disconnects, and the other common problems.
+description: Voice, rate limits, uploads, disconnects, startup and plugins.
 icon: Bug
 ---
 
+Press **F9** in a voice channel for connection diagnostics. Set `debug=true` in [`config.ini`](/docs/configuration) for verbose server logs.
+
 <Accordion>
-  <AccordionItem title="Voice, webcam, or screen sharing does not work">
-    Check, in this order:
-
-    - You are on HTTPS, or on `http://localhost`. Browsers block media devices anywhere else. See [Why HTTPS](/docs/https/why).
-    - The browser has permission to use the microphone and camera for this site.
-    - Port `40000` is open in your firewall and router, on **both UDP and TCP**.
-    - If the server is behind NAT, Docker, or a cloud provider, set `webRtc.announcedAddress` to your public IP or domain in [`config.ini`](/docs/configuration). Without it, clients may be told to send media to a private address they cannot reach.
-    - If you changed `webRtc.port`, open the new port and restart the server.
-
-  </AccordionItem>
-  <AccordionItem title="Hotkeys or push to talk do not work">
-    Hotkeys need the optional Bridge app running on your computer, with hotkeys enabled and paired in **User Settings → Hotkeys**. See [Bridge troubleshooting](/docs/bridge/troubleshooting) for the checks.
+  <AccordionItem title="Voice, webcam or screen sharing does not work">
+    - You are on HTTPS or `http://localhost`. See [Why HTTPS](/docs/https/why).
+    - Port `40000` is open on **both UDP and TCP**, in the firewall and the router.
+    - Behind NAT, Docker or a cloud provider, `webRtc.announcedAddress` is set to the public IP or domain, and that domain is not behind a CDN proxy.
   </AccordionItem>
   <AccordionItem title="Everyone gets 'Too many requests'">
-    Your reverse proxy's address is being rate limited instead of the users behind it. The server logs this once at the point it happens, naming the address to add:
-
-```
-Requests are arriving from 172.18.0.4 with forwarded headers, but that address is
-not in server.trustedProxies, so the headers are ignored and every client is rate
-limited as one.
-```
-
-Loopback and private ranges are trusted by default, so this normally only comes up when a CDN such as Cloudflare sits in front of your proxy, or when you narrowed the list yourself. See [Behind a Proxy](/docs/https/behind-a-proxy).
+    Users are being counted as your proxy's IP. The server logs the address to trust. Usually a CDN like Cloudflare in front of your proxy. See [Behind a Proxy](/docs/https/behind-a-proxy).
   </AccordionItem>
-  <AccordionItem title="File uploads fail">
-    Large uploads that fail immediately are usually stopped by the reverse proxy, not by Sharkord. Nginx caps request bodies at 1 MB by default; set `client_max_body_size 0`. See the [Nginx guide](/docs/https/nginx).
-
-    If the error mentions the file size or the quota, it comes from Sharkord itself: per-role upload limits and the server storage quota are set in the server settings.
-
+  <AccordionItem title="Uploads fail">
+    Failing instantly with `413`: your proxy caps body size. Nginx needs `client_max_body_size 0`. Error about size or quota: Sharkord's own [storage limits](/docs/administration/storage).
   </AccordionItem>
-  <AccordionItem title="I keep getting disconnected (code 1006)">
-    This is the browser reporting that the WebSocket closed abnormally, almost always a network or proxy problem. Check the proxy's read timeout (Sharkord holds one long-lived connection) and any idle timeout between you and the server.
-
-    These issues collect the known cases:
-    - [#46](https://github.com/Sharkord/sharkord/issues/46)
-    - [#289](https://github.com/Sharkord/sharkord/issues/289)
-    - [#259](https://github.com/Sharkord/sharkord/issues/259)
-
+  <AccordionItem title="Disconnects with code 1006">
+    The WebSocket was cut, almost always by a proxy read timeout or an idle timeout in the network. Known cases: [#46](https://github.com/Sharkord/sharkord/issues/46), [#289](https://github.com/Sharkord/sharkord/issues/289), [#259](https://github.com/Sharkord/sharkord/issues/259).
   </AccordionItem>
   <AccordionItem title="The server will not start">
-    - **Windows**: install the [Microsoft Visual C++ 2015-2022 Redistributable (x64)](https://aka.ms/vs/17/release/vc_redist.x64.exe). Without it the binary exits immediately.
-    - **Port in use**: another process is on `4991`. Change `server.port`, or stop the other process.
-    - **Permissions**: the user running Sharkord must be able to write to its [data directory](/docs/data-dir). In Docker, use `PUID` and `PGID` to match the owner of the mounted volume.
-
+    - **Windows:** install the [Visual C++ Redistributable (x64)](https://aka.ms/vs/17/release/vc_redist.x64.exe).
+    - **Port in use:** change `server.port` or stop the other process.
+    - **Permissions:** the data directory must be writable. In Docker, set `PUID` and `PGID`.
   </AccordionItem>
-  <AccordionItem title="My config.ini changes did nothing">
-    The file is only read at startup, so restart the server. Sharkord also rewrites the file on every boot: comments and unknown keys are dropped, and a file that fails validation is replaced by the defaults, with the reason logged. Check the console output if a value keeps reverting.
+  <AccordionItem title="config.ini changes do nothing or revert">
+    It is only read at startup. A file that fails validation is replaced by the defaults, with the reason in the log.
   </AccordionItem>
   <AccordionItem title="A plugin does not load">
-    Open the plugin's logs in the server settings; load failures are recorded there with the reason. The usual causes:
+    The reason is in the plugin's **Logs** tab. Usual causes:
 
-    - Plugins are disabled server-wide. Turn them on in the server settings first.
-    - The plugin folder name does not match the `id` in its `manifest.json`.
-    - `server/index.js` or `client/index.js` is missing from the plugin folder. Both are required, even if the plugin has no UI.
-    - The plugin does not export an `onLoad` function. A missing `onUnload` only logs a warning.
-    - The manifest's `sdkVersion` does not match the server's plugin SDK version.
-    - `onLoad` threw, or took longer than 30 seconds.
-    - `onUpgrade` threw. The version on record is left alone, so the migration is retried on the next load rather than running half-applied.
-
-    See [Installation](/docs/plugins/installation).
-
-  </AccordionItem>
-  <AccordionItem title="I lost the owner access token">
-    It cannot be recovered. If you still have owner access, grant the roles you need from the server settings. If you do not, the only reset is a fresh [data directory](/docs/data-dir), which starts the server from scratch.
+    - Plugins are off in the server settings.
+    - The folder name does not match the manifest `id`.
+    - `manifest.json`, `server/index.js` or `client/index.js` is missing.
+    - No `onLoad` export.
+    - `sdkVersion` does not match the server.
+    - `onLoad` or `onUpgrade` threw or took over 30 seconds.
   </AccordionItem>
 </Accordion>
 
-Still stuck? Search the [issues](https://github.com/Sharkord/sharkord/issues) or ask in [discussions](https://github.com/Sharkord/sharkord/discussions). Turning on `debug` in [`config.ini`](/docs/configuration) makes the server log a lot more, which is worth including in a report.
+Still stuck? Search the [issues](https://github.com/Sharkord/sharkord/issues) or ask in [discussions](https://github.com/Sharkord/sharkord/discussions).

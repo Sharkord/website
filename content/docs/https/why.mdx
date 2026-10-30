@@ -1,32 +1,17 @@
 ---
-title: Why Do I Need HTTPS?
-description: What breaks without HTTPS, and how to fix it.
+title: Why HTTPS
+description: What breaks without it, and which guide to follow.
 icon: CircleQuestionMark
 ---
 
-Browsers only give a page access to the microphone, webcam, and screen in a [secure context](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia): HTTPS, or `http://localhost`. Over plain HTTP on any other address, those requests are blocked before Sharkord ever sees them.
+Browsers only allow the microphone, webcam and screen sharing on HTTPS or `http://localhost`. On plain HTTP, chat works but voice and video do not, and passwords travel unencrypted.
 
-So without HTTPS:
+Sharkord does not do TLS itself. Put a reverse proxy in front of port `4991`:
 
-- Text chat, file sharing, and everything else still work.
-- Voice, webcam, and screen sharing do not.
-- Traffic between your users and the server is unencrypted, including their passwords.
+- [Docker Compose](/docs/introduction/installation/docker-compose): Sharkord and Caddy in one file. Recommended.
+- [Caddy](./caddy): automatic certificates.
+- [Nginx](./nginx) or [Apache](./apache): certificates through certbot.
 
-Testing locally on `http://localhost` is fine. Anything else needs a certificate. See [Voice and Devices](/docs/voice) for what those blocked features are.
+No domain? Get a [free subdomain](/docs/domains).
 
-### How to Set It Up
-
-Sharkord does not terminate TLS itself. Put a reverse proxy in front of it, point your domain at the server, and let the proxy handle certificates:
-
-- **[Caddy](/docs/https/caddy)**: the easiest option. Certificates are automatic.
-- **[Nginx](/docs/https/nginx)**: certificates through certbot.
-- **[Apache](/docs/https/apache)**: certificates through certbot.
-- **[Docker Compose](/docs/introduction/installation/docker-compose)**: Sharkord and Caddy together in one file, and the one we recommend. There is a [one minute video](https://www.youtube.com/watch?v=Baa7uEKUkgQ) of it if you prefer.
-
-No domain? Claim a [free subdomain](/docs/domains).
-
-<Alert type="info" title="Media does not go through the proxy">
-  The reverse proxy handles HTTP and WebSocket traffic on port 4991 only. Voice
-  and video go directly to port `40000` over UDP and TCP, so that port has to
-  stay open in your firewall.
-</Alert>
+Media on port `40000` does not go through the proxy. Keep it open on TCP and UDP.

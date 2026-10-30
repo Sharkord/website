@@ -1,7 +1,7 @@
 ---
 title: Contract
 description: One type that makes both halves of a plugin type safe.
-icon: FileSignature
+icon: FilePenLine
 ---
 
 A plugin is two bundles that never import each other's code: `server/index.js` runs in the Sharkord process, `client/index.js` runs in the browser. The contract is the one thing they share, and it is types only, so nothing of it survives into either bundle.

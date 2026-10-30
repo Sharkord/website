@@ -1,18 +1,10 @@
 ---
 title: Docker Compose
-description: Run Sharkord with Docker Compose and Caddy for automatic HTTPS.
+description: Sharkord plus Caddy for automatic HTTPS. The recommended setup.
 icon: Container
 ---
 
-This is the easiest way to get a working setup with HTTPS: Compose runs Sharkord, and Caddy sits in front of it and handles certificates for your domain automatically.
-
-<Alert type="tip" title="Prefer to watch it?">
-  [How To Deploy Sharkord In 1
-  Minute](https://www.youtube.com/watch?v=Baa7uEKUkgQ) walks through this exact
-  setup end to end.
-</Alert>
-
-Create a `docker-compose.yml`:
+Your domain must already point at the server. `docker-compose.yml`:
 
 ```yaml
 services:
@@ -26,8 +18,6 @@ services:
       - "40000:40000/tcp"
       - "40000:40000/udp"
     environment:
-      SHARKORD_PORT: "4991"
-      # the address clients send voice and video to
       SHARKORD_WEBRTC_ANNOUNCED_ADDRESS: "your-domain.com"
     volumes:
       - ./data:/home/bun/.config/sharkord
@@ -50,7 +40,7 @@ volumes:
   caddy_config:
 ```
 
-And a `Caddyfile` next to it, replacing `your-domain.com` with your domain:
+`Caddyfile` next to it:
 
 ```
 your-domain.com {
@@ -58,17 +48,11 @@ your-domain.com {
 }
 ```
 
-Then start it:
-
 ```bash
 docker compose up -d
+docker compose logs sharkord   # to read the access token on first run
 ```
 
-Caddy requests a certificate from Let's Encrypt on the first request, so your instance is reachable at `https://your-domain.com` within a few seconds. Your domain must already point at the server's public IP.
+Caddy gets the certificate on the first request. Open port `40000` TCP and UDP in your firewall, since media skips Caddy. Your data is in `./data`.
 
-### Notes
-
-- **Media ports are published directly.** Caddy proxies HTTP and WebSocket traffic only; WebRTC media goes straight to port `40000` on both TCP and UDP. Open it in your firewall.
-- **Forwarded addresses work out of the box.** Sharkord trusts private ranges by default, which covers the Compose network Caddy talks to it over, so rate limits apply per user rather than per proxy. See [Behind a Proxy](/docs/https/behind-a-proxy) if you put a CDN in front of Caddy.
-- **The access token** from the first launch is in `docker compose logs sharkord`.
-- **Your data** lives in `./data`. Back it up before updating.
+Forwarded client IPs work without config. If you put a CDN in front of Caddy, see [Behind a Proxy](/docs/https/behind-a-proxy).
