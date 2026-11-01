@@ -18,17 +18,16 @@ When opened in a browser, the connect screen shows **Add to desktop app**. It op
 
 The desktop app registers hotkeys with the OS directly, without the [Bridge](/docs/bridge).
 
-| System | Mute and deafen | Push to talk |
-| --- | --- | --- |
-| Linux on Wayland | Yes | Yes |
-| Windows, macOS, Linux on X11 | Yes | No |
+| System                       | Mute and deafen | Push to talk |
+| ---------------------------- | --------------- | ------------ |
+| Linux on Wayland             | Yes             | Yes          |
+| Windows, macOS, Linux on X11 | Yes             | No           |
 
 Push to talk needs key release events, which only the Wayland shortcuts portal provides. Elsewhere, use the Bridge in a browser.
 
-## Things to Tell Your Users
+## Notes
 
 - **The app is not signed yet.** Windows: **More info → Run anyway**. macOS: **System Settings → Privacy & Security → Open Anyway**, or `xattr -dr com.apple.quarantine /Applications/Sharkord.app`.
 - **Linux auto updates only work with the AppImage.**
 - **macOS does not update itself yet.** Unsigned Mac apps cannot install updates, so the app announces each new version and links to its download. Pick the Apple silicon or Intel build to match the Mac.
-- **System audio in screen shares** works on Linux with PipeWire, without echoing the call back, on Windows, and on macOS 14.2 or later.
 - **App data:** `%APPDATA%\sharkord-app`, `~/Library/Application Support/sharkord-app` or `~/.config/sharkord-app`. **Advanced → Reset App…** wipes it.
