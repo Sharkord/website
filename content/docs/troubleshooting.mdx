@@ -1,10 +1,10 @@
 ---
 title: Troubleshooting
-description: Voice, rate limits, uploads, disconnects, startup and plugins.
+description: Voice, screen share audio, rate limits, uploads, disconnects, startup and plugins.
 icon: Bug
 ---
 
-Press **F9** in a voice channel for connection diagnostics. Set `debug=true` in [`config.ini`](/docs/configuration) for verbose server logs.
+Press **F9** in a voice channel for connection diagnostics. Set `debug=true` in [`config.ini`](/docs/configuration) for verbose server logs. The desktop app keeps its own [log file](/docs/desktop-app#logs).
 
 <Accordion>
   <AccordionItem title="Voice, webcam or screen sharing does not work">
@@ -38,6 +38,47 @@ Press **F9** in a voice channel for connection diagnostics. Set `debug=true` in 
     - No `onLoad` export.
     - `sdkVersion` does not match the server.
     - `onLoad` or `onUpgrade` threw or took over 30 seconds.
+  </AccordionItem>
+</Accordion>
+
+## Screen Share Audio
+
+What gets shared depends on where you stream from:
+
+| Streaming from          | Audio shared                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------ |
+| Firefox                 | None                                                                                 |
+| Chromium based browsers | A tab's audio. Whole system audio only on some systems, and never for a single window |
+| Desktop app             | Everything playing on the computer except Sharkord itself                            |
+
+Stream from the desktop app for games and other apps. On Linux it needs PipeWire.
+
+<Accordion>
+  <AccordionItem title="Viewers hear nothing">
+    - **Share system audio** is on in the screen share options.
+    - In a browser, share a tab or the entire screen, not a window. See the table above.
+    - **Linux with EasyEffects or another virtual output:** turn on **Desktop Settings → Screen share → Capture audio from all outputs**. Apps that play through a virtual output are skipped otherwise.
+  </AccordionItem>
+  <AccordionItem title="Viewers hear themselves">
+    - **Restrict Own Audio** is on, in the screen share options or under **User Settings → Devices**.
+    - The streamer wears headphones or mutes their mic. A mic picking up the speakers sends viewers back through the voice channel, not the stream.
+    - **Windows:** audio software that replays every app's sound from its own process (SteelSeries Sonar, Voicemeeter, Nahimic and similar) defeats Restrict Own Audio. Close it while streaming.
+    - **Linux with EasyEffects:** turn on **Capture audio from all outputs**, as above. Otherwise the stream records EasyEffects' output, which carries the call's voices too.
+  </AccordionItem>
+  <AccordionItem title="My mic ends up in the stream, or I hear myself (Linux)">
+    EasyEffects with **Process all input/output streams** used to reroute the stream's audio capture. Update the desktop app.
+  </AccordionItem>
+  <AccordionItem title="The stream has all my desktop audio, not just the shared window">
+    Expected. The desktop app shares everything except Sharkord, since there is no reliable way to tell which sound belongs to which window. Mute what viewers should not hear.
+  </AccordionItem>
+  <AccordionItem title="Reporting a Linux audio problem">
+    Start the AppImage from a terminal with logging on, start a share, then stop it:
+
+    ```bash
+    VENMIC_ENABLE_LOG=1 ./Sharkord*.AppImage
+    ```
+
+    Attach the app's [`main.log`](/docs/desktop-app#logs), `~/.local/state/venmic/venmic.log` and the output of `wpctl status` and `pw-link -l`, captured while the audio is playing, to the [issue](https://github.com/Sharkord/sharkord/issues).
   </AccordionItem>
 </Accordion>
 

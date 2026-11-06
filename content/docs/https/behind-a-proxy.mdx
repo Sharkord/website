@@ -26,6 +26,13 @@ So a proxy on the same host, in another container or on your LAN needs no config
   Anything trusted can pick any client IP. If machines you do not control can
   reach Sharkord's port (shared provider network, campus LAN, multi-tenant
   Kubernetes), narrow the list to your proxy.
+
+  Running in Docker with no proxy at all? Some setups (Docker's userland
+  proxy, IPv6) make every outside client arrive from the bridge gateway, such
+  as `172.17.0.1`, which falls in a trusted range, so any of them can pick its
+  own IP. Set the list to `127.0.0.1` and `::1` to stop that. Those clients
+  then share the gateway's IP and one rate limit bucket, so the real fix is to
+  put a proxy in front.
 </Alert>
 
 ## How the IP Is Picked

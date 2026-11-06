@@ -20,6 +20,7 @@ debug=false
 autoupdate=false
 backupDatabase=true
 maxRequestBodyBytes=262144
+rateLimitersEnabled=true
 allowedOrigins[]=*
 trustedProxies[]=127.0.0.1
 trustedProxies[]=::1
@@ -40,10 +41,6 @@ disableLocalLogin=false
 port=40000
 announcedAddress=
 maxBitrate=30000000
-
-[rateLimiters.sendAndEditMessage]
-maxRequests=15
-windowMs=60000
 ```
 
 Lists repeat the key with `[]`, one line per entry.
@@ -58,6 +55,7 @@ Lists repeat the key with `[]`, one line per entry.
 | `autoupdate`          | `false`  | Check for new releases every hour and install them. Ignored in Docker. See [Updating](/docs/updating). |
 | `backupDatabase`      | `true`   | Snapshot the database before applying migrations. See [Database Migrations](/docs/migrations). |
 | `maxRequestBodyBytes` | `262144` | Max HTTP request body, in bytes. Uploads are not affected. |
+| `rateLimitersEnabled` | `true`   | Turns every rate limit on or off. The limits themselves are set in the server settings, see [Rate Limits](#rate-limits). |
 | `allowedOrigins`      | `*`      | Origins allowed to call the server from a browser. `*` allows any.                                    |
 | `trustedProxies`      | loopback and private ranges | Addresses or CIDR ranges whose forwarded headers are believed. See [Behind a Proxy](/docs/https/behind-a-proxy). |
 
@@ -75,39 +73,17 @@ The `[oidc]` section. See [Single Sign-On](/docs/oidc).
 
 When `announcedAddress` is empty, the server looks up its public IP at startup (icanhazip, ipify or ifconfig.me). Setting it skips the lookup.
 
-## Rate Limiters
+## Rate Limits
 
-Each limiter is a `[rateLimiters.<name>]` section with `maxRequests` and `windowMs`. Counted per user when logged in, per IP before that. Most servers never touch these.
+Rate limits are set in **Server Settings → Rate Limits**, by anyone with the Manage Settings permission. Changes apply without a restart.
 
-| Limiter                 | Max requests | Window   | Applies to                        |
-| ----------------------- | ------------ | -------- | --------------------------------- |
-| `sendAndEditMessage`    | `15`         | `60000`  | Sending and editing messages      |
-| `joinVoiceChannel`      | `20`         | `60000`  | Joining voice channels            |
-| `moveMembers`           | `20`         | `60000`  | Moving members between channels   |
-| `login`                 | `5`          | `60000`  | Login attempts                    |
-| `joinServer`            | `5`          | `60000`  | Joining the server                |
-| `upload`                | `30`         | `60000`  | File uploads                      |
-| `search`                | `15`         | `60000`  | Message search                    |
-| `signalTyping`          | `40`         | `5000`   | Typing indicators                 |
-| `getMessages`           | `60`         | `10000`  | Loading message history           |
-| `markAsRead`            | `60`         | `10000`  | Marking channels as read          |
-| `toggleMessageReaction` | `60`         | `10000`  | Adding and removing reactions     |
-| `addEmoji`              | `10`         | `60000`  | Uploading custom emojis           |
-| `openDirectMessage`     | `10`         | `60000`  | Opening direct message channels   |
-| `handshake`             | `10`         | `60000`  | Initial connection handshakes     |
-| `updatePassword`        | `5`          | `60000`  | Password changes                  |
-| `adminCreate`           | `60`         | `60000`  | Creating roles and invites        |
-| `voiceTransport`        | `30`         | `60000`  | Voice transport setup             |
-| `voiceStream`           | `200`        | `60000`  | Voice and video stream updates    |
-| `useSecretToken`        | `5`          | `60000`  | Owner token claims                |
-| `pluginExecute`         | `60`         | `60000`  | Plugin commands and actions       |
-| `pluginRoute`           | `300`        | `60000`  | Requests to plugin HTTP routes    |
-| `pluginInstall`         | `10`         | `60000`  | Installing and updating plugins   |
-| `oidc`                  | `30`         | `60000`  | Single sign-on requests           |
+Every action has the global limit, 120 requests per minute by default, counted separately per action: per user when logged in, per IP before that. A few actions have their own limit, either because a low one protects a secret (login, server password, owner token) or because normal use needs more room (typing, push to talk, voice streams).
+
+The same tab has a switch to turn every limit off. `rateLimitersEnabled=false` here (or `SHARKORD_RATE_LIMITERS_ENABLED=false`) turns them off regardless of that switch, which is the way back in if a limit set too low locks you out. The tab then shows the limits as disabled.
 
 ## Environment Variables
 
-Env variables win over `config.ini`. Empty values are ignored. Rate limiters have none.
+Env variables win over `config.ini`. Empty values are ignored.
 
 | Variable                            | Overrides                   |
 | ----------------------------------- | --------------------------- |
@@ -117,6 +93,7 @@ Env variables win over `config.ini`. Empty values are ignored. Rate limiters hav
 | `SHARKORD_AUTOUPDATE`               | `server.autoupdate`         |
 | `SHARKORD_BACKUP_DATABASE`          | `server.backupDatabase`     |
 | `SHARKORD_MAX_REQUEST_BODY_BYTES`   | `server.maxRequestBodyBytes` |
+| `SHARKORD_RATE_LIMITERS_ENABLED`    | `server.rateLimitersEnabled` |
 | `SHARKORD_ALLOWED_ORIGINS`          | `server.allowedOrigins`     |
 | `SHARKORD_TRUSTED_PROXIES`          | `server.trustedProxies`     |
 | `SHARKORD_OIDC_ENABLED`             | `oidc.enabled`              |

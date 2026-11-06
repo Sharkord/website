@@ -175,6 +175,6 @@ The answer is a short notification, not a message, so keep it to a sentence or t
   [`ctx.messages.send`](./messages).
 </Alert>
 
-Command executions are rate limited (60 per minute per user by default, `rateLimiters.pluginExecute` in [`config.ini`](/docs/configuration)) and recorded in the server activity log, arguments included. They are never written to the plugin's own log, which anyone who can manage plugins can read.
+Command executions are rate limited (the global limit, 120 per minute per user by default, see [Rate Limits](/docs/configuration#rate-limits)) and recorded in the server activity log, arguments included. They are never written to the plugin's own log, which anyone who can manage plugins can read.
 
 See [Actions](./actions) for server functions called from your own UI instead of by a user typing.

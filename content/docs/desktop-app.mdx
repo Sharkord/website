@@ -31,3 +31,9 @@ Push to talk needs key release events, which only the Wayland shortcuts portal p
 - **Linux auto updates only work with the AppImage.**
 - **macOS does not update itself yet.** Unsigned Mac apps cannot install updates, so the app announces each new version and links to its download. Pick the Apple silicon or Intel build to match the Mac.
 - **App data:** `%APPDATA%\sharkord-app`, `~/Library/Application Support/sharkord-app` or `~/.config/sharkord-app`. **Advanced → Reset App…** wipes it.
+
+## Logs
+
+The app writes `main.log` to the `logs` folder inside its app data. **Desktop Settings → General → Logs folder** shows the path and opens it. It records startup details, page load failures, screen share and hotkey decisions, updates and crashes, plus each server page's warnings and errors. The app's own entries name servers by id, but a page's errors can still mention its address, so read the file before posting it publicly. Past 5 MB the file rotates into `main.old.log`.
+
+Attach both files when [reporting a problem](https://github.com/Sharkord/sharkord/issues) with the app.
