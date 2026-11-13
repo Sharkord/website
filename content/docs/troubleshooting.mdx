@@ -11,6 +11,9 @@ Press **F9** in a voice channel for connection diagnostics. Set `debug=true` in 
     - You are on HTTPS or `http://localhost`. See [Why HTTPS](/docs/https/why).
     - Port `40000` is open on **both UDP and TCP**, in the firewall and the router.
     - Behind NAT, Docker or a cloud provider, `webRtc.announcedAddress` is set to the public IP or domain, and that domain is not behind a CDN proxy.
+    - Server and clients on the same machine or LAN, `webRtc.announcedAddress` is set to `127.0.0.1` (same machine) or the server's LAN IP (other devices). Most routers do not loop the public IP back to your own network.
+    - Remote users connect but LAN users do not (or the other way around), `webRtc.announcedAddress` is the public address and `webRtc.internalAnnouncedAddress` is the server's LAN IP. See [WebRTC](/docs/configuration#webrtc).
+    - IPv6 only clients cannot connect, `webRtc.announcedAddressV6` is set and the port is open for IPv6 too.
   </AccordionItem>
   <AccordionItem title="Everyone gets 'Too many requests'">
     Users are being counted as your proxy's IP. The server logs the address to trust. Usually a CDN like Cloudflare in front of your proxy. See [Behind a Proxy](/docs/https/behind-a-proxy).

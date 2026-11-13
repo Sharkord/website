@@ -40,6 +40,8 @@ disableLocalLogin=false
 [webRtc]
 port=40000
 announcedAddress=
+announcedAddressV6=
+internalAnnouncedAddress=
 maxBitrate=30000000
 ```
 
@@ -68,10 +70,18 @@ The `[oidc]` section. See [Single Sign-On](/docs/oidc).
 | Field              | Default    | Description                                                                                            |
 | ------------------ | ---------- | ------------------------------------------------------------------------------------------------------ |
 | `port`             | `40000`    | Media port, UDP and TCP. Open both. |
-| `announcedAddress` | empty      | Public IP or domain clients send media to. Set it behind NAT or Docker. |
+| `announcedAddress` | empty      | Public IPv4 address or domain clients send media to. Set it behind NAT or Docker. |
+| `announcedAddressV6` | empty    | Public IPv6 address or domain. Turns on IPv6 voice next to IPv4. See below. |
+| `internalAnnouncedAddress` | empty | LAN IP or domain sent to clients next to `announcedAddress`. See below. |
 | `maxBitrate`       | `30000000` | Maximum bitrate per connection, in bits per second.                                                     |
 
-When `announcedAddress` is empty, the server looks up its public IP at startup (icanhazip, ipify or ifconfig.me). Setting it skips the lookup.
+When `announcedAddress` is empty, the server looks up its public IP at startup (icanhazip, ipify or ifconfig.me). Setting it skips the lookup. A domain (a DDNS record, say) is resolved to its IPv4 address once at startup, so restart the server when that address changes. If it does not resolve, or you put an IPv6 address here, the server falls back to the lookup and warns in the log.
+
+If the server and its clients are on the same machine or LAN, set it to `127.0.0.1` (same machine) or the server's LAN IP (other devices on the network). Most routers do not loop the public IP back to your own network, so voice fails to connect otherwise.
+
+If both LAN and remote users need to connect, keep `announcedAddress` on the public address and set `internalAnnouncedAddress` to the server's LAN IP. Every client gets both, and the browser uses whichever one it can reach. A domain works too: it is resolved by the server, so with split DNS the server's own resolver has to return the LAN IP for it. In Docker, use the host's LAN IP, not the container's. Remote clients receive the LAN IP as well, so leave it empty if you do not need it.
+
+Voice is IPv4 only unless `announcedAddressV6` is set. Set it to the server's public IPv6 address, or a domain with an AAAA record, and the server also listens on IPv6 on the same port. Clients get both addresses and use whichever works, so IPv6 only clients can connect too. Open the port for IPv6 in the firewall as well. If the value is not an IPv6 address or the domain has no AAAA record, IPv6 stays off and the log says why.
 
 ## Rate Limits
 
@@ -104,6 +114,8 @@ Env variables win over `config.ini`. Empty values are ignored.
 | `SHARKORD_OIDC_DISABLE_LOCAL_LOGIN` | `oidc.disableLocalLogin`    |
 | `SHARKORD_WEBRTC_PORT`              | `webRtc.port`               |
 | `SHARKORD_WEBRTC_ANNOUNCED_ADDRESS` | `webRtc.announcedAddress`   |
+| `SHARKORD_WEBRTC_ANNOUNCED_ADDRESS_V6` | `webRtc.announcedAddressV6` |
+| `SHARKORD_WEBRTC_INTERNAL_ANNOUNCED_ADDRESS` | `webRtc.internalAnnouncedAddress` |
 | `SHARKORD_WEBRTC_MAX_BITRATE`       | `webRtc.maxBitrate`         |
 
 Lists are comma separated: `SHARKORD_TRUSTED_PROXIES="127.0.0.1,::1"`.

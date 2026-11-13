@@ -15,6 +15,10 @@ Plugins are off by default. Turn them on in the server settings first. Installin
 
 Server settings → Plugins → Marketplace → install. The download is checked against the registry checksum. Updates and removal happen in the same place. See [Marketplace](./marketplace).
 
+## Upload
+
+Server settings → Plugins → drop a `.tar`, `.tar.gz` or `.tgz` archive of the built plugin, or click to pick one. The plugin files can sit at the root of the archive or inside a single folder. Up to 20 MB. Uploading a plugin that is already installed updates it.
+
 ## Manually
 
 Copy the built folder (`dist/<plugin-id>`) into `plugins/` in the [data directory](/docs/data-dir). It is picked up live, no restart. Enable it in the server settings.
