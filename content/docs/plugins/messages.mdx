@@ -101,7 +101,7 @@ const message = await ctx.messages.get(messageId);
 const recent = await ctx.messages.list({ channelId: 1, limit: 50 });
 ```
 
-`edit` and `delete` only work on the plugin's **own** messages; anything else fails with a permission error. Deleting a message also deletes the files attached to it. Users cannot edit plugin messages, but a user with `MANAGE_MESSAGES` can delete them.
+`edit` only works on the plugin's **own** messages; anything else fails with a permission error. `delete` works on **any** message, a user's or another plugin's, so a plugin can moderate. Deleting a message also deletes the files attached to it and raises `message:deleted`. Users cannot edit plugin messages, but a user with `MANAGE_MESSAGES` can delete them.
 
 `get` and `list` read any message. `list` returns newest first, at most 100 at a time, and takes `channelId`, `limit`, `before` and `parentMessageId`. Pass `parentMessageId` to read a thread, and `before` to page backwards through history.
 
