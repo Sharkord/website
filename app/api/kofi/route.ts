@@ -23,10 +23,28 @@ const tokenMatches = (token: string) => {
 };
 
 const cleanName = (name: string) =>
-  name
-    .replace(/\p{C}/gu, "")
-    .trim()
-    .slice(0, 40);
+  name.replace(/\p{C}/gu, "").trim().slice(0, 40);
+
+// relays every verified webhook (private ones too, the plugin hides those) to
+// the demo server's plugin, e.g. https://demo.example/plugins/plugin-example/kofi.
+// Never fails the request: a non-200 makes ko-fi retry and count the donation twice.
+const forwardToSharkord = async (raw: string) => {
+  const url = process.env.KOFI_FORWARD_URL;
+
+  if (!url) return;
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      body: new URLSearchParams({ data: raw }),
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!res.ok) console.error(`ko-fi forward got ${res.status}`);
+  } catch (error) {
+    console.error("ko-fi forward failed", error);
+  }
+};
 
 export async function POST(request: Request) {
   const form = await request.formData();
@@ -47,6 +65,8 @@ export async function POST(request: Request) {
   if (!tokenMatches(String(payload.verification_token))) {
     return new Response("unauthorized", { status: 401 });
   }
+
+  await forwardToSharkord(raw);
 
   const name = cleanName(String(payload.from_name ?? ""));
   // ponytail: amounts are summed as plain numbers, every donation so far is in euros, convert if other currencies show up
