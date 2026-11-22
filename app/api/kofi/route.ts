@@ -26,7 +26,7 @@ const cleanName = (name: string) =>
   name.replace(/\p{C}/gu, "").trim().slice(0, 40);
 
 // relays every verified webhook (private ones too, the plugin hides those) to
-// the demo server's plugin, e.g. https://demo.example/plugins/plugin-example/kofi.
+// the demo server's plugin, e.g. https://demo.example/plugins/demo-plugin/kofi.
 // Never fails the request: a non-200 makes ko-fi retry and count the donation twice.
 const forwardToSharkord = async (raw: string) => {
   const url = process.env.KOFI_FORWARD_URL;
