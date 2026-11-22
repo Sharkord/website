@@ -10,6 +10,7 @@ import { PluginsSection } from "@/components/plugins-section";
 import { ProofStrip } from "@/components/proof-strip";
 import { ScopeSection } from "@/components/scope-section";
 import { ShowcaseSection } from "@/components/showcase-section";
+import { SupportersSection } from "@/components/supporters-section";
 import { getDesktopRelease, getRepoStats } from "@/lib/github";
 import type { Metadata } from "next";
 
@@ -87,6 +88,7 @@ export default async function Page() {
         <ScopeSection />
         <InstallSection />
         <DownloadSection stats={stats} desktop={desktop} />
+        <SupportersSection />
         <CTASection />
       </main>
       <Footer />
