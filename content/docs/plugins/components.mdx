@@ -19,7 +19,7 @@ Plugins can render React components into fixed slots of the interface, and add t
 | `USER_POPOVER`     | `{ userId }`                 | The card that opens when a user is clicked                             |
 | `CHANNEL_HEADER`   | `{ channelId }`              | The channel's top bar, before the pinned-messages button               |
 | `TOPBAR_RIGHT`     | none                         | The right side of the top bar                                          |
-| `FULL_SCREEN`      | none                         | A full-screen view, with a button added to the left sidebar to open it |
+| `FULL_SCREEN`      | none                         | Deprecated, use [pages](#full-screen-pages). A full-screen view, with one sidebar button labelled with your plugin id |
 | `USER_SETTINGS`    | none                         | The plugin's own entry in **user** settings, next to Profile and Notifications |
 | `VOICE_CONTROLS`   | `{ channelId }`              | The voice connection panel, beside the camera and screen buttons. Only while connected |
 | `VOICE_USER_CARD`  | `{ channelId, userId }`      | The top left corner of each user's card in the voice grid              |
@@ -204,6 +204,45 @@ export { tabs };
 
 Each tab needs a unique `id`, a `label` in the language you ship, and a `component`. `settings`, `commands` and `logs` are reserved: a tab claiming one of those, or a duplicate id, is dropped with a warning in the browser console.
 
+### Full Screen Pages
+
+A `pages` export adds full-screen pages, each opened from its own button in the left sidebar. One plugin can add as many as it needs.
+
+```tsx
+// src/client/index.ts
+import type { TPluginPages } from "@sharkord/plugin-sdk/client";
+import { Leaderboard } from "./leaderboard";
+import { Supporters } from "./supporters";
+
+const pages: TPluginPages = [
+  { id: "supporters", label: "Supporters <3", component: Supporters },
+  { id: "leaderboard", label: "Leaderboard", component: Leaderboard },
+];
+
+export { pages };
+```
+
+Each page needs a unique `id`, a `label` for its button in the language you ship, and a `component`. A duplicate id or a page missing any of them is dropped with a warning in the browser console. The buttons show in the order you list them.
+
+A page can set an `icon` for its button, rendered at 16 by 16. Without one, the button shows your plugin's logo. The icon is either an image url (http(s), for example one of your own [HTTP routes](./http), or a `data:image/...` url), or a component that draws an svg. A component can use `currentColor` to follow the theme:
+
+```tsx
+const Heart = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 21s-7-4.4-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.6-9.5 9-9.5 9z" />
+  </svg>
+);
+
+const pages: TPluginPages = [
+  { id: "supporters", label: "Supporters <3", component: Supporters, icon: Heart },
+  { id: "stats", label: "Stats", component: Stats, icon: "https://example.com/stats.png" },
+];
+```
+
+An icon that is neither is ignored and the logo shows instead, and a component icon that throws falls back to a generic icon without affecting the rest of the sidebar.
+
+Like every slot, pages render only for users holding `USE_PLUGINS`, and only once you call `ctx.ui.enable()`. They share the requirement of the `FULL_SCREEN` slot, so `ctx.ui.enable({ [PluginSlot.FULL_SCREEN]: Permission.X })` gates all of a plugin's pages at once, and so do the role overrides for that slot in the server settings. A user without it sees none of the buttons.
+
 ### Writing the Components
 
 React comes from the host through globals, so your bundle does not ship its own and there is exactly one React on the page. The build tooling rewrites `react` and `react-dom` imports for you.
@@ -218,6 +257,33 @@ const buttonStyle: CSSProperties = {
   color: "var(--primary-foreground)",
 };
 ```
+
+Or skip the styling and use the components in `@sharkord/ui`, the same ones Sharkord's own interface is built from, so their classes are already in the stylesheet. `MultiSelect`, for example, is the dropdown of checkboxes the settings page uses for [`multiple`](./settings#picking-several) settings:
+
+```tsx
+import { MultiSelect } from "@sharkord/ui";
+import { useState } from "react";
+
+const options = [
+  { value: "bug", label: "Bug" },
+  { value: "feature", label: "Feature" },
+];
+
+const TagPicker = () => {
+  const [tags, setTags] = useState<string[]>([]);
+
+  return (
+    <MultiSelect
+      options={options}
+      value={tags}
+      onChange={setTags}
+      placeholder="No tags"
+    />
+  );
+};
+```
+
+It shows the picked labels on its button, or `placeholder` while nothing is picked, and stays open while the user ticks several items.
 
 For data, read the store with `useStoreSelector`; for anything privileged, call a server [action](./actions). See [Client SDK](./client-sdk).
 

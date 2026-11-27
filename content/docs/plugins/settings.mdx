@@ -58,11 +58,11 @@ const onLoad = async (ctx: PluginContext) => {
 | `number`  | Number field      |                                                           |
 | `boolean` | Toggle            |                                                           |
 | `secret`  | Password field    | Write-only: never sent back to the client                 |
-| `enum`    | Select            | Requires `options: [{ value, label }]`                    |
-| `channel` | Channel picker    | Stores the channel id. `0` means none picked              |
-| `role`    | Role picker       | Stores the role id. `0` means none picked                 |
+| `enum`    | Select            | Requires `options: [{ value, label }]`. Takes `multiple`  |
+| `channel` | Channel picker    | Stores the channel id. `0` means none. Takes `multiple`   |
+| `role`    | Role picker       | Stores the role id. `0` means none. Takes `multiple`      |
 
-A definition takes `key`, `name`, `type`, `defaultValue`, an optional `description`, and `options` for an enum. `key` is how you read the value back and how it is stored, so keep it stable across versions.
+A definition takes `key`, `name`, `type`, `defaultValue`, an optional `description`, `options` for an enum, an optional `multiple` for an enum, channel or role (see [Picking Several](#picking-several)), and an optional `noneLabel` for what an empty picker shows. `key` is how you read the value back and how it is stored, so keep it stable across versions.
 
 `secret` is the type for API keys and tokens. An admin can replace one but not read it back, and the value never leaves the server. Your plugin reads it normally with `get`.
 
@@ -89,9 +89,48 @@ ctx.events.on("user:banned", async ({ userId, reason }) => {
 });
 ```
 
-Use `0` as the default: it means nothing has been picked yet, and is always accepted. When an admin saves, the server checks the channel or role exists and refuses one that does not, and a direct message channel is never offered or accepted.
+Use `0` as the default: it means nothing is picked, and is always accepted. The picker starts with a **None** item that stores `0`, so an admin can clear a channel or role they picked earlier. Set `noneLabel` to name that item after what it means for your plugin, such as `noneLabel: "Don't log"`. When an admin saves, the server checks the channel or role exists and refuses one that does not, and a direct message channel is never offered or accepted.
 
 That check only happens on save. A channel or role deleted afterwards leaves its old id in the setting, so look it up with `ctx.channels.get` or `ctx.roles.get` before using it, as above, or watch `channel:deleted` and `role:deleted`.
+
+### Picking Several
+
+Add `multiple: true` to an `enum`, `channel` or `role` setting and it renders as a dropdown of checkboxes instead, storing a list of the picked values. Use `[]` as the default: it means nothing is picked. The dropdown shows **None** while the list is empty, or your `noneLabel` if you set one.
+
+```ts
+const settings = await ctx.settings.register([
+  {
+    key: "watchedChannels",
+    name: "Watched channels",
+    type: "channel",
+    multiple: true,
+    defaultValue: [],
+  },
+  {
+    key: "pingRoles",
+    name: "Ping roles",
+    type: "role",
+    multiple: true,
+    defaultValue: [],
+  },
+  {
+    key: "tags",
+    name: "Tags",
+    type: "enum",
+    multiple: true,
+    defaultValue: ["bug"],
+    options: [
+      { value: "bug", label: "Bug" },
+      { value: "feature", label: "Feature" },
+    ],
+  },
+] as const);
+
+settings.get("watchedChannels"); // number[]
+settings.get("tags"); // string[]
+```
+
+Every item in the list is validated like a single value would be: each channel or role has to exist when an admin saves, and each enum value has to be one of the `options`. A list holds at most 100 items. `multiple` is ignored on the other types.
 
 ### Reading and Writing
 
@@ -120,6 +159,6 @@ The event is scoped to your own plugin, so you never see another plugin's settin
 
 ### Notes
 
-- Values written from the interface are validated against your definition: a `number` setting cannot be set to a string, an `enum` cannot be set to a value outside its `options`, and a `channel` or `role` setting cannot be set to an id that does not exist.
+- Values written from the interface are validated against your definition: a `number` setting cannot be set to a string, an `enum` cannot be set to a value outside its `options`, a `channel` or `role` setting cannot be set to an id that does not exist, and a `multiple` setting only takes a list.
 - Settings are cleared from memory when the plugin unloads and reloaded from the database on the next `register`. The stored values are not deleted when a plugin is disabled, only when it is removed.
 - Anything an admin can read in the interface is not a secret from admins. `secret` settings are hidden from the form, but a plugin running in the server process can do whatever it likes with them. See [Security](./security).
